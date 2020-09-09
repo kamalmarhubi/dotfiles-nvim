@@ -1,0 +1,1 @@
+vim.o.hidden = true
