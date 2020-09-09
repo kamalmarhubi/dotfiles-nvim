@@ -1,0 +1,11 @@
+*
+!/.gitignore.d
+!/.gitignore.d/nvim
+!/.config
+!/.config/nvim
+!/.config/nvim/**
+!/.local
+!/.local/share
+!/.local/share/nvim
+!/.local/share/nvim/site
+!/.local/share/nvim/site/**
