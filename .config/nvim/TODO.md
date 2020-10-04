@@ -6,9 +6,9 @@ here to make myself happy. Here's stuff I can think of right now.
 
 ## basics
 
-- [ ] vim-surround or equivalent
-- [ ] vim-unimpaired or equivalent
-- [ ] vim-abolish or equivalent
+- [x] vim-surround or equivalent
+- [x] vim-unimpaired or equivalent
+- [x] vim-abolish or equivalent
 
 
 ## colours
