@@ -1,4 +1,4 @@
-require('abbr')
-require('highlight')
-require('map')
-require('opt')
+require('config.abbr')
+require('config.highlight')
+require('config.map')
+require('config.opt')
