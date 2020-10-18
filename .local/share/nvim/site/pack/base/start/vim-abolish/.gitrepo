@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/tpope/vim-abolish.git
+	branch = master
+	commit = 1329f888a777cc1f8228f048a532502a30f1df01
+	parent = 911dbb6470b61e75cdc8fbab3c89d739e9c2c98a
+	method = merge
+	cmdver = 0.4.0
