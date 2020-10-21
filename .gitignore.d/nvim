@@ -5,6 +5,8 @@
 !/.config/nvim
 !/.config/nvim/**
 !/.local
+!/.local/bin
+!/.local/bin/vinstall
 !/.local/share
 !/.local/share/nvim
 !/.local/share/nvim/site

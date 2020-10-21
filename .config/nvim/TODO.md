@@ -10,6 +10,12 @@ here to make myself happy. Here's stuff I can think of right now.
 - [x] vim-unimpaired or equivalent
 - [x] vim-abolish or equivalent
 
+## plugin management
+- [x] add vinstall script to repo
+- [ ] change script to use git-subrepo
+- [ ] add ability to upgrade
+- [ ] probably rewrite in python
+
 
 ## colours
 
