@@ -4,6 +4,7 @@
 !/.config
 !/.config/nvim
 !/.config/nvim/**
+/.config/nvim/.netrwhist
 !/.local
 !/.local/bin
 !/.local/bin/vinstall
