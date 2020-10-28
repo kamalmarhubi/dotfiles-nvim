@@ -12,7 +12,7 @@ local function first_non_null(...)
   end
 end
 
-local actions = require('telescope.actions')
+local sorters = require('telescope.sorters')
 
 -- TODO: Add other major configuration points here.
 -- selection_strategy
@@ -60,6 +60,7 @@ function config.set_defaults(defaults)
   --    Last argument will be the search term (passed in during execution)
   set("vimgrep_arguments", {'rg', '--color=never', '--no-heading', '--with-filename', '--line-number', '--column', '--smart-case'})
   set("use_less", true)
+  set("color_devicons", true)
 
   -- TODO: Add motions to keybindings
 
@@ -81,12 +82,8 @@ function config.set_defaults(defaults)
   set("mappings", {})
   set("default_mappings", nil)
 
-  -- NOT STABLE. DO NOT USE
-  set("horizontal_config", {
-    get_preview_width = function(columns, _)
-      return math.floor(columns * 0.75)
-    end,
-  })
+  set("generic_sorter", sorters.get_generic_fuzzy_sorter)
+  set("file_sorter", sorters.get_fuzzy_file)
 end
 
 function config.clear_defaults()

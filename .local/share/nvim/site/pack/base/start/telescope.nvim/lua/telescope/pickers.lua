@@ -37,6 +37,7 @@ local extend = function(opts, defaults)
 end
 
 local ns_telescope_selection = a.nvim_create_namespace('telescope_selection')
+local ns_telescope_entry = a.nvim_create_namespace('telescope_entry')
 local ns_telescope_matching = a.nvim_create_namespace('telescope_matching')
 local ns_telescope_prompt = a.nvim_create_namespace('telescope_prompt')
 local ns_telescope_prompt_prefix = a.nvim_create_namespace('telescope_prompt_prefix')
@@ -102,8 +103,8 @@ function Picker:new(opts)
 
       get_preview_width = get_default(opts.preview_width, config.values.get_preview_width),
 
-      results_width = get_default(opts.results_width, 0.8),
-      results_height = get_default(opts.results_height, 1),
+      results_width = get_default(opts.results_width, config.values.results_width),
+      results_height = get_default(opts.results_height, config.values.results_height),
 
       winblend = get_default(opts.winblend, config.values.winblend),
       prompt_position = get_default(opts.prompt_position, config.values.prompt_position),
@@ -338,11 +339,13 @@ function Picker:find()
   -- Prompt prefix
   local prompt_prefix = self.prompt_prefix
   if prompt_prefix ~= '' then
-    if not vim.endswith(prompt_prefix, ' ') then
-      prompt_prefix = prompt_prefix.." "
-    end
     a.nvim_buf_set_option(prompt_bufnr, 'buftype', 'prompt')
+
+    if not vim.endswith(prompt_prefix, " ") then
+      prompt_prefix = prompt_prefix .. " "
+    end
     vim.fn.prompt_setprompt(prompt_bufnr, prompt_prefix)
+
     a.nvim_buf_add_highlight(prompt_bufnr, ns_telescope_prompt_prefix, 'TelescopePromptPrefix', 0, 0, #prompt_prefix)
   end
 
@@ -389,7 +392,11 @@ function Picker:find()
       return
     end
 
-    local prompt = vim.api.nvim_buf_get_lines(prompt_bufnr, first_line, last_line, false)[1]:sub(#prompt_prefix)
+    local prompt = vim.trim(vim.api.nvim_buf_get_lines(prompt_bufnr, first_line, last_line, false)[1]:sub(#prompt_prefix))
+
+    if self.sorter then
+      self.sorter:_start(prompt)
+    end
 
     -- TODO: Statusbar possibilities here.
     -- vim.api.nvim_buf_set_virtual_text(prompt_bufnr, 0, 1, { {"hello", "Error"} }, {})
@@ -770,10 +777,10 @@ function Picker:entry_adder(index, entry, score)
     return
   end
 
-  local display
+  local display, display_highlights
   if type(entry.display) == 'function' then
     self:_increment("display_fn")
-    display = entry:display()
+    display, display_highlights = entry:display()
   elseif type(entry.display) == 'string' then
     display = entry.display
   else
@@ -784,11 +791,8 @@ function Picker:entry_adder(index, entry, score)
   -- This is the two spaces to manage the '> ' stuff.
   -- Maybe someday we can use extmarks or floaty text or something to draw this and not insert here.
   -- until then, insert two spaces
-  if TELESCOPE_DEBUG then
-    display = '  ' .. score .. display
-  else
-    display = '  ' .. display
-  end
+  local prefix = TELESCOPE_DEBUG and ('  ' .. score) or '  '
+  display = prefix .. display
 
   self:_increment("displayed")
 
@@ -799,8 +803,13 @@ function Picker:entry_adder(index, entry, score)
       return
     end
 
-
     local set_ok = pcall(vim.api.nvim_buf_set_lines, self.results_bufnr, row, row + 1, false, {display})
+    if set_ok and display_highlights then
+      -- TODO: This should actually be done during the cursor moving stuff annoyingly.... didn't see this bug yesterday.
+      for _, hl_block in ipairs(display_highlights) do
+        a.nvim_buf_add_highlight(self.results_bufnr, ns_telescope_entry, hl_block[2], row, #prefix + hl_block[1][1], #prefix + hl_block[1][2])
+      end
+    end
 
     -- This pretty much only fails when people leave newlines in their results.
     --  So we'll clean it up for them if it fails.
