@@ -14,9 +14,13 @@ that just loads the lua config.
 
 ## plugin management
 
-I have decided to vendor plugins using git-subtree(1). There's a bash script
-called vinstall to handle thiss. It's in bash because I have problems.
+I have decided to vendor plugins using [git-subrepo]. There's a bash script
+called vinstall to handle this. It's in bash because I have problems. Not as
+many as I would have if I was the author of git-subrepo though. That's all
+bash.
 
 The main reason for this is I would like to just clone my nvim config and move
 on. A step like `PlugInstall` or the equivalent can fail, and making it
 deterministic is a pain of specifying git commits or tags.
+
+[git-subrepo]: https://github.com/ingydotnet/git-subrepo
