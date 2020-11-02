@@ -13,5 +13,17 @@ vim.schedule(function()
   require'nvim-treesitter.configs'.setup {
     ensure_installed = "maintained",
     highlight = { enable = true },
+    textobjects = {
+      select = {
+        enable = true,
+        keymaps = {
+          -- TODO: Figure out why the .inner ones don't work
+          ["af"] = "@function.outer",
+          ["if"] = "@function.inner",
+          ["ac"] = "@class.outer",
+          ["ic"] = "@class.inner",
+        },
+      },
+    },
   }
 end)
