@@ -5,6 +5,9 @@ vim.g.which_key_map = {
     f = { [[luaeval("require('telescope.builtin').find_files({ cwd = '~/.config/nvim/' })")]], 'find file' },
     m = { [[:e ~/.config/nvim/lua/config/map.lua]], 'edit mappings' },
     c = { [[:e ~/.config/nvim/lua/config/colors.lua]], 'edit colors' },
+    i = { [[:e ~/.config/nvim/lua/config/init.lua]], 'edit init' },
+    R = { [[:e ~/.config/nvim/README.md]], 'edit readme' },
+    t = { [[:e ~/.config/nvim/TODO.md]], 'edit todo' },
   },
   f = { [[luaeval("require('telescope.builtin').git_files{}")]], 'git files' },
   n = {
