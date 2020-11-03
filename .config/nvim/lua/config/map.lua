@@ -1,3 +1,4 @@
+-- Leader mappings via vim-which-key
 vim.g.which_key_map = {
   v = {
     name = '+vim',
@@ -15,7 +16,6 @@ vim.g.which_key_map = {
     f = { [[luaeval("require('telescope.builtin').git_files{}")]], 'git files' },
   },
 }
-
 vim.api.nvim_set_keymap('', '<space>', '<leader>', { silent = true })
 vim.api.nvim_set_keymap('', '<leader>', [[<cmd>WhichKey '<space>'<cr>]], { silent = true, noremap = true })
 
