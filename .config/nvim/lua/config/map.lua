@@ -11,6 +11,7 @@ vim.g.which_key_map = {
     t = { [[:e ~/.config/nvim/TODO.md]], 'edit todo' },
   },
   f = { [[luaeval("require('telescope.builtin').git_files{}")]], 'git files' },
+  b = { [[luaeval("require('telescope.builtin').buffers{}")]], 'buffers' },
   n = {
     name = '+navigation',
     f = { [[luaeval("require('telescope.builtin').git_files{}")]], 'git files' },
