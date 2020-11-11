@@ -1,4 +1,5 @@
 vim.api.nvim_set_keymap('', '<space>', '<leader>', { silent = true })
+vim.api.nvim_set_keymap('n', 'Y', 'y$', { noremap = true, silent = true })
 
 -- Leader mappings via vim-which-key
 vim.api.nvim_set_keymap('', '<leader>', [[<cmd>WhichKey '<space>'<cr>]], { silent = true, noremap = true })
