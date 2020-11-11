@@ -17,6 +17,7 @@ vim.g.which_key_map = {
     i = { [[:e ~/.config/nvim/lua/config/init.lua]], 'edit init' },
     R = { [[:e ~/.config/nvim/README.md]], 'edit readme' },
     t = { [[:e ~/.config/nvim/TODO.md]], 'edit todo' },
+    o = { [[:e ~/.config/nvim/lua/config/opt.lua]], 'edit options' },
     T = { [[luaeval("require('telescope.builtin').builtin{}")]], 'telescope builtins' },
   },
   f = { [[luaeval("require('telescope.builtin').git_files{}")]], 'git files' },
