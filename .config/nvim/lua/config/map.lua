@@ -1,6 +1,10 @@
 vim.api.nvim_set_keymap('', '<space>', '<leader>', { silent = true })
 vim.api.nvim_set_keymap('n', 'Y', 'y$', { noremap = true, silent = true })
 
+-- Clear search highlight
+vim.api.nvim_set_keymap('n', '<esc>', '<cmd>nohlsearch<cr>', { noremap = true, silent = true })
+vim.api.nvim_set_keymap('n', '<leader><leader>', '<cmd>nohlsearch<cr>', { noremap = true, silent = true })
+
 -- Leader mappings via vim-which-key
 vim.api.nvim_set_keymap('', '<leader>', [[<cmd>WhichKey '<space>'<cr>]], { silent = true, noremap = true })
 vim.g.which_key_map = {

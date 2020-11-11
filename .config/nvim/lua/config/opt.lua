@@ -3,6 +3,7 @@ vim.o.hidden = true
 -- Less annoying search
 vim.o.ignorecase = true
 vim.o.smartcase = true
+vim.o.incsearch = true
 
 -- Use treesitter for folding.
 vim.o.foldmethod = 'expr'
