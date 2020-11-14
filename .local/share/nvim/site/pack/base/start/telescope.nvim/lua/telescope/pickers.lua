@@ -7,11 +7,13 @@ local actions = require('telescope.actions')
 local config = require('telescope.config')
 local debounce = require('telescope.debounce')
 local resolve = require('telescope.config.resolve')
-local layout_strategies = require('telescope.pickers.layout_strategies')
 local log = require('telescope.log')
 local mappings = require('telescope.mappings')
 local state = require('telescope.state')
 local utils = require('telescope.utils')
+
+local layout_strategies = require('telescope.pickers.layout_strategies')
+local entry_display = require('telescope.pickers.entry_display')
 
 local EntryManager = require('telescope.entry_manager')
 
@@ -81,6 +83,7 @@ function Picker:new(opts)
     stats = {},
 
     attach_mappings = opts.attach_mappings,
+    file_ignore_patterns = get_default(opts.file_ignore_patterns, config.values.file_ignore_patterns),
 
     sorting_strategy = get_default(opts.sorting_strategy, config.values.sorting_strategy),
     selection_strategy = get_default(opts.selection_strategy, config.values.selection_strategy),
@@ -194,7 +197,13 @@ function Picker:get_reset_row()
   end
 end
 
+function Picker:is_done()
+  if not self.manager then return true end
+end
+
 function Picker:clear_extra_rows(results_bufnr)
+  if self:is_done() then return end
+
   if not vim.api.nvim_buf_is_valid(results_bufnr) then
     log.debug("Invalid results_bufnr for clearing:", results_bufnr)
     return
@@ -209,7 +218,7 @@ function Picker:clear_extra_rows(results_bufnr)
       return
     end
 
-    vim.api.nvim_buf_set_lines(results_bufnr, num_results + 1, self.max_results, false, {})
+    pcall(vim.api.nvim_buf_set_lines, results_bufnr, num_results, self.max_results, false, {})
   else
     worst_line = self:get_row(self.manager:num_results())
     if worst_line <= 0 then
@@ -306,7 +315,9 @@ function Picker:find()
 
   local results_win, results_opts = popup.create('', popup_opts.results)
   local results_bufnr = a.nvim_win_get_buf(results_win)
+
   self.results_bufnr = results_bufnr
+  self.results_win = results_win
 
   -- TODO: Should probably always show all the line for results win, so should implement a resize for the windows
   a.nvim_win_set_option(results_win, 'wrap', false)
@@ -407,6 +418,8 @@ function Picker:find()
     -- self.manager = EntryManager:new(self.max_results, self.entry_adder, self.stats)
 
     local process_result = function(entry)
+      if self:is_done() then return end
+
       self:_increment("processed")
 
       if not entry then
@@ -420,6 +433,13 @@ function Picker:find()
       end
 
       log.trace("Processing result... ", entry)
+
+      for _, v in ipairs(self.file_ignore_patterns or {}) do
+        if string.find(entry.value, v) then
+          log.debug("SKPIPING", entry.value, "because", v)
+          return
+        end
+      end
 
       local sort_ok, sort_score = nil, 0
       if self.sorter then
@@ -443,6 +463,8 @@ function Picker:find()
     end
 
     local process_complete = function()
+      if self:is_done() then return end
+
       -- TODO: We should either: always leave one result or make sure we actually clean up the results when nothing matches
       if selection_strategy == 'row' then
         self:set_selection(self:get_selection_row())
@@ -671,8 +693,14 @@ function Picker:set_selection(row)
   row = self:_handle_scroll_strategy(row)
 
   if not self:can_select_row(row) then
-    log.debug("Cannot select row:", row, self.manager:num_results(), self.max_results)
-    return
+    -- If the current selected row exceeds number of currently displayed
+    -- elements we have to reset it. Affectes sorting_strategy = 'row'.
+    if not self:can_select_row(self:get_selection_row()) then
+      row = self:get_row(self.manager:num_results())
+    else
+      log.debug("Cannot select row:", row, self.manager:num_results(), self.max_results)
+      return
+    end
   end
 
   -- local entry = self.manager:get_entry(self.max_results - row + 1)
@@ -777,13 +805,8 @@ function Picker:entry_adder(index, entry, score)
     return
   end
 
-  local display, display_highlights
-  if type(entry.display) == 'function' then
-    self:_increment("display_fn")
-    display, display_highlights = entry:display()
-  elseif type(entry.display) == 'string' then
-    display = entry.display
-  else
+  local display, display_highlights = entry_display.resolve(self, entry)
+  if not display then
     log.info("Weird entry", entry)
     return
   end

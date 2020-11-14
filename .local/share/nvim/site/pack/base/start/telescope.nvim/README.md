@@ -43,7 +43,7 @@ Best experience on Neovim Nightly with LSP configured.
 ```vim
 Plug 'nvim-lua/popup.nvim'
 Plug 'nvim-lua/plenary.nvim'
-Plug 'nvim-lua/telescope.nvim'
+Plug 'nvim-telescope/telescope.nvim'
 ```
 
 ### Optional
@@ -88,6 +88,17 @@ require('telescope').setup{
   }
 }
 ```
+
+### Default Configuration Keys
+
+
+- ( Missing configuration description for many items here, but I'm trying :smile: )
+- `file_ignore_patterns`:
+    - List of strings that are Lua patterns that, if any are matched, will make result be ignored.
+    - Please note, these are Lua patterns. See: [Lua Patterns](https://www.lua.org/pil/20.2.html)
+    - Example:
+        - `file_ignore_patterns = { "scratch/.*", "%.env" }`
+        - This will ignore anything in `scratch/` folders and any files named `.env`
 
 ## Examples
 
@@ -173,25 +184,28 @@ To see the full list of mappings, check out `lua/telescope/mappings.lua` and the
 
 To override ALL of the default mappings, you can use the `default_mappings` key in the `setup` table.
 
-To override only SOME of the default mappings, you can use the `mappings` key in the `setup` table.
+```lua
+-- To disable a keymap, put [map] = false
+-- So, to not map "<C-n>", just put
+["<C-n>"] = false,
+-- Into your config.
 
-```
- To disable a keymap, put [map] = false
+-- Otherwise, just set the mapping to the function that you want it to be.
+["<C-i>"] = actions.goto_file_selection_split,
 
-        So, to not map "<C-n>", just put 
+-- You can also define your own functions, which then can be mapped to a key
+local function test_action(prompt_bufnr)
+  print("Action was attached with prompt_bufnr: ", prompt_bufnr)
+  -- Enter your function logic here. You can take inspiration from lua/telescope/actions.lua
+end
+["<C-i>"] = test_action,
 
-            ...,
-            ["<C-n>"] = false,
-            ...,
-
-        Into your config.
-
- Otherwise, just set the mapping to the function that you want it to be.
-
-            ...,
-            ["<C-i>"] = actions.goto_file_selection_split
-            ...,
-
+-- If you want your function to run after another action you should define it as follows
+local test_action = actions._transform_action(function(prompt_bufnr)
+  print("This function ran after another action. Prompt_bufnr: " .. prompt_bufnr)
+  -- Enter your function logic here. You can take inspiration from lua/telescope/actions.lua
+end)
+["<C-i>"] = actions.goto_file_selection_split + test_action
 
 ```
 
@@ -199,6 +213,12 @@ A full example:
 
 ```lua
 local actions = require('telescope.actions')
+
+-- If you want your function to run after another action you should define it as follows
+local test_action = actions._transform_action(function(prompt_bufnr)
+  print("This function ran after another action. Prompt_bufnr: " .. prompt_bufnr)
+  -- Enter your function logic here. You can take inspiration from lua/telescope/actions.lua
+end)
 
 require('telescope').setup {
   defaults = {
@@ -209,10 +229,34 @@ require('telescope').setup {
 
         -- Create a new <c-s> mapping
         ["<c-s>"] = actions.goto_file_selection_split,
+
+        -- Add up multiple actions
+        ["<CR>"] = actions.goto_file_selection_edit + actions.center,
+
+        -- You can perform as many actions in a row as you like
+        ["<CR>"] = actions.goto_file_selection_edit + actions.center + test_action,
       },
     },
   }
 }
+```
+
+To override only SOME of the default mappings, you can use the `attach_mappings` key in the `setup` table. For example:
+
+```lua
+function my_custom_picker(results)
+  pickers.new(opts, {
+    prompt_title = 'Custom Picker',
+    finder = finders.new_table(results),
+    sorter = sorters.fuzzy_with_index_bias(),
+    attach_mappings = function(_, map)
+      -- Map "<CR>" in insert mode to the funciton, actions.set_command_line
+      map('i', '<CR>', actions.set_command_line)
+
+      return true
+    end,
+  }):find()
+end
 ```
 
 Additionally, the prompt's filetype will be `TelescopePrompt`. You can customize the filetype as you would normally.
@@ -302,6 +346,13 @@ require'telescope.builtin'.command_history{}
 Search the vim command history.
 
 ```lua
+require'telescope.builtin.maps{}
+```
+
+Search on vim key maps.
+
+
+```lua
 require'telescope.builtin'.buffers{
     -- Optional
     -- show_all_buffers = true -- Show unloaded buffers aswell
@@ -352,7 +403,7 @@ Use the telescope.
 
 ## Themes
 
-Common groups of settings can be setup to allow for themes. We have some built in themes but are looking for more cool options. 
+Common groups of settings can be setup to allow for themes. We have some built in themes but are looking for more cool options.
 
 ### Dropdown
 
@@ -368,9 +419,33 @@ Then you can put your configuration into `get_dropdown({})`
 nnoremap <Leader>f :lua require'telescope.builtin'.find_files(require('telescope.themes').get_dropdown({ winblend = 10 }))<cr>
 ```
 
-Themes should work with every `telescope.builtin` function.  
+Themes should work with every `telescope.builtin` function.
 
 If you wish to make theme, check out `lua/telescope/themes.lua`. If you need more features, make an issue :).
+
+## Configuration
+
+### Display
+
+`Resolvable`:
+1. 0 <= number < 1:
+    - This means total height as a percentage
+2. 1 <= number:
+    - This means total height as a fixed number
+3. function(picker, columns, lines):
+    - returns one of the above options
+    - `return max.min(110, max_rows * .5)`
+
+```lua
+layout_strategies.horizontal = function(self, max_columns, max_lines)
+  local layout_config = validate_layout_config(self.layout_config or {}, {
+    width_padding = "How many cells to pad the width",
+    height_padding = "How many cells to pad the height",
+    preview_width = "(Resolvable): Determine preview width",
+  })
+  ...
+end
+```
 
 ## Goals
 
@@ -433,6 +508,20 @@ Picker:new{
 - sometimes a lua callback
 
 As an example, you could pipe your inputs into fzf, and then it can sort them for you.
+
+### Command
+
+Also you can use the `Telescope` command with options in vim command line. like
+
+```vim
+" Press Tab to  get completion list
+:Telescope find_files
+" Command with options
+:Telescope find_files  prompt_prefix=🔍
+" If option is table type in lua code ,you can use `,` connect each command string eg:
+" find_command,vimgrep_arguments they are both table type. so config it in commandline like
+:Telecope find_files find_command=rg,--ignore,--hidden,--files prompt_prefix=🔍
+```
 
 
 ## Other Examples

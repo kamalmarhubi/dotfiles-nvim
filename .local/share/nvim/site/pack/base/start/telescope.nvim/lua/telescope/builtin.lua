@@ -24,14 +24,13 @@ if 2 > vim.o.report then
 end
 
 
--- TODO: Give some bonus weight to files we've picked before
--- TODO: Give some bonus weight to oldfiles
-
 local actions = require('telescope.actions')
 local finders = require('telescope.finders')
+local log = require('telescope.log')
 local make_entry = require('telescope.make_entry')
-local previewers = require('telescope.previewers')
+local path = require('telescope.path')
 local pickers = require('telescope.pickers')
+local previewers = require('telescope.previewers')
 local sorters = require('telescope.sorters')
 local utils = require('telescope.utils')
 
@@ -46,11 +45,17 @@ local builtin = {}
 builtin.git_files = function(opts)
   opts = opts or {}
 
+  local show_untracked = utils.get_default(opts.show_untracked, true)
+
   if opts.cwd then
     opts.cwd = vim.fn.expand(opts.cwd)
   else
     --- Find root of git directory and remove trailing newline characters
-    opts.cwd = string.gsub(vim.fn.system("git rev-parse --show-toplevel"), '[\n\r]+', '')
+    opts.cwd = vim.fn.systemlist("git rev-parse --show-toplevel")[1]
+
+    if 1 ~= vim.fn.isdirectory(opts.cwd) then
+      error("Not a working directory for git_files:" .. opts.cwd)
+    end
   end
 
   -- By creating the entry maker after the cwd options,
@@ -60,7 +65,7 @@ builtin.git_files = function(opts)
   pickers.new(opts, {
     prompt_title = 'Git File',
     finder = finders.new_oneshot_job(
-      { "git", "ls-tree", "--full-tree", "-r", "--name-only", "HEAD" },
+      { "git", "ls-files", "--exclude-standard", "--cached", show_untracked and "--others" },
       opts
     ),
     previewer = previewers.cat.new(opts),
@@ -412,6 +417,72 @@ builtin.command_history = function(opts)
   }):find()
 end
 
+builtin.vim_options = function(opts)
+  opts = opts or {}
+
+  -- Load vim options.
+  local vim_opts = loadfile(utils.data_directory() .. path.separator .. 'options' .. path.separator .. 'options.lua')().options
+
+  pickers.new(opts, {
+      prompt = 'options',
+      finder = finders.new_table {
+        results = vim_opts,
+        entry_maker = make_entry.gen_from_vimoptions(opts),
+      },
+      -- TODO: previewer for Vim options
+      -- previewer = previewers.help.new(opts),
+      sorter = sorters.get_fzy_sorter(),
+      attach_mappings = function(prompt_bufnr, map)
+        local edit_option = function()
+          local selection = actions.get_selected_entry(prompt_bufnr)
+          local esc = ""
+
+
+          if vim.fn.mode() == "i" then
+            -- TODO: don't make this local
+            esc = vim.api.nvim_replace_termcodes("<esc>", true, false, true)
+          end
+
+          -- TODO: Make this actually work.
+
+          -- actions.close(prompt_bufnr)
+          -- vim.api.nvim_win_set_var(vim.fn.nvim_get_current_win(), "telescope", 1)
+          -- print(prompt_bufnr)
+          -- print(vim.fn.bufnr())
+          -- vim.cmd([[ autocmd BufEnter <buffer> ++nested ++once startinsert!]])
+          -- print(vim.fn.winheight(0))
+
+          -- local prompt_winnr = vim.fn.getbufinfo(prompt_bufnr)[1].windows[1]
+          -- print(prompt_winnr)
+
+          -- local float_opts = {}
+          -- float_opts.relative = "editor"
+          -- float_opts.anchor = "sw"
+          -- float_opts.focusable = false
+          -- float_opts.style = "minimal"
+          -- float_opts.row = vim.api.nvim_get_option("lines") - 2 -- TODO: include `cmdheight` and `laststatus` in this calculation
+          -- float_opts.col = 2
+          -- float_opts.height = 10
+          -- float_opts.width = string.len(selection.last_set_from)+15
+          -- local buf = vim.fn.nvim_create_buf(false, true)
+          -- vim.fn.nvim_buf_set_lines(buf, 0, 0, false, {"default value: abcdef", "last set from: " .. selection.last_set_from})
+          -- local status_win = vim.fn.nvim_open_win(buf, false, float_opts)
+          -- -- vim.api.nvim_win_set_option(status_win, "winblend", 100)
+          -- vim.api.nvim_win_set_option(status_win, "winhl", "Normal:PmenuSel")
+          -- -- vim.api.nvim_set_current_win(status_win)
+          -- vim.cmd[[redraw!]]
+          -- vim.cmd("autocmd CmdLineLeave : ++once echom 'beep'")
+          vim.api.nvim_feedkeys(string.format("%s:set %s=%s", esc, selection.name, selection.current_value), "m", true)
+        end
+
+        map('i', '<CR>', edit_option)
+        map('n', '<CR>', edit_option)
+
+        return true
+      end
+    }):find()
+end
+
 builtin.help_tags = function(opts)
   opts = opts or {}
 
@@ -436,15 +507,36 @@ builtin.help_tags = function(opts)
     previewer = previewers.help.new(opts),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr, map)
-      local view_help = function()
+      local open = function(cmd)
         local selection = actions.get_selected_entry(prompt_bufnr)
 
         actions.close(prompt_bufnr)
-        vim.cmd("help " .. selection.value)
+        vim.cmd(cmd .. selection.value)
       end
-
-      map('i', '<CR>', view_help)
-      map('n', '<CR>', view_help)
+      local nhelp = function()
+        return open("help ")
+      end
+      local vhelp = function()
+        return open("vert bo help ")
+      end
+      local hhelp = function()
+        return open("help ")
+        -- Not sure how explictly make horizontal
+      end
+      local thelp = function()
+        return open("tab help ")
+      end
+      -- Perhaps it would be a good idea to have vsplit,tab,hsplit open
+      -- a builtin action that accepts a command to be ran before creating
+      -- the split or tab
+      map('i', '<CR>',  nhelp)
+      map('n', '<CR>',  nhelp)
+      map('i', '<C-v>', vhelp)
+      map('n', '<C-v>', vhelp)
+      map('i', '<C-x>', hhelp)
+      map('n', '<C-x>', hhelp)
+      map('i', '<C-t>', thelp)
+      map('n', '<C-t>', thelp)
 
       return true
     end
@@ -546,7 +638,7 @@ builtin.find_files = function(opts)
     elseif 1 == vim.fn.executable("rg") then
       find_command = { 'rg', '--files' }
     elseif 1 == vim.fn.executable("find") then
-      find_command = { 'find', '-type', 'f' }
+      find_command = { 'find', '.', '-type', 'f' }
     end
   end
 
@@ -750,9 +842,7 @@ builtin.man_pages = function(opts)
 
   local cmd = opts.man_cmd or "apropos --sections=1 ''"
 
-  local f = assert(io.popen(cmd, 'r'))
-  local pages = assert(f:read('*a'))
-  f:close()
+  local pages = utils.get_os_command_output(cmd)
 
   local lines = {}
   for s in pages:gmatch("[^\r\n]+") do
@@ -830,6 +920,35 @@ builtin.marks = function(opts)
     },
     previewer = previewers.vimgrep.new(opts),
     sorter = sorters.get_generic_fuzzy_sorter(),
+  }):find()
+end
+
+-- find normal mode mappings
+builtin.keymaps = function(opts)
+  opts = opts or {}
+  local modes = {"n", "i", "c"}
+  local keymaps_table = {}
+  for _, mode in pairs(modes) do
+    local keymaps_iter = vim.api.nvim_get_keymap(mode)
+    for _, keymap in pairs(keymaps_iter) do
+      table.insert(keymaps_table, keymap)
+    end
+  end
+
+  pickers.new({}, {
+    prompt_title = 'Key Maps',
+    finder = finders.new_table {
+      results = keymaps_table,
+      entry_maker = function(line)
+        return {
+          valid = line ~= "",
+          value = line,
+          ordinal = line.lhs .. line.rhs,
+          display = line.mode .. ' ' .. utils.display_termcodes(line.lhs) .. ' ' .. line.rhs
+        }
+      end
+    },
+    sorter = conf.generic_sorter()
   }):find()
 end
 
