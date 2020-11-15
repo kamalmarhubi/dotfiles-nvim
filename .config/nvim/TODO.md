@@ -42,5 +42,5 @@ nothing bright. maybe use typefaces over colours actually?
 
 
 ## navigation / fuzzyfinding
-- [ ] make it go
+- [x] make it go
 - [ ] customise it?
