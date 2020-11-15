@@ -21,12 +21,19 @@ vim.g.which_key_map = {
     T = { [[luaeval("require('telescope.builtin').builtin{}")]], 'telescope builtins' },
   },
   f = { [[luaeval("require('telescope.builtin').git_files{}")]], 'git files' },
+  g = {
+    name = '+git',
+    m = { [[<Plug>(git-messenger)]], 'message at line' },
+  },
   b = { [[luaeval("require('telescope.builtin').buffers{}")]], 'buffers' },
   n = {
     name = '+navigation',
     f = { [[luaeval("require('telescope.builtin').git_files{}")]], 'git files' },
   },
 }
+
+-- Tell git-messenger not to map <Leader>gm; we'll do it with vim-which-key.
+vim.g.git_messenger_no_default_mappings = true
 
 -- TODO: Not sure why this is necessary :/
 vim.schedule(function()

@@ -31,7 +31,8 @@ nothing bright. maybe use typefaces over colours actually?
 ## vcs
 - [ ] vim-fugitive or gina or ???
 - [ ] the blame browser thing
-- [ ] last commit for line
+- [x] last commit for line
+  - [ ] make it modal: keep it open when moving within file?
 
 
 ## lsp
