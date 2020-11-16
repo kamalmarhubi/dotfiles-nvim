@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/neovim/nvim-lspconfig.git
+	branch = master
+	commit = 1f86bfd62d0ba78b0479373661be3fa13f1f8f35
+	parent = 45ef23c8110efb5dfa483b32c3ca32457a330e75
+	method = merge
+	cmdver = 0.4.0
