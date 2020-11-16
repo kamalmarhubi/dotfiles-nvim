@@ -35,7 +35,4 @@ vim.g.which_key_map = {
 -- Tell git-messenger not to map <Leader>gm; we'll do it with vim-which-key.
 vim.g.git_messenger_no_default_mappings = true
 
--- TODO: Not sure why this is necessary :/
-vim.schedule(function()
-  vim.fn['which_key#register']('<space>', 'g:which_key_map')
-end)
+vim.fn['which_key#register']('<space>', 'g:which_key_map')
