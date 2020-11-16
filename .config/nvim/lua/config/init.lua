@@ -19,3 +19,14 @@ require('nvim-treesitter.configs').setup {
   },
 }
 
+require('telescope').setup {
+  defaults = {
+    layout_strategy = 'flex',
+    layout_defaults = {
+      flex = {
+        -- Use the vertical layout a bit more eagerly than the default.
+        flip_columns = 120,
+      },
+    },
+  }
+}
