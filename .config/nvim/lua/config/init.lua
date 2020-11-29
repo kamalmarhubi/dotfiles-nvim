@@ -30,3 +30,7 @@ require('telescope').setup {
     },
   }
 }
+
+require('lspconfig').pyright.setup{
+  cmd = { 'npx', '--no-install', '--package', 'pyright', 'pyright-langserver', '--stdio' },
+}
