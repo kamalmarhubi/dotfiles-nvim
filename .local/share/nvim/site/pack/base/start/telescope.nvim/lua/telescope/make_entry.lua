@@ -134,7 +134,7 @@ do
   end
 
   local execute_keys = {
-    path = function(t) 
+    path = function(t)
       return t.cwd .. path.separator .. t.filename, false
     end,
 
@@ -215,6 +215,24 @@ do
   end
 end
 
+function make_entry.gen_from_git_commits(opts)
+  opts = opts or {}
+
+  return function(entry)
+    if entry == "" then
+      return nil
+    end
+
+    local sha, msg = string.match(entry, '([^ ]+) (.+)')
+
+    return {
+      value = sha,
+      ordinal = sha .. ' ' .. msg,
+      display = sha .. ' ' .. msg,
+    }
+  end
+end
+
 function make_entry.gen_from_quickfix(opts)
   opts = opts or {}
   opts.tail_path = get_default(opts.tail_path, true)
@@ -265,18 +283,16 @@ end
 function make_entry.gen_from_buffer(opts)
   opts = opts or {}
 
+  local displayer = entry_display.create {
+    separator = " ",
+    items = {
+      { width = opts.bufnr_width },
+      { width = 4 },
+      { remaining = true },
+    },
+  }
+
   local cwd = vim.fn.expand(opts.cwd or vim.fn.getcwd())
-
-  local get_position = function(entry)
-    local tabpage_wins = vim.api.nvim_tabpage_list_wins(0)
-    for k, v in ipairs(tabpage_wins) do
-      if entry == vim.api.nvim_win_get_buf(v) then
-        return vim.api.nvim_win_get_cursor(v)
-      end
-    end
-
-    return {}
-  end
 
   local make_display = function(entry)
     local display_bufname
@@ -286,33 +302,35 @@ function make_entry.gen_from_buffer(opts)
       display_bufname = entry.filename
     end
 
-    return string.format("%" .. opts.bufnr_width .. "d : %s",
-                         entry.bufnr, display_bufname)
+    return displayer {
+      entry.bufnr,
+      entry.indicator,
+      display_bufname .. ":" .. entry.lnum,
+    }
   end
 
   return function(entry)
-    local bufnr_str = tostring(entry)
-    local bufname = path.normalize(vim.api.nvim_buf_get_name(entry), cwd)
-
+    local bufname = entry.info.name ~= "" and entry.info.name or '[No Name]'
     -- if bufname is inside the cwd, trim that part of the string
+    bufname = path.normalize(bufname, cwd)
 
-    local position = get_position(entry)
-
-    if '' == bufname then
-      return nil
-    end
+    local hidden = entry.info.hidden == 1 and 'h' or 'a'
+    local readonly = vim.api.nvim_buf_get_option(entry.bufnr, 'readonly') and '=' or ' '
+    local changed = entry.info.changed == 1 and '+' or ' '
+    local indicator = entry.flag .. hidden .. readonly .. changed
 
     return {
       valid = true,
 
       value = bufname,
-      ordinal = bufnr_str .. " : " .. bufname,
+      ordinal = entry.bufnr .. " : " .. bufname,
       display = make_display,
 
-      bufnr = entry,
+      bufnr = entry.bufnr,
       filename = bufname,
 
-      lnum = position[1] or 1,
+      lnum = entry.info.lnum and entry.info.lnum or 1,
+      indicator = indicator,
     }
   end
 end
@@ -365,47 +383,16 @@ function make_entry.gen_from_treesitter(opts)
   end
 end
 
-function make_entry.gen_from_tagfile(opts)
-  local help_entry, version
-  local delim = string.char(7)
-
-  local make_display = function(line)
-    help_entry = ""
-    display    = ""
-    version    = ""
-
-    line = line .. delim
-    for section in line:gmatch("(.-)" .. delim) do
-      if section:find("^vim:") == nil then
-        local ver = section:match("^neovim:(.*)")
-        if ver == nil then
-          help_entry = section
-        else
-          version = ver:sub(1, -2)
-        end
-      end
-    end
-
-    result = {}
-    if version ~= "" then -- some Vim only entries are unversioned
-      if opts.show_version then
-        result.display = string.format("%s [%s]", help_entry, version)
-      else
-        result.display = help_entry
-      end
-      result.value = help_entry
-    end
-
-    return result
-  end
+function make_entry.gen_from_taglist(_)
+  local delim = string.char(9)
 
   return function(line)
     local entry = {}
-    local d = make_display(line)
-    entry.valid   = next(d) ~= nil
-    entry.display = d.display
-    entry.value   = d.value
-    entry.ordinal = d.value
+    local tag = (line..delim):match("(.-)" .. delim)
+    entry.valid   = tag ~= ""
+    entry.display = tag
+    entry.value   = tag
+    entry.ordinal = tag
 
     return entry
   end
@@ -466,7 +453,62 @@ function make_entry.gen_from_marks(_)
   end
 end
 
-function make_entry.gen_from_vimoptions(opts)
+function make_entry.gen_from_registers(_)
+  local displayer = entry_display.create {
+    separator = ":",
+    items = {
+      { width = 4 },
+      { remaining = true },
+    },
+  }
+
+  local make_display = function(entry)
+    return displayer {
+      string.format("[%s]", entry.value),
+      entry.content
+    }
+  end
+
+  return function(entry)
+    return {
+      valid = true,
+      value = entry,
+      ordinal = entry,
+      content = vim.fn.getreg(entry),
+      display = make_display
+    }
+  end
+end
+
+function make_entry.gen_from_highlights()
+  return function(entry)
+    local make_display = function(entry)
+      local display = entry.value
+      return display, { { { 0, #display }, display } }
+    end
+
+    local preview_command = function(entry, bufnr)
+      local hl = entry.value
+      vim.api.nvim_buf_set_option(bufnr, 'filetype', 'vim')
+      local output = vim.split(vim.fn.execute('hi ' .. hl), '\n')
+      local start = string.find(output[2], 'xxx', 1, true)
+      vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, output)
+      vim.api.nvim_buf_add_highlight(bufnr, -1, hl, 1, start - 1, start + 2)
+    end
+
+    return {
+      value = entry,
+      display = make_display,
+      ordinal = entry,
+
+      preview_command = preview_command
+
+    }
+  end
+end
+
+function make_entry.gen_from_vimoptions()
+
   -- TODO: Can we just remove this from `options.lua`?
   function N_(s)
     return s
@@ -533,7 +575,6 @@ function make_entry.gen_from_vimoptions(opts)
     end
   end
 
-  -- TODO: don't call this 'line'
   local displayer = entry_display.create {
     separator = "│",
     items = {
@@ -569,6 +610,75 @@ function make_entry.gen_from_vimoptions(opts)
     -- entry.last_set_from = d.last_set_from
 
     return entry
+  end
+end
+
+function make_entry.gen_from_ctags(opts)
+  opts = opts or {}
+
+  local cwd = vim.fn.expand(opts.cwd or vim.fn.getcwd())
+  local current_file = path.normalize(vim.fn.expand('%'), cwd)
+
+  local display_items = {
+    { width = 30 },
+    { remaining = true },
+  }
+
+  if opts.show_line then
+    table.insert(display_items, 2, { width = 30 })
+  end
+
+  local displayer = entry_display.create {
+    separator = " │ ",
+    items = display_items,
+  }
+
+  local make_display = function(entry)
+    local filename
+    if not opts.hide_filename then
+      if opts.shorten_path then
+        filename = path.shorten(entry.filename)
+      else
+        filename = entry.filename
+      end
+    end
+
+    local scode
+    if opts.show_line then
+      scode = entry.scode
+    end
+
+    return displayer {
+      filename,
+      entry.tag,
+      scode,
+    }
+  end
+
+  return function(line)
+    if line == '' or line:sub(1, 1) == '!' then
+      return nil
+    end
+
+    local tag, file, scode = string.match(line, '([^\t]+)\t([^\t]+)\t/^\t?(.*)/;"\t+.*')
+
+    if opts.only_current_file and file ~= current_file then
+      return nil
+    end
+
+    return {
+      valid = true,
+
+      ordinal = file .. ': ' .. tag,
+      display = make_display,
+      scode = scode,
+      tag = tag,
+
+      filename = file,
+
+      col = 1,
+      lnum = 1,
+    }
   end
 end
 

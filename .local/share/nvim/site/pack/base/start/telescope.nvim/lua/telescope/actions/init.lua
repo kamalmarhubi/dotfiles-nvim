@@ -6,42 +6,13 @@ local log = require('telescope.log')
 local path = require('telescope.path')
 local state = require('telescope.state')
 
+local transform_mod = require('telescope.actions.mt').transform_mod
+
 local actions = setmetatable({}, {
   __index = function(_, k)
     error("Actions does not have a value: " .. tostring(k))
   end
 })
-
-local action_mt = {
-  __call = function(t, ...)
-    local values = {}
-    for _, v in ipairs(t) do
-      local result = {v(...)}
-      for _, res in ipairs(result) do
-        table.insert(values, res)
-      end
-    end
-
-    return unpack(values)
-  end,
-
-  __add = function(lhs, rhs)
-    local new_actions = {}
-    for _, v in ipairs(lhs) do
-      table.insert(new_actions, v)
-    end
-
-    for _, v in ipairs(rhs) do
-      table.insert(new_actions, v)
-    end
-
-    return setmetatable(new_actions, getmetatable(lhs))
-  end
-}
-
-local transform_action = function(a)
-  return setmetatable({a}, action_mt)
-end
 
 --- Get the current picker object for the prompt
 function actions.get_current_picker(prompt_bufnr)
@@ -68,8 +39,8 @@ function actions.add_selection(prompt_bufnr)
 end
 
 --- Get the current entry
-function actions.get_selected_entry(prompt_bufnr)
-  return actions.get_current_picker(prompt_bufnr):get_selection()
+function actions.get_selected_entry()
+  return state.get_global_key('selected_entry')
 end
 
 function actions.preview_scrolling_up(prompt_bufnr)
@@ -81,7 +52,7 @@ function actions.preview_scrolling_down(prompt_bufnr)
 end
 
 -- TODO: It seems sometimes we get bad styling.
-local function goto_file_selection(prompt_bufnr, command)
+function actions._goto_file_selection(prompt_bufnr, command)
   local entry = actions.get_selected_entry(prompt_bufnr)
 
   if not entry then
@@ -95,7 +66,7 @@ local function goto_file_selection(prompt_bufnr, command)
       -- TODO: Check for off-by-one
       row = entry.row or entry.lnum
       col = entry.col
-    else
+    elseif not entry.bufnr then
       -- TODO: Might want to remove this and force people
       -- to put stuff into `filename`
       local value = entry.value
@@ -124,11 +95,19 @@ local function goto_file_selection(prompt_bufnr, command)
 
     actions.close(prompt_bufnr)
 
-    filename = path.normalize(filename, vim.fn.getcwd())
-
     if entry_bufnr then
-      vim.cmd(string.format(":%s #%d", command, entry_bufnr))
+      if command == 'edit' then
+        vim.cmd(string.format(":buffer %d", entry_bufnr))
+      elseif command == 'new' then
+        vim.cmd(string.format(":sbuffer %d", entry_bufnr))
+      elseif command == 'vnew' then
+        vim.cmd(string.format(":vert sbuffer %d", entry_bufnr))
+      elseif command == 'tabedit' then
+        vim.cmd(string.format(":tab sb %d", entry_bufnr))
+      end
     else
+      filename = path.normalize(filename, vim.fn.getcwd())
+
       local bufnr = vim.api.nvim_get_current_buf()
       if filename ~= vim.api.nvim_buf_get_name(bufnr) then
         vim.cmd(string.format(":%s %s", command, filename))
@@ -151,19 +130,19 @@ function actions.center(_)
 end
 
 function actions.goto_file_selection_edit(prompt_bufnr)
-  goto_file_selection(prompt_bufnr, "edit")
+  actions._goto_file_selection(prompt_bufnr, "edit")
 end
 
 function actions.goto_file_selection_split(prompt_bufnr)
-  goto_file_selection(prompt_bufnr, "new")
+  actions._goto_file_selection(prompt_bufnr, "new")
 end
 
 function actions.goto_file_selection_vsplit(prompt_bufnr)
-  goto_file_selection(prompt_bufnr, "vnew")
+  actions._goto_file_selection(prompt_bufnr, "vnew")
 end
 
 function actions.goto_file_selection_tabedit(prompt_bufnr)
-  goto_file_selection(prompt_bufnr, "tabedit")
+  actions._goto_file_selection(prompt_bufnr, "tabedit")
 end
 
 function actions.close_pum(_)
@@ -198,6 +177,45 @@ actions.set_command_line = function(prompt_bufnr)
   vim.cmd(entry.value)
 end
 
+actions.edit_register = function(prompt_bufnr)
+  local entry = actions.get_selected_entry(prompt_bufnr)
+  local picker = actions.get_current_picker(prompt_bufnr)
+
+  vim.fn.inputsave()
+  local updated_value = vim.fn.input("Edit [" .. entry.value .. "] ❯ ", entry.content)
+  vim.fn.inputrestore()
+  if updated_value ~= entry.content then
+    vim.fn.setreg(entry.value, updated_value)
+    entry.content = updated_value
+  end
+
+  -- update entry in results table
+  -- TODO: find way to redraw finder content
+  for k, v in pairs(picker.finder.results) do
+    if v == entry then
+      v.content = updated_value
+    end
+  end
+  -- print(vim.inspect(picker.finder.results))
+end
+
+actions.paste_register = function(prompt_bufnr)
+  local entry = actions.get_selected_entry(prompt_bufnr)
+
+  actions.close(prompt_bufnr)
+
+  -- ensure that the buffer can be written to
+  if vim.api.nvim_buf_get_option(vim.api.nvim_get_current_buf(), "modifiable") then
+    print("Paste!")
+    -- substitute "^V" for "b"
+    local reg_type = vim.fn.getregtype(entry.value)
+    if reg_type:byte(1, 1) == 0x16 then
+      reg_type = "b" .. reg_type:sub(2, -1)
+    end
+    vim.api.nvim_put({entry.content}, reg_type, true, true)
+  end
+end
+
 actions.run_builtin = function(prompt_bufnr)
   local entry = actions.get_selected_entry(prompt_bufnr)
 
@@ -218,10 +236,31 @@ actions.insert_value = function(prompt_bufnr)
   return entry.value
 end
 
-for k, v in pairs(actions) do
-  actions[k] = transform_action(v)
+actions.git_checkout = function(prompt_bufnr)
+  local selection = actions.get_selected_entry(prompt_bufnr)
+  actions.close(prompt_bufnr)
+  local val = selection.value
+  os.execute('git checkout ' .. val)
 end
 
-actions._transform_action = transform_action
+actions.git_staging_toggle = function(prompt_bufnr)
+  local selection = actions.get_selected_entry(prompt_bufnr)
 
+  -- If parts of the file are staged and unstaged at the same time, stage
+  -- changes. Else toggle between staged and unstaged if the file is tracked,
+  -- and between added and untracked if the file is untracked.
+  if selection.status:sub(2) == ' ' then
+    os.execute('git restore --staged ' .. selection.value)
+  else
+    os.execute('git add ' .. selection.value)
+  end
+  actions.close(prompt_bufnr)
+  require('telescope.builtin').git_status()
+  vim.api.nvim_feedkeys('i', 'n', false)
+end
+
+-- ==================================================
+-- Transforms modules and sets the corect metatables.
+-- ==================================================
+actions = transform_mod(actions)
 return actions
