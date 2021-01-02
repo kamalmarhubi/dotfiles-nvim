@@ -79,10 +79,6 @@ utils.quickfix_items_to_entries = function(locations)
   return results
 end
 
-utils.new_ngram = function()
-  return require("telescope._private.NGram"):new()
-end
-
 -- TODO: Figure out how to do this... could include in plenary :)
 -- NOTE: Don't use this yet. It will segfault sometimes.
 --
@@ -141,9 +137,15 @@ end
 function utils.buf_delete(bufnr)
   if bufnr == nil then return end
 
+  -- Suppress the buffer deleted message for those with &report<2
+  local start_report = vim.o.report
+  if start_report < 2 then vim.o.report = 2 end
+
   if vim.api.nvim_buf_is_valid(bufnr) and vim.api.nvim_buf_is_loaded(bufnr) then
-    vim.cmd(string.format("bdelete! %s", bufnr))
+    vim.api.nvim_buf_delete(bufnr, { force = true })
   end
+
+  if start_report < 2 then vim.o.report = start_report end
 end
 
 function utils.max_split(s, pattern, maxsplit)

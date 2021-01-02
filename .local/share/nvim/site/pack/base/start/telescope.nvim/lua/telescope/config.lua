@@ -52,13 +52,17 @@ function config.set_defaults(defaults)
   set("border", {})
   set("borderchars", { '─', '│', '─', '│', '╭', '╮', '╯', '╰'})
 
-  set("get_status_text", function(self) return string.format("%s / %s", self.stats.processed - self.stats.filtered, self.stats.processed) end)
+  set("get_status_text", function(self)
+    return string.format("%s / %s", self.stats.processed - self.stats.filtered, self.stats.processed)
+  end)
 
   -- Builtin configuration
 
   -- List that will be executed.
   --    Last argument will be the search term (passed in during execution)
-  set("vimgrep_arguments", {'rg', '--color=never', '--no-heading', '--with-filename', '--line-number', '--column', '--smart-case'})
+  set("vimgrep_arguments",
+      {'rg', '--color=never', '--no-heading', '--with-filename', '--line-number', '--column', '--smart-case'}
+  )
   set("use_less", true)
   set("color_devicons", true)
 
@@ -88,6 +92,11 @@ function config.set_defaults(defaults)
   set("file_sorter", sorters.get_fuzzy_file)
 
   set("file_ignore_patterns", nil)
+
+  set("file_previewer", function(...) return require('telescope.previewers').cat.new(...) end)
+  set("grep_previewer", function(...) return require('telescope.previewers').vimgrep.new(...) end)
+  set("qflist_previewer", function(...) return require('telescope.previewers').qflist.new(...) end)
+  set("buffer_previewer_maker", function(...) return require('telescope.previewers').buffer_previewer_maker(...) end)
 end
 
 function config.clear_defaults()

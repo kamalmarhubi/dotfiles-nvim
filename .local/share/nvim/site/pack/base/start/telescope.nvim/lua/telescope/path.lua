@@ -4,7 +4,6 @@ local path = {}
 path.separator = package.config:sub(1, 1)
 path.home = vim.fn.expand("~")
 
-
 path.make_relative = function(filepath, cwd)
   if not cwd or not filepath then return filepath end
 
@@ -55,6 +54,33 @@ path.normalize = function(filepath, cwd)
   filepath = filepath:gsub(path.separator .. path.separator, path.separator)
 
   return filepath
+end
+
+path.read_file = function(filepath)
+  local fd = vim.loop.fs_open(filepath, "r", 438)
+  if fd == nil then return '' end
+  local stat = assert(vim.loop.fs_fstat(fd))
+  if stat.type ~= 'file' then return '' end
+  local data = assert(vim.loop.fs_read(fd, stat.size, 0))
+  assert(vim.loop.fs_close(fd))
+  return data
+end
+
+path.read_file_async = function(filepath, callback)
+  vim.loop.fs_open(filepath, "r", 438, function(err_open, fd)
+    assert(not err_open, err_open)
+    vim.loop.fs_fstat(fd, function(err_fstat, stat)
+      assert(not err_fstat, err_fstat)
+      if stat.type ~= 'file' then return callback('') end
+      vim.loop.fs_read(fd, stat.size, 0, function(err_read, data)
+        assert(not err_read, err_read)
+        vim.loop.fs_close(fd, function(err_close)
+          assert(not err_close, err_close)
+          return callback(data)
+        end)
+      end)
+    end)
+  end)
 end
 
 return path

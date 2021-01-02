@@ -14,6 +14,8 @@ local utils = require('telescope.utils')
 
 local layout_strategies = require('telescope.pickers.layout_strategies')
 local entry_display = require('telescope.pickers.entry_display')
+local p_highlights = require('telescope.pickers.highlights')
+local p_scroller = require('telescope.pickers.scroller')
 
 local EntryManager = require('telescope.entry_manager')
 
@@ -38,8 +40,6 @@ local extend = function(opts, defaults)
   return result
 end
 
-local ns_telescope_selection = a.nvim_create_namespace('telescope_selection')
-local ns_telescope_entry = a.nvim_create_namespace('telescope_entry')
 local ns_telescope_matching = a.nvim_create_namespace('telescope_matching')
 local ns_telescope_prompt = a.nvim_create_namespace('telescope_prompt')
 local ns_telescope_prompt_prefix = a.nvim_create_namespace('telescope_prompt_prefix')
@@ -66,7 +66,7 @@ function Picker:new(opts)
 
   local layout_strategy = get_default(opts.layout_strategy, config.values.layout_strategy)
 
-  return setmetatable({
+  local obj = setmetatable({
     prompt_title = get_default(opts.prompt_title, "Prompt"),
     results_title = get_default(opts.results_title, "Results"),
     preview_title = get_default(opts.preview_title, "Preview"),
@@ -91,7 +91,6 @@ function Picker:new(opts)
 
     sorting_strategy = get_default(opts.sorting_strategy, config.values.sorting_strategy),
     selection_strategy = get_default(opts.selection_strategy, config.values.selection_strategy),
-    scroll_strategy = get_default(opts.scroll_strategy, config.values.scroll_strategy),
 
     get_window_options = opts.get_window_options,
     layout_strategy = layout_strategy,
@@ -123,6 +122,22 @@ function Picker:new(opts)
 
     preview_cutoff = get_default(opts.preview_cutoff, config.values.preview_cutoff),
   }, self)
+
+
+  obj.scroller = p_scroller.create(
+    get_default(opts.scroll_strategy, config.values.scroll_strategy),
+    obj.sorting_strategy
+  )
+
+  obj.highlighter = p_highlights.new(obj)
+
+  if opts.on_complete then
+    for _, on_complete_item in ipairs(opts.on_complete) do
+      obj:register_completion_callback(on_complete_item)
+    end
+  end
+
+  return obj
 end
 
 function Picker:_get_initial_window_options()
@@ -170,7 +185,7 @@ function Picker:get_window_options(max_columns, max_lines)
 end
 
 --- Take a row and get an index.
----@note: Rows are 0-indexed, and `index` is 1 indexed (table index)
+--- @note: Rows are 0-indexed, and `index` is 1 indexed (table index)
 ---@param index number: The row being displayed
 ---@return number The row for the picker to display in
 function Picker:get_row(index)
@@ -244,7 +259,7 @@ function Picker:highlight_displayed_rows(results_bufnr, prompt)
   vim.api.nvim_buf_clear_namespace(results_bufnr, ns_telescope_matching, 0, -1)
 
   local displayed_rows = vim.api.nvim_buf_get_lines(results_bufnr, 0, -1, false)
-  for row_index = 1, #displayed_rows do
+  for row_index = 1, math.min(#displayed_rows, self.max_results) do
     local display = displayed_rows[row_index]
 
     self:highlight_one_row(results_bufnr, prompt, display, row_index - 1)
@@ -328,7 +343,9 @@ function Picker:find()
   a.nvim_win_set_option(results_win, 'winhl', 'Normal:TelescopeNormal')
   a.nvim_win_set_option(results_win, 'winblend', self.window.winblend)
   local results_border_win = results_opts.border and results_opts.border.win_id
-  if results_border_win then vim.api.nvim_win_set_option(results_border_win, 'winhl', 'Normal:TelescopeResultsBorder') end
+  if results_border_win then
+    vim.api.nvim_win_set_option(results_border_win, 'winhl', 'Normal:TelescopeResultsBorder')
+  end
 
 
   local preview_win, preview_opts, preview_bufnr
@@ -339,8 +356,9 @@ function Picker:find()
     a.nvim_win_set_option(preview_win, 'winhl', 'Normal:TelescopeNormal')
     a.nvim_win_set_option(preview_win, 'winblend', self.window.winblend)
     local preview_border_win = preview_opts and preview_opts.border and preview_opts.border.win_id
-    if preview_border_win then vim.api.nvim_win_set_option(preview_border_win, 'winhl', 'Normal:TelescopePreviewBorder') end
-
+    if preview_border_win then
+      vim.api.nvim_win_set_option(preview_border_win, 'winhl', 'Normal:TelescopePreviewBorder')
+    end
   end
 
   -- TODO: We need to center this and make it prettier...
@@ -363,6 +381,7 @@ function Picker:find()
 
     a.nvim_buf_add_highlight(prompt_bufnr, ns_telescope_prompt_prefix, 'TelescopePromptPrefix', 0, 0, #prompt_prefix)
   end
+  self.prompt_prefix = prompt_prefix
 
   -- Temporarily disabled: Draw the screen ASAP. This makes things feel speedier.
   -- vim.cmd [[redraw]]
@@ -385,7 +404,10 @@ function Picker:find()
       return
     end
 
-    local padding = string.rep(" ", vim.api.nvim_win_get_width(prompt_win) - #current_prompt - #text - 3)
+    local expected_prompt_len = #self.prompt_prefix + 1
+    local prompt_len = #current_prompt < expected_prompt_len and expected_prompt_len or #current_prompt
+
+    local padding = string.rep(" ", vim.api.nvim_win_get_width(prompt_win) - prompt_len - #text - 3)
     vim.api.nvim_buf_clear_namespace(prompt_bufnr, ns_telescope_prompt, 0, 1)
     vim.api.nvim_buf_set_virtual_text(prompt_bufnr, ns_telescope_prompt, 0, { {padding .. text, "NonText"} }, {})
 
@@ -407,8 +429,7 @@ function Picker:find()
       return
     end
 
-    local prompt = vim.trim(vim.api.nvim_buf_get_lines(prompt_bufnr, first_line, last_line, false)[1]:sub(#prompt_prefix))
-
+    local prompt = self:_get_prompt()
     if self.sorter then
       self.sorter:_start(prompt)
     end
@@ -439,13 +460,17 @@ function Picker:find()
       log.trace("Processing result... ", entry)
 
       for _, v in ipairs(self.file_ignore_patterns or {}) do
-        if string.find(entry.value, v) then
-          log.debug("SKPIPING", entry.value, "because", v)
-          return
+        local file = type(entry.value) == 'string' and entry.value or entry.filename
+        if file then
+          if string.find(file, v) then
+            log.debug("SKPIPING", entry.value, "because", v)
+            return
+          end
         end
       end
 
-      local sort_ok, sort_score = nil, 0
+      local sort_ok
+      local sort_score = 0
       if self.sorter then
         sort_ok, sort_score = self:_track("_sort_time", pcall, self.sorter.score, self.sorter, prompt, entry)
 
@@ -469,7 +494,7 @@ function Picker:find()
     local process_complete = function()
       if self:is_done() then return end
 
-      -- TODO: We should either: always leave one result or make sure we actually clean up the results when nothing matches
+      -- TODO: Either: always leave one result or make sure we actually clean up the results when nothing matches
       if selection_strategy == 'row' then
         if self._selection_row == nil and self.default_selection_index ~= nil then
           self:set_selection(self:get_row(self.default_selection_index))
@@ -535,6 +560,8 @@ function Picker:find()
   vim.api.nvim_buf_attach(prompt_bufnr, false, {
     on_lines = on_lines,
     on_detach = vim.schedule_wrap(function()
+      self:_reset_highlights()
+
       on_lines = nil
 
       -- TODO: Can we add a "cleanup" / "teardown" function that completely removes these.
@@ -663,19 +690,21 @@ function Picker:add_selection(row)
 end
 
 function Picker:display_multi_select(results_bufnr)
-  for entry, _ in pairs(self.multi_select) do
-    local index = self.manager:find_entry(entry)
-    if index then
-      vim.api.nvim_buf_add_highlight(
-        results_bufnr,
-        ns_telescope_selection,
-        "TelescopeMultiSelection",
-        self:get_row(index),
-        0,
-        -1
-      )
-    end
-  end
+  if true then return end
+
+  -- for entry, _ in pairs(self.multi_select) do
+  --   local index = self.manager:find_entry(entry)
+  --   if index then
+  --     vim.api.nvim_buf_add_highlight(
+  --       results_bufnr,
+  --       ns_telescope_selection,
+  --       "TelescopeMultiSelection",
+  --       self:get_row(index),
+  --       0,
+  --       -1
+  --     )
+  --   end
+  -- end
 end
 
 function Picker:reset_selection()
@@ -685,28 +714,10 @@ function Picker:reset_selection()
   self.multi_select = {}
 end
 
-function Picker:_handle_scroll_strategy(row)
-  if self.scroll_strategy == "cycle" then
-    if row >= self.max_results then
-      row = 0
-    elseif row < 0 then
-      row = self.max_results - 1
-    end
-  else
-    if row >= self.max_results then
-      row = self.max_results - 1
-    elseif row < 0 then
-      row = 0
-    end
-  end
-
-  return row
-end
-
 function Picker:set_selection(row)
   -- TODO: Loop around behavior?
   -- TODO: Scrolling past max results
-  row = self:_handle_scroll_strategy(row)
+  row = self.scroller(self.max_results, self.manager:num_results(), row)
 
   if not self:can_select_row(row) then
     -- If the current selected row exceeds number of currently displayed
@@ -738,24 +749,27 @@ function Picker:set_selection(row)
       return
     end
 
-    local prompt = vim.api.nvim_buf_get_lines(self.prompt_bufnr, 0, 1, false)[1]
+    local prompt = self:_get_prompt()
 
     -- Handle adding '> ' to beginning of selections
     if self._selection_row then
-      local old_selection = a.nvim_buf_get_lines(results_bufnr, self._selection_row, self._selection_row + 1, false)[1]
+      local display, display_highlights = entry_display.resolve(self, self._selection_entry)
 
-      if old_selection then
-        local old_display = '  ' .. old_selection:sub(3)
-        a.nvim_buf_set_lines(results_bufnr, self._selection_row, self._selection_row + 1, false, {old_display})
+      if display then
+        display = '  ' .. display
+        a.nvim_buf_set_lines(results_bufnr, self._selection_row, self._selection_row + 1, false, {display})
 
-        if prompt and self.sorter and self.sorter.highlighter then
-          self:highlight_one_row(results_bufnr, prompt, old_display, self._selection_row)
-        end
+        self.highlighter:hi_display(self._selection_row, '  ', display_highlights)
+        self.highlighter:hi_sorter(self._selection_row, prompt, display)
       end
     end
 
     local caret = '>'
-    local display = string.format('%s %s', caret, (a.nvim_buf_get_lines(results_bufnr, row, row + 1, false)[1] or ''):sub(3))
+    -- local display = string.format('%s %s', caret,
+    --   (a.nvim_buf_get_lines(results_bufnr, row, row + 1, false)[1] or ''):sub(3)
+    -- )
+    local display, display_highlights = entry_display.resolve(self, entry)
+    display = caret .. ' ' .. display
 
     -- TODO: You should go back and redraw the highlights for this line from the sorter.
     -- That's the only smart thing to do.
@@ -765,29 +779,12 @@ function Picker:set_selection(row)
     end
     a.nvim_buf_set_lines(results_bufnr, row, row + 1, false, {display})
 
-    a.nvim_buf_clear_namespace(results_bufnr, ns_telescope_selection, 0, -1)
-    a.nvim_buf_add_highlight(
-      results_bufnr,
-      ns_telescope_selection,
-      'TelescopeSelectionCaret',
-      row,
-      0,
-      #caret
-    )
-    a.nvim_buf_add_highlight(
-      results_bufnr,
-      ns_telescope_selection,
-      'TelescopeSelection',
-      row,
-      #caret,
-      -1
-    )
+    self.highlighter:hi_selection(row, caret)
+    self.highlighter:hi_display(row, '  ', display_highlights)
+    self.highlighter:hi_sorter(row, prompt, display)
 
-    self:display_multi_select(results_bufnr)
-
-    if prompt and self.sorter and self.sorter.highlighter then
-      self:highlight_one_row(results_bufnr, prompt, display, row)
-    end
+    -- TODO: Actually implement this for real TJ, don't leave around half implemented code plz :)
+    -- self:display_multi_select(results_bufnr)
   end)
 
   if not set_ok then
@@ -832,7 +829,7 @@ function Picker:entry_adder(index, entry, score)
   -- This is the two spaces to manage the '> ' stuff.
   -- Maybe someday we can use extmarks or floaty text or something to draw this and not insert here.
   -- until then, insert two spaces
-  local prefix = TELESCOPE_DEBUG and ('  ' .. score) or '  '
+  local prefix = '  '
   display = prefix .. display
 
   self:_increment("displayed")
@@ -846,10 +843,7 @@ function Picker:entry_adder(index, entry, score)
 
     local set_ok = pcall(vim.api.nvim_buf_set_lines, self.results_bufnr, row, row + 1, false, {display})
     if set_ok and display_highlights then
-      -- TODO: This should actually be done during the cursor moving stuff annoyingly.... didn't see this bug yesterday.
-      for _, hl_block in ipairs(display_highlights) do
-        a.nvim_buf_add_highlight(self.results_bufnr, ns_telescope_entry, hl_block[2], row, #prefix + hl_block[1][1], #prefix + hl_block[1][2])
-      end
+      self.highlighter:hi_display(row, prefix, display_highlights)
     end
 
     -- This pretty much only fails when people leave newlines in their results.
@@ -908,7 +902,7 @@ end
 
 function Picker:_on_complete()
   for _, v in ipairs(self._completion_callbacks) do
-    v(self)
+    pcall(v, self)
   end
 end
 
@@ -935,6 +929,16 @@ function pickers.on_close_prompt(prompt_bufnr)
   -- vim.api.nvim_buf_detach(prompt_bufnr)
 
   picker.close_windows(status)
+end
+
+function Picker:_get_prompt()
+  return vim.trim(
+    vim.api.nvim_buf_get_lines(self.prompt_bufnr, 0, 1, false)[1]:sub(#self.prompt_prefix)
+  )
+end
+
+function Picker:_reset_highlights()
+  self.highlighter:clear_display()
 end
 
 pickers._Picker = Picker

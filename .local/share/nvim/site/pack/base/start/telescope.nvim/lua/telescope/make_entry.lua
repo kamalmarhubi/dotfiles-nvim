@@ -7,9 +7,33 @@ local utils = require('telescope.utils')
 
 local get_default = utils.get_default
 
+local treesitter_type_highlight = {
+  ["associated"] = "TSConstant",
+  ["constant"]   = "TSConstant",
+  ["field"]      = "TSField",
+  ["function"]   = "TSFunction",
+  ["method"]     = "TSMethod",
+  ["parameter"]  = "TSParameter",
+  ["property"]   = "TSProperty",
+  ["struct"]     = "Struct",
+  ["var"]        = "TSVariableBuiltin",
+}
+
+local lsp_type_highlight = {
+  ["Class"]    = "TelescopeResultsClass",
+  ["Constant"] = "TelescopeResultsConstant",
+  ["Field"]    = "TelescopeResultsField",
+  ["Function"] = "TelescopeResultsFunction",
+  ["Method"]   = "TelescopeResultsMethod",
+  ["Property"] = "TelescopeResultsOperator",
+  ["Struct"]   = "TelescopeResultsStruct",
+  ["Variable"] = "TelescopeResultsVariable",
+}
+
 local make_entry = {}
 
 local transform_devicons
+local get_devicons
 if has_devicons then
   if not devicons.has_loaded() then
     devicons.setup()
@@ -29,9 +53,26 @@ if has_devicons then
       return icon_display
     end
   end
+
+  get_devicons = function(filename, disable_devicons)
+    if disable_devicons or not filename then
+      return ''
+    end
+
+    local icon, icon_highlight = devicons.get_icon(filename, string.match(filename, '%a+$'), { default = true })
+    if conf.color_devicons then
+      return icon, icon_highlight
+    else
+      return icon
+    end
+  end
 else
   transform_devicons = function(_, display, _)
     return display
+  end
+
+  get_devicons = function(_, _)
+    return ''
   end
 end
 
@@ -77,7 +118,8 @@ do
 
     mt_file_entry.cwd = cwd
     mt_file_entry.display = function(entry)
-      local display, hl_group = entry.value, nil
+      local hl_group
+      local display = path.make_relative(entry.value, cwd)
       if shorten_path then
         display = utils.path_shorten(display)
       end
@@ -96,7 +138,11 @@ do
       if raw then return raw end
 
       if k == "path" then
-        return t.cwd .. path.separator .. t.value
+        local retpath = t.cwd .. path.separator .. t.value
+        if not vim.loop.fs_access(retpath, "R", nil) then
+          retpath = t.value
+        end
+        return retpath
       end
 
       return rawget(t, rawget(lookup_keys, k))
@@ -168,8 +214,6 @@ do
 
     mt_vimgrep_entry.cwd = vim.fn.expand(opts.cwd or vim.fn.getcwd())
     mt_vimgrep_entry.display = function(entry)
-      local display, hl_group = entry.value, nil
-
       local display_filename
       if shorten_path then
         display_filename = utils.path_shorten(entry.filename)
@@ -182,7 +226,7 @@ do
         coordinates = string.format("%s:%s:", entry.lnum, entry.col)
       end
 
-      display, hl_group = transform_devicons(
+      local display, hl_group = transform_devicons(
         entry.filename,
         string.format(display_string, display_filename,  coordinates, entry.text),
         disable_devicons
@@ -215,8 +259,21 @@ do
   end
 end
 
-function make_entry.gen_from_git_commits(opts)
-  opts = opts or {}
+function make_entry.gen_from_git_commits()
+  local displayer = entry_display.create {
+    separator = " ",
+    items = {
+      { width = 8 },
+      { remaining = true }
+      }
+    }
+
+  local make_display = function(entry)
+    return displayer {
+      {entry.value, "TelescopeResultsIdentifier"},
+      entry.msg
+    }
+  end
 
   return function(entry)
     if entry == "" then
@@ -228,7 +285,8 @@ function make_entry.gen_from_git_commits(opts)
     return {
       value = sha,
       ordinal = sha .. ' ' .. msg,
-      display = sha .. ' ' .. msg,
+      msg = msg,
+      display = make_display
     }
   end
 end
@@ -237,24 +295,33 @@ function make_entry.gen_from_quickfix(opts)
   opts = opts or {}
   opts.tail_path = get_default(opts.tail_path, true)
 
-  local make_display = function(entry)
-    local to_concat = {}
+  local displayer = entry_display.create {
+    separator = "▏",
+    items = {
+      { width = 8 },
+      { width = 50 },
+      { remaining = true }
+    }
+  }
 
+  local make_display = function(entry)
+    local filename
     if not opts.hide_filename then
-      local filename = entry.filename
+      filename = entry.filename
       if opts.tail_path then
         filename = utils.path_tail(filename)
       elseif opts.shorten_path then
         filename = utils.path_shorten(filename)
       end
-
-      table.insert(to_concat, filename)
-      table.insert(to_concat, ":")
     end
 
-    table.insert(to_concat, entry.text)
+    local line_info = {table.concat({entry.lnum, entry.col}, ":"), "TelescopeResultsLineNr"}
 
-    return table.concat(to_concat, "")
+    return displayer {
+      line_info,
+      entry.text:gsub(".* | ", ""),
+      filename,
+    }
   end
 
   return function(entry)
@@ -280,14 +347,116 @@ function make_entry.gen_from_quickfix(opts)
   end
 end
 
+function make_entry.gen_from_lsp_symbols(opts)
+  opts = opts or {}
+  local bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
+
+  local display_items = {
+    { width = 25 },       -- symbol
+    { width = 8 },        -- symbol type
+    { remaining = true }, -- filename{:optional_lnum+col} OR content preview
+  }
+
+  if opts.ignore_filename and opts.show_line then
+    table.insert(display_items, 2, { width = 6 })
+  end
+
+  local displayer = entry_display.create {
+    separator = " ",
+    hl_chars = { ['['] = 'TelescopeBorder', [']'] = 'TelescopeBorder' },
+    items = display_items
+  }
+
+  local make_display = function(entry)
+    local msg
+
+    -- what to show in the last column: filename or symbol information
+    if opts.ignore_filename then -- ignore the filename and show line preview instead
+      -- TODO: fixme - if ignore_filename is set for workspace, bufnr will be incorrect
+      msg = vim.api.nvim_buf_get_lines(
+          bufnr,
+          entry.lnum - 1,
+          entry.lnum,
+          false
+        )[1] or ''
+      msg = vim.trim(msg)
+    else
+      local filename = ""
+      opts.tail_path = get_default(opts.tail_path, true)
+
+      if not opts.hide_filename then -- hide the filename entirely
+        filename = entry.filename
+        if opts.tail_path then
+          filename = utils.path_tail(filename)
+        elseif opts.shorten_path then
+          filename = utils.path_shorten(filename)
+        end
+      end
+
+      if opts.show_line then -- show inline line info
+        filename = filename .. " [" ..entry.lnum .. ":" .. entry.col .. "]"
+      end
+      msg = filename
+    end
+
+    local type_highlight = opts.symbol_highlights or lsp_type_highlight
+    local display_columns = {
+      entry.symbol_name,
+      {entry.symbol_type:lower(), type_highlight[entry.symbol_type], type_highlight[entry.symbol_type]},
+      msg,
+    }
+
+    if opts.ignore_filename and opts.show_line then
+      table.insert(display_columns, 2, {entry.lnum .. ":" .. entry.col, "TelescopeResultsLineNr"})
+    end
+
+    return displayer(display_columns)
+  end
+
+  return function(entry)
+    local filename = entry.filename or vim.api.nvim_buf_get_name(entry.bufnr)
+    local symbol_msg = entry.text:gsub(".* | ", "")
+    local symbol_type, symbol_name = symbol_msg:match("%[(.+)%]%s+(.*)")
+
+    local ordinal = ""
+    if not opts.ignore_filename and filename then
+      ordinal = filename .. " "
+    end
+    ordinal = ordinal ..  symbol_name .. " " .. symbol_type
+    return {
+      valid = true,
+
+      value = entry,
+      ordinal = ordinal,
+      display = make_display,
+
+      filename = filename,
+      lnum = entry.lnum,
+      col = entry.col,
+      symbol_name = symbol_name,
+      symbol_type = symbol_type,
+      start = entry.start,
+      finish = entry.finish,
+    }
+  end
+end
+
 function make_entry.gen_from_buffer(opts)
   opts = opts or {}
+
+  local disable_devicons = opts.disable_devicons
+
+  local icon_width = 0
+  if not disable_devicons then
+    icon_width = vim.fn.strdisplaywidth(get_devicons('fname', disable_devicons))
+  end
 
   local displayer = entry_display.create {
     separator = " ",
     items = {
       { width = opts.bufnr_width },
       { width = 4 },
+      { width = icon_width },
       { remaining = true },
     },
   }
@@ -302,11 +471,14 @@ function make_entry.gen_from_buffer(opts)
       display_bufname = entry.filename
     end
 
+    local icon, hl_group = get_devicons(entry.filename, disable_devicons)
+
     return displayer {
-      entry.bufnr,
-      entry.indicator,
-      display_bufname .. ":" .. entry.lnum,
-    }
+      {entry.bufnr, "TelescopeResultsNumber"},
+      {entry.indicator, "TelescopeResultsComment"},
+      { icon, hl_group },
+      display_bufname .. ":" .. entry.lnum
+      }
   end
 
   return function(entry)
@@ -329,7 +501,7 @@ function make_entry.gen_from_buffer(opts)
       bufnr = entry.bufnr,
       filename = bufname,
 
-      lnum = entry.info.lnum and entry.info.lnum or 1,
+      lnum = entry.info.lnum ~= 0 and entry.info.lnum or 1,
       indicator = indicator,
     }
   end
@@ -340,34 +512,54 @@ function make_entry.gen_from_treesitter(opts)
 
   local bufnr = opts.bufnr or vim.api.nvim_get_current_buf()
 
+  local display_items = {
+    { width = 25 },
+    { width = 10 },
+    { remaining = true },
+  }
+
+  if opts.show_line then
+    table.insert(display_items, 2, { width = 6 })
+  end
+
+  local displayer = entry_display.create {
+    separator = " ",
+    items = display_items,
+  }
+
+  local type_highlight = opts.symbol_highlights or treesitter_type_highlight
+
   local make_display = function(entry)
+    local msg = vim.api.nvim_buf_get_lines(
+      bufnr,
+      entry.lnum - 1,
+      entry.lnum,
+      false
+      )[1] or ''
+    msg = vim.trim(msg)
+
+    local display_columns = {
+      entry.text,
+      {entry.kind, type_highlight[entry.kind], type_highlight[entry.kind]},
+      msg
+    }
     if opts.show_line then
-      if not tonumber(opts.show_line) then
-        opts.show_line = 30
-      end
-
-      local spacing = string.rep(" ", opts.show_line - #entry.ordinal)
-
-      return entry.ordinal .. spacing .. ": " .. (vim.api.nvim_buf_get_lines(
-        bufnr,
-        entry.lnum - 1,
-        entry.lnum,
-        false
-      )[1] or '')
-    else
-      return entry.ordinal
+      table.insert(display_columns, 2, {entry.lnum .. ":" .. entry.col, "TelescopeResultsLineNr"})
     end
+
+    return displayer(display_columns)
   end
 
   return function(entry)
     local ts_utils = require('nvim-treesitter.ts_utils')
-    local start_row, start_col, end_row, end_col = ts_utils.get_node_range(entry.node)
+    local start_row, start_col, end_row, _ = ts_utils.get_node_range(entry.node)
     local node_text = ts_utils.get_node_text(entry.node)[1]
     return {
       valid = true,
 
       value = entry.node,
-      ordinal = string.format("%s [%s]", node_text, entry.kind),
+      kind = entry.kind,
+      ordinal = node_text .. " " .. entry.kind,
       display = make_display,
 
       node_text = node_text,
@@ -380,21 +572,6 @@ function make_entry.gen_from_treesitter(opts)
       start = start_row,
       finish = end_row
     }
-  end
-end
-
-function make_entry.gen_from_taglist(_)
-  local delim = string.char(9)
-
-  return function(line)
-    local entry = {}
-    local tag = (line..delim):match("(.-)" .. delim)
-    entry.valid   = tag ~= ""
-    entry.display = tag
-    entry.value   = tag
-    entry.ordinal = tag
-
-    return entry
   end
 end
 
@@ -420,16 +597,30 @@ function make_entry.gen_from_packages(opts)
   end
 end
 
-function make_entry.gen_from_apropos(opts)
-  opts = opts or {}
+function make_entry.gen_from_apropos()
+  local displayer = entry_display.create {
+    separator = "",
+    items = {
+      { width = 30 },
+      { remaining = true },
+    },
+  }
+
+  local make_display = function(entry)
+    return displayer {
+      entry.value,
+      entry.description
+    }
+  end
 
   return function(line)
     local cmd, _, desc = line:match("^(.*)%s+%((.*)%)%s+%-%s(.*)$")
 
     return {
       value = cmd,
+      description = desc,
       ordinal = cmd,
-      display = string.format("%-30s : %s", cmd, desc)
+      display = make_display,
     }
   end
 end
@@ -455,17 +646,18 @@ end
 
 function make_entry.gen_from_registers(_)
   local displayer = entry_display.create {
-    separator = ":",
+    separator = " ",
+    hl_chars = { ['['] = 'TelescopeBorder', [']'] = 'TelescopeBorder' },
     items = {
-      { width = 4 },
+      { width = 3 },
       { remaining = true },
     },
   }
 
   local make_display = function(entry)
     return displayer {
-      string.format("[%s]", entry.value),
-      entry.content
+      {'[' .. entry.value .. ']', "TelescopeResultsNumber"},
+      entry.content,
     }
   end
 
@@ -481,39 +673,21 @@ function make_entry.gen_from_registers(_)
 end
 
 function make_entry.gen_from_highlights()
+  local make_display = function(entry)
+    local display = entry.value
+    return display, { { { 0, #display }, display } }
+  end
+
   return function(entry)
-    local make_display = function(entry)
-      local display = entry.value
-      return display, { { { 0, #display }, display } }
-    end
-
-    local preview_command = function(entry, bufnr)
-      local hl = entry.value
-      vim.api.nvim_buf_set_option(bufnr, 'filetype', 'vim')
-      local output = vim.split(vim.fn.execute('hi ' .. hl), '\n')
-      local start = string.find(output[2], 'xxx', 1, true)
-      vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, output)
-      vim.api.nvim_buf_add_highlight(bufnr, -1, hl, 1, start - 1, start + 2)
-    end
-
     return {
       value = entry,
       display = make_display,
       ordinal = entry,
-
-      preview_command = preview_command
-
     }
   end
 end
 
 function make_entry.gen_from_vimoptions()
-
-  -- TODO: Can we just remove this from `options.lua`?
-  function N_(s)
-    return s
-  end
-
   local process_one_opt = function(o)
     local ok, value_origin
 
@@ -660,7 +834,13 @@ function make_entry.gen_from_ctags(opts)
       return nil
     end
 
-    local tag, file, scode = string.match(line, '([^\t]+)\t([^\t]+)\t/^\t?(.*)/;"\t+.*')
+    local tag, file, scode, lnum
+    -- ctags gives us: 'tags\tfile\tsource'
+    tag, file, scode = string.match(line, '([^\t]+)\t([^\t]+)\t/^\t?(.*)/;"\t+.*')
+    if not tag then
+      -- hasktags gives us: 'tags\tfile\tlnum'
+      tag, file, lnum  = string.match(line, '([^\t]+)\t([^\t]+)\t(%d+).*')
+    end
 
     if opts.only_current_file and file ~= current_file then
       return nil
@@ -677,7 +857,45 @@ function make_entry.gen_from_ctags(opts)
       filename = file,
 
       col = 1,
-      lnum = 1,
+      lnum = lnum and tonumber(lnum) or 1,
+    }
+  end
+end
+
+function make_entry.gen_from_autocommands(_)
+  local displayer = entry_display.create {
+    separator = "▏",
+    items = {
+      { width = 14 },
+      { width = 18 },
+      { width = 16 },
+      { remaining = true },
+    },
+  }
+
+  local make_display = function(entry)
+    return displayer {
+      {entry.event, "vimAutoEvent"},
+      {entry.group , "vimAugroup"},
+      {entry.ft_pattern, "vimAutoCmdSfxList"},
+      entry.command
+    }
+  end
+
+  -- TODO: <action> dump current filtered items to buffer
+  return function(entry)
+    return {
+      event      = entry.event,
+      group      = entry.group,
+      ft_pattern = entry.ft_pattern,
+      command    = entry.command,
+      value      = string.format("+%d %s", entry.source_lnum, entry.source_file),
+      source_file = entry.source_file,
+      source_lnum = entry.source_lnum,
+      --
+      valid = true,
+      ordinal = entry.event .. " "  .. entry.group .. " " .. entry.ft_pattern .. " " .. entry.command,
+      display = make_display,
     }
   end
 end

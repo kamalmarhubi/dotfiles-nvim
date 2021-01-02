@@ -122,6 +122,7 @@ function actions._goto_file_selection(prompt_bufnr, command)
         end
       end
     end
+    vim.api.nvim_command("doautocmd filetypedetect BufRead " .. vim.fn.fnameescape(filename))
   end
 end
 
@@ -151,7 +152,7 @@ function actions.close_pum(_)
   end
 end
 
-function actions.close(prompt_bufnr)
+local do_close = function(prompt_bufnr, keepinsert)
   local picker = actions.get_current_picker(prompt_bufnr)
   local prompt_win = state.get_status(prompt_bufnr).prompt_win
   local original_win_id = picker.original_win_id
@@ -161,12 +162,18 @@ function actions.close(prompt_bufnr)
   end
 
   actions.close_pum(prompt_bufnr)
-  vim.cmd [[stopinsert]]
+  if not keepinsert then
+    vim.cmd [[stopinsert]]
+  end
 
   vim.api.nvim_win_close(prompt_win, true)
 
   pcall(vim.cmd, string.format([[silent bdelete! %s]], prompt_bufnr))
   pcall(a.nvim_set_current_win, original_win_id)
+end
+
+function actions.close(prompt_bufnr)
+  do_close(prompt_bufnr, false)
 end
 
 actions.set_command_line = function(prompt_bufnr)
@@ -191,7 +198,7 @@ actions.edit_register = function(prompt_bufnr)
 
   -- update entry in results table
   -- TODO: find way to redraw finder content
-  for k, v in pairs(picker.finder.results) do
+  for _, v in pairs(picker.finder.results) do
     if v == entry then
       v.content = updated_value
     end
@@ -219,10 +226,14 @@ end
 actions.run_builtin = function(prompt_bufnr)
   local entry = actions.get_selected_entry(prompt_bufnr)
 
-  actions.close(prompt_bufnr)
-  vim.cmd [[startinsert]]
-
+  do_close(prompt_bufnr, true)
   require('telescope.builtin')[entry.text]()
+end
+
+actions.insert_symbol = function(prompt_bufnr)
+  local selection = actions.get_selected_entry()
+  actions.close(prompt_bufnr)
+  vim.api.nvim_put({selection.value[1]}, '', true, true)
 end
 
 -- TODO: Think about how to do this.
@@ -254,9 +265,8 @@ actions.git_staging_toggle = function(prompt_bufnr)
   else
     os.execute('git add ' .. selection.value)
   end
-  actions.close(prompt_bufnr)
+  do_close(prompt_bufnr, true)
   require('telescope.builtin').git_status()
-  vim.api.nvim_feedkeys('i', 'n', false)
 end
 
 -- ==================================================

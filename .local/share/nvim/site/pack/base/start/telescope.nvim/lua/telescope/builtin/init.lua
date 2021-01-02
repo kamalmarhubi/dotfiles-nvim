@@ -17,12 +17,6 @@ if 1 ~= vim.fn.has('nvim-0.5') then
   return
 end
 
-if 2 > vim.o.report then
-  vim.api.nvim_err_writeln(string.format("[telescope] It seems you have `set report=%s`", vim.o.report))
-  vim.api.nvim_err_writeln("[telescope] Instead, change 'report' back to its default value. `set report=2`.")
-  vim.api.nvim_err_writeln("[telescope] If you do not, you will have a bad experience")
-end
-
 local builtin = {}
 
 builtin.live_grep = require('telescope.builtin.files').live_grep
@@ -42,6 +36,7 @@ builtin.git_status = require('telescope.builtin.git').status
 
 builtin.builtin = require('telescope.builtin.internal').builtin
 builtin.planets = require('telescope.builtin.internal').planets
+builtin.symbols = require('telescope.builtin.internal').symbols
 builtin.commands = require('telescope.builtin.internal').commands
 builtin.quickfix = require('telescope.builtin.internal').quickfix
 builtin.loclist = require('telescope.builtin.internal').loclist
@@ -58,6 +53,7 @@ builtin.registers = require('telescope.builtin.internal').registers
 builtin.keymaps = require('telescope.builtin.internal').keymaps
 builtin.filetypes = require('telescope.builtin.internal').filetypes
 builtin.highlights = require('telescope.builtin.internal').highlights
+builtin.autocommands = require('telescope.builtin.internal').autocommands
 
 builtin.lsp_references = require('telescope.builtin.lsp').references
 builtin.lsp_document_symbols = require('telescope.builtin.lsp').document_symbols

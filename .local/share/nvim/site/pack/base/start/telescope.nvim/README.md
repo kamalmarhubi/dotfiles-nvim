@@ -1,36 +1,39 @@
-# Telescope.nvim
+# telescope.nvim
 [![Gitter](https://badges.gitter.im/nvim-telescope/community.svg)](https://gitter.im/nvim-telescope/community?utm_source=badge&utm_medium=badge&utm_campaign=pr-badge)
 
-> **Telescope**
-> An arrangement of lenses or mirrors or both that gathers light,
-> permitting direct observation or photographic recording of distant objects.
->
-> — thefreedictionary
+Gaze deeply into unknown regions using the power of the moon.
 
-![by @glepnir](https://files.gitter.im/5fbbeebed73408ce4ff4bdd0/OcyL/telescope.gif) 
+## What Is Telescope?
 
+`telescope.nvim` is a highly extendable fuzzy finder over lists. Built on the latest
+awesome features from `neovim` core. Telescope is centered around
+modularity, allowing for easy customization.
 
-`Telescope.nvim` is a next generation library for creating floating pickers
-with advanced features.  It is written in `lua` and is built on top of latest
-awesome features from `neovim` core.  `Telescope.nvim` is centered around
-modularity so much so that each picker is its own world, (meaning it can be
-configured in isolation from other pickers, such presentation, algorithm,
-mappings ... etc).
+Community driven built-in [pickers](#pickers), [sorters](#sorters) and [previewers](#previewers).
 
-`Telescope.nvim` was built with the intention of becoming a library, but it has long grown to
-be much bigger than that.  In addition to
-[extensions](https://github.com/nvim-telescope) `Telescope.nvim` comes with a
-growing number of community driven [built-in pickers](#built-in-pickers),
-covering a wide range of use cases and tools, and offers a customizable user
-interface.
+### Built-in Support:
+- [Vim](#vim-pickers)
+- [Files](#file-pickers)
+- [Git](#git-pickers)
+- [LSP](#lsp-pickers)
+- [Treesitter](#treesitter-pickers)
+
+![by @glepnir](https://user-images.githubusercontent.com/41671631/100819597-6f737900-3487-11eb-8621-37ec1ffabe4b.gif)
 
 
 <!-- You can read this documentation from start to finish, or you can look at the -->
 <!-- outline and directly jump to the section that interests you most. -->
 
+## Telescope Table of Contents
 - [Getting Started](#getting-started)
+- [Usage](#usage)
 - [Customization](#customization)
-- [Built-in pickers](#built-in-pickers)
+- [Mappings](#mappings)
+- [Pickers](#pickers)
+- [Sorters](#sorters)
+- [Previewers](#previewers)
+- [Themes](#themes)
+- [Extensions](#extensions)
 - [API](#api)
 - [Media](#media)
 - [Gallery](https://github.com/nvim-telescope/telescope.nvim/wiki/Gallery)
@@ -40,12 +43,12 @@ interface.
 
 ## Getting Started
 
-This section should guide to run your first built-in pickers :smile:
+This section should guide to run your first built-in pickers :smile:.
 
 [Neovim Nightly (0.5)](https://github.com/neovim/neovim/releases/tag/nightly)
   is required for `telescope.nvim` to work.
 
-#### Optional dependences
+### Optional dependences
 - [sharkdp/bat](https://github.com/sharkdp/bat) (preview)
 - [sharkdp/fd](https://github.com/sharkdp/fd) (finder)
 - [BurntSushi/ripgrep](https://github.com/BurntSushi/ripgrep) (finder)
@@ -54,7 +57,7 @@ This section should guide to run your first built-in pickers :smile:
 - [devicons](https://github.com/kyazdani42/nvim-web-devicons) (icons)
 
 
-#### Installation
+### Installation
 
 Using [vim-plug](https://github.com/junegunn/vim-plug)
 
@@ -80,7 +83,7 @@ use {
 }
 ```
 
-#### Usage
+## Usage
 
 Try the command `:Telescope find_files<cr>`
   to see if `telescope.nvim` is installed correctly.
@@ -96,10 +99,10 @@ nnoremap <leader>fh <cmd>Telescope help_tags<cr>
 nnoremap <leader>ff <cmd>lua require('telescope.builtin').find_files()<cr>
 nnoremap <leader>fg <cmd>lua require('telescope.builtin').live_grep()<cr>
 nnoremap <leader>fb <cmd>lua require('telescope.builtin').buffers()<cr>
-nnoremap <leader>ff <cmd>lua require('telescope.builtin').help_tags()<cr>
+nnoremap <leader>fh <cmd>lua require('telescope.builtin').help_tags()<cr>
 ```
 
-See [built-in pickers](#built-in-pickers) for the list of all built-in
+See [built-in pickers](#pickers) for the list of all built-in
 functions.
 
 
@@ -117,7 +120,7 @@ customizations globally or individual pre picker.
   built-in pickers (e.g. `builtin.fd(opts)`) see [Configuration recipes](https://github.com/nvim-telescope/telescope.nvim/wiki/Configuration-Recipes) wiki page for ideas.
 
 
-#### Telescope Defaults
+### Telescope Defaults
 
 As an example of using the `setup()` method, the following code configures
 `telescope.nvim` to its default settings.
@@ -142,7 +145,7 @@ require('telescope').setup{
     layout_defaults = {
       -- TODO add builtin options.
     },
-    file_sorter =  require'telescope.sorters'.get_fuzzy_file ,
+    file_sorter =  require'telescope.sorters'.get_fuzzy_file,
     file_ignore_patterns = {},
     generic_sorter =  require'telescope.sorters'.get_generic_fuzzy_sorter,
     shorten_path = true,
@@ -156,6 +159,12 @@ require('telescope').setup{
     color_devicons = true,
     use_less = true,
     set_env = { ['COLORTERM'] = 'truecolor' }, -- default { }, currently unsupported for shells like cmd.exe / powershell.exe
+    file_previewer = require'telescope.previewers'.cat.new, -- For buffer previewer use `require'telescope.previewers'.vim_buffer_cat.new`
+    grep_previewer = require'telescope.previewers'.vimgrep.new, -- For buffer previewer use `require'telescope.previewers'.vim_buffer_vimgrep.new`
+    qflist_previewer = require'telescope.previewers'.qflist.new, -- For buffer previewer use `require'telescope.previewers'.vim_buffer_qflist.new`
+
+    -- Developer configurations: Not meant for general override
+    buffer_previewer_maker = require'telescope.previewers'.buffer_previewer_maker
   }
 }
 ```
@@ -174,7 +183,7 @@ EOF
 
 <!-- TODO: move some options to Options affecting Behaviour -->
 
-#### Options affecting Presentation
+### Options affecting Presentation
 
 | Keys                   | Description                                           | Options                    |
 |------------------------|-------------------------------------------------------|----------------------------|
@@ -193,19 +202,28 @@ EOF
 | `use_less`             | Whether to use less with bat or less/cat if bat not installed | boolean                    |
 | `set_env`              | Set environment variables for previewer               | dict                       |
 | `scroll_strategy`      | How to behave when the when there are no more item next/prev | cycle, nil          |
+| `file_previewer`       | What telescope previewer to use for files.            | [Previewers](#previewers)  |
+| `grep_previewer`       | What telescope previewer to use for grep and similar  | [Previewers](#previewers)  |
+| `qflist_previewer`     | What telescope previewer to use for qflist            | [Previewers](#previewers)  |
 
-#### Options affecting Sorting
+
+### Options for extension developers
+| Keys                   | Description                                           | Options                    |
+|------------------------|-------------------------------------------------------|----------------------------|
+| `buffer_previewer_maker` | How a file gets loaded and which highlighter will be used. Extensions will change it | function             |
+
+### Options affecting Sorting
 
 | Keys                   | Description                                           | Options                    |
 |------------------------|-------------------------------------------------------|----------------------------|
-| `file_sorter`          | The sorter for file lists.                            | [Sorters](#built-in-sorters)   |
-| `generic_sorter`       | The sorter for everything else.                       | [Sorters](#built-in-sorters)   |
+| `file_sorter`          | The sorter for file lists.                            | [Sorters](#sorters)        |
+| `generic_sorter`       | The sorter for everything else.                       | [Sorters](#sorters)        |
 | `vimgrep_arguments`    | The command line argument for grep search ... TODO.   | dict                       |
 | `selection_strategy`   | What happens to the selection if the list changes.    | follow/reset/row           |
 | `file_ignore_patterns` | Pattern to be ignored `{ "scratch/.*", "%.env"}`      | dict                       |
 | `shorten_path`         | Whether to shorten paths or not.                      | boolean                    |
 
-#### Mappings
+## Mappings
 
 Mappings are fully customizable.
 Many familiar mapping patterns are setup as defaults.
@@ -228,8 +246,8 @@ To see the full list of mappings, check out `lua/telescope/mappings.lua` and
 the `default_mappings` table.
 
 
-Much like [built-in pickers](#built-in-pickers), there are a number of
-[built-in actions](https://github.com/nvim-telescope/telescope.nvim/blob/master/lua/telescope/actions/init.lua) you can pick from to remap your telescope buffer mappings or create a new custom action:
+Much like [built-in pickers](#pickers), there are a number of
+[actions](https://github.com/nvim-telescope/telescope.nvim/blob/master/lua/telescope/actions/init.lua) you can pick from to remap your telescope buffer mappings or create a new custom action:
 <!-- TODO: add custom action in addition to a function that gets ran after a given action--->
 ```lua
 -- Built-in actions
@@ -273,7 +291,7 @@ require('telescope').setup{
 }
 ```
 
-For a [picker](#built-in-pickers) specific remapping, it can be done by setting
+For a [picker](#pickers) specific remapping, it can be done by setting
 its `attach_mappings` key to a function, like this
 
 ```lua
@@ -343,16 +361,29 @@ require('telescope.builtin').fd({ -- or new custom picker's attach_mappings fiel
 <!-- ``` -->
 <!-- See `lua/telescope/builtin.lua` for examples on how to `attach_mappings` in the prefered way. -->
 
-## Built-in Pickers
+## Pickers
 
-Built-in function ready to be bound to any key you like :smile:.
+Built-in functions. Ready to be bound to any key you like. :smile:
+
+```vim
+:lua require'telescope.builtin'.planets{}
+
+:nnoremap <Leader>pp :lua require'telescope.builtin'.planets{}
+```
+
+### File Pickers
 
 | Functions                           | Description                                                                                 |
 |-------------------------------------|---------------------------------------------------------------------------------------------|
-| `builtin.planets`                   | Demo showcasing how simple to create pickers with telescope.                                |
-| `builtin.builtin`                   | Lists Built-in pickers and run them on enter.                                               |
 | `builtin.find_files`                | Lists Files in current directory.                                                           |
 | `builtin.git_files`                 | Lists Git files in current directory.                                                       |
+| `builtin.grep_string`               | Searches for a string under the cursor in current directory.                                |
+| `builtin.live_grep`                 | Searches in current directory files. (respecting .gitignore)                                |
+
+### Vim Pickers
+
+| Functions                           | Description                                                                                 |
+|-------------------------------------|---------------------------------------------------------------------------------------------|
 | `builtin.buffers`                   | Lists Open buffers in the current vim instance.                                             |
 | `builtin.oldfiles`                  | Lists Previously open files.                                                                |
 | `builtin.commands`                  | Lists Available plugin/user commands and run it.                                            |
@@ -362,32 +393,83 @@ Built-in function ready to be bound to any key you like :smile:.
 | `builtin.man_pages`                 | Lists Man entries.                                                                          |
 | `builtin.marks`                     | Lists Markers and their value.                                                              |
 | `builtin.colorscheme`               | Lists Colorscheme and switch to it on enter.                                                |
-| `builtin.treesitter`                | Lists Function names, variables, from Treesitter!                                           |
-| `builtin.live_grep`                 | Searches in current directory files. (respecting .gitignore)                                |
+| `builtin.quickfix`                  | Lists items from quickfix.                                                                  |
+| `builtin.loclist`                   | Lists items from current window's location list.                                            |
+| `builtin.vim_options`               | Lists vim options and on enter edit the options value.                                      |
+| `builtin.registers`                 | Lists vim registers and edit or paste selection.                                            |
+| `builtin.autocommands`              | Lists vim autocommands and go to their declaration.                                         |
+| `builtin.keymaps`                   | Lists normal-mode mappings.                                                                 |
+| `builtin.filetypes`                 | Lists all filetypes.                                                                        |
+| `builtin.highlights`                | Lists all highlights.                                                                       |
 | `builtin.current_buffer_fuzzy_find` | Searches in current buffer lines.                                                           |
 | `builtin.current_buffer_tags`       | Lists Tags in current buffer.                                                               |
-| `builtin.grep_string`               | Searches for a string under the cursor in current directory.                                |
+| ..................................  | Your next awesome picker function here :D                                                   |
+
+### LSP Pickers
+
+| Functions                           | Description                                                                                 |
+|-------------------------------------|---------------------------------------------------------------------------------------------|
 | `builtin.lsp_references`            | Searches in LSP references.                                                                 |
 | `builtin.lsp_document_symbols`      | Searches in LSP Document Symbols in the current document.                                   |
 | `builtin.lsp_workspace_symbols`     | Searches in LSP all workspace symbols.                                                      |
 | `builtin.lsp_code_actions`          | Lists LSP action to be trigged on enter.                                                    |
 | `builtin.lsp_range_code_actions`    | Lists LSP range code action to be trigged on enter.                                         |
-| `builtin.quickfix`                  | Lists items from quickfix.                                                                  |
-| `builtin.loclist`                   | Lists items from current window's location list.                                            |
-| `builtin.reloader`                  | Lists lua modules and reload them on enter.                                                 |
-| `builtin.vim_options`               | Lists vim options and on enter edit the options value.                                      |
-| `builtin.registers`                 | Lists vim registers and edit or paste selection.                                            |
-| `builtin.keymaps`                   | Lists normal-mode mappings.                                                                 |
-| `builtin.filetypes`                 | Lists all filetypes.                                                                        |
-| `builtin.highlights`                | Lists all highlights.                                                                       |
+| ..................................  | Your next awesome picker function here :D                                                   |
+
+### Git Pickers
+
+| Functions                           | Description                                                                                 |
+|-------------------------------------|---------------------------------------------------------------------------------------------|
 | `builtin.git_commits`               | Lists git commits with diff preview and on enter checkout the commit.                       |
 | `builtin.git_bcommits`              | Lists buffer's git commits with diff preview and checkouts it out on enter.                 |
 | `builtin.git_branches`              | Lists all branches with log preview and checkout action.                                    |
 | `builtin.git_status`                | Lists current changes per file with diff preview and add action. (Multiselection still WIP) |
-| ..................................  | Your next awesome finder function here :D                                                   |
+| ..................................  | Your next awesome picker function here :D                                                   |
 
+### Treesitter Picker
 
-#### Built-in Sorters
+| Functions                           | Description                                                                                 |
+|-------------------------------------|---------------------------------------------------------------------------------------------|
+| `builtin.treesitter`                | Lists Function names, variables, from Treesitter!                                           |
+| ..................................  | Your next awesome picker function here :D                                                   |
+
+### Lists Picker
+
+| Functions                           | Description                                                                                 |
+|-------------------------------------|---------------------------------------------------------------------------------------------|
+| `builtin.planets`                   | Use the telescope.                                                                          |
+| `builtin.builtin`                   | Lists Built-in pickers and run them on enter.                                               |
+| `builtin.reloader`                  | Lists lua modules and reload them on enter.                                                 |
+| `builtin.symbols`                   | Lists symbols inside a file `data/telescope-sources/*.json` found in your rtp. More info and symbol sources can be found [here](https://github.com/nvim-telescope/telescope-symbols.nvim) |
+| ..................................  | Your next awesome picker function here :D                                                   |
+
+## Previewers
+
+| Previewers                         | Description                                                     |
+|------------------------------------|-----------------------------------------------------------------|
+| `previewers.cat.new`               | Default previewer for files. Uses `cat`/`bat`                   |
+| `previewers.vimgrep.new`           | Default previewer for grep and similar. Uses `cat`/`bat`        |
+| `previewers.qflist.new`            | Default previewer for qflist. Uses `cat`/`bat`                  |
+| `previewers.vim_buffer_cat.new`    | Experimental previewer for files. Uses vim buffers              |
+| `previewers.vim_buffer_vimgrep.new`| Experimental previewer for grep and similar. Uses vim buffers   |
+| `previewers.vim_buffer_qflist.new` | Experimental previewer for qflist. Uses vim buffers             |
+| .................................. | Your next awesome previewer here :D                             |
+
+By default, telescope.nvim uses `cat`/`bat` for preview. However after telescope's new experimental previewers
+are stable this will change. The new experimental previewers use tree-sitter and vim buffers, provide much
+better performance and are ready for daily usage, but there might be cases where it can't detect a Filetype
+correctly, thus leading to wrong highlights. This is because we can't determine the filetype in the traditional way
+(we don't do `bufload`. We read the file async with `vim.loop.fs_` and attach only a highlighter), because we can't
+execute autocommands, otherwise the speed of the previewer would slow down considerably.
+If you want to configure more filetypes take a look at
+[plenary wiki](https://github.com/nvim-lua/plenary.nvim#plenaryfiletype).
+
+If you want to configure the `vim_buffer_` previewer, e.g. you want the line to wrap do this:
+```vim
+autocmd User TelescopePreviewerLoaded setlocal wrap
+```
+
+## Sorters
 
 | Sorters                            | Description                                                     |
 |------------------------------------|-----------------------------------------------------------------|
@@ -408,14 +490,16 @@ return a number, which is equivalent to the "distance" between the current
 <!-- - However, this prevents using some tools, like FZF easily. -->
 <!-- - In the future, I'll probably add a mode where you can delay the sorting til the end, so you can use more traditional sorting tools. -->
 
-## Built-in Themes
+## Themes
 
 Common groups of settings can be set up to allow for themes.
 We have some built in themes but are looking for more cool options.
 
+![dropdown](https://i.imgur.com/SorAcXv.png)
+
 | Themes                   | Description                                                           |
 |--------------------------|-----------------------------------------------------------------------|
-| `themes.get_dropdown`    | A list like centered list. [example](https://i.imgur.com/SorAcXv.png) |
+| `themes.get_dropdown`    | A list like centered list. [dropdown](https://i.imgur.com/SorAcXv.png)|
 | ...                      | Your next awesome theme here :D                                       |
 
 
@@ -427,8 +511,7 @@ nnoremap <Leader>f :lua require'telescope.builtin'.find_files(require('telescope
 ```
 
 Themes should work with every `telescope.builtin` function.  If you wish to
-make theme, check out `lua/telescope/themes.lua`. If you need more features,
-make an issue :).
+make theme, check out `lua/telescope/themes.lua`.
 
 
 ## Extensions
@@ -438,9 +521,14 @@ Telescope provides the capabilties to create & register extensions, which improv
 Some extensions provide integration with external tools, outside of the scope of `builtins`. Others provide performance
 enhancements by using compiled C and interfacing directly with Lua.
 
-For example:
-- [fzy-native](https://github.com/nvim-telescope/telescope-fzy-native.nvim) : WIP native FZY sorter that uses compiled C to do the matching.
-- [nvim-dap integration](https://github.com/nvim-telescope/telescope-dap.nvim) : WIP nvim-dap integration.
+### Community Extensions
+- [telescope-fzy-native.nvim](https://github.com/nvim-telescope/telescope-fzy-native.nvim) - Native FZY sorter that uses compiled C to do the matching
+- [telescope-dap.nvim](https://github.com/nvim-telescope/telescope-dap.nvim) - [`nvim-dap`](https://github.com/mfussenegger/nvim-dap) integration
+- [telescope-packer.nvim](https://github.com/nvim-telescope/telescope-packer.nvim) - A Telescope extension that provides extra functionality for Packer.nvim
+- [telescope-github.nvim](https://github.com/nvim-telescope/telescope-github.nvim) - Integration with github cli
+- [telescope-vimspector.nvim](https://github.com/nvim-telescope/telescope-vimspector.nvim) - Integration for [vimspector](https://github.com/puremourning/vimspector)
+- [telescope-fzf-writer.nvim](https://github.com/nvim-telescope/telescope-fzf-writer.nvim) - Incorporating some fzf concepts with plenary jobs and telescope
+- [telescope-symbols.nvim](https://github.com/nvim-telescope/telescope-symbols.nvim) - Picking symbols and insert them at point.
 
 Extensions can be refenced by doing the following:
 
@@ -459,7 +547,7 @@ require('telescope').load_extension('fzy_native')
 ## API
 <!-- TODO: need to provide working examples for every api -->
 
-#### Finders
+### Finders
 <!-- TODO what is finders -->
 ```lua
 -- lua/telescope/finders.lua
@@ -471,7 +559,7 @@ Finder:new{
 }
 ```
 
-#### Picker
+### Picker
 <!-- TODO: this section need some love, an in-depth explanation will be appreciated it need some in depth explanation -->
 <!-- TODO what is pickers -->
 This section is an overview of how custom pickers can be created any configured.
@@ -511,7 +599,7 @@ function my_custom_picker(results)
 end
 ```
 
-#### Layout (display)
+### Layout (display)
 <!-- TODO need some work -->
 
 `Resolvable`:
@@ -534,7 +622,7 @@ layout_strategies.horizontal = function(self, max_columns, max_lines)
 end
 ```
 
-#### Command-line
+## Vim Commands
 
 All `telescope.nvim` functions are wrapped in `vim` commands for easy access, its
 supports tab completions and settings options.
@@ -549,7 +637,7 @@ supports tab completions and settings options.
 
 " If option is table type in lua code ,you can use `,` connect each command string eg:
 " find_command,vimgrep_arguments they are both table type. so config it in commandline like
-:Telecope find_files find_command=rg,--ignore,--hidden,--files prompt_prefix=🔍
+:Telescope find_files find_command=rg,--ignore,--hidden,--files prompt_prefix=🔍
 ```
 
 ## Media

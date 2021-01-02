@@ -2,7 +2,6 @@ local actions = require('telescope.actions')
 local finders = require('telescope.finders')
 local make_entry = require('telescope.make_entry')
 local pickers = require('telescope.pickers')
-local previewers = require('telescope.previewers')
 local utils = require('telescope.utils')
 
 local conf = require('telescope.config').values
@@ -31,9 +30,9 @@ lsp.references = function(opts)
     prompt_title = 'LSP References',
     finder    = finders.new_table {
       results = locations,
-      entry_maker = make_entry.gen_from_quickfix(opts),
+      entry_maker = opts.entry_maker or make_entry.gen_from_quickfix(opts),
     },
-    previewer = previewers.qflist.new(opts),
+    previewer = conf.qflist_previewer(opts),
     sorter = conf.generic_sorter(opts),
   }):find()
 end
@@ -56,13 +55,14 @@ lsp.document_symbols = function(opts)
     return
   end
 
+  opts.ignore_filename = opts.ignore_filename or true
   pickers.new(opts, {
     prompt_title = 'LSP Document Symbols',
     finder    = finders.new_table {
       results = locations,
-      entry_maker = make_entry.gen_from_quickfix(opts)
+      entry_maker = opts.entry_maker or make_entry.gen_from_lsp_symbols(opts)
     },
-    previewer = previewers.qflist.new(opts),
+    previewer = conf.qflist_previewer(opts),
     sorter = conf.generic_sorter(opts),
   }):find()
 end
@@ -86,8 +86,13 @@ lsp.code_actions = function(opts)
     return
   end
 
-  local results = (results_lsp[1] or results_lsp[2]).result;
+  local _, response = next(results_lsp)
+  if not response then
+    print("No code actions available")
+    return
+  end
 
+  local results = response.result
   if not results or #results == 0 then
     print("No code actions available")
     return
@@ -161,22 +166,59 @@ lsp.workspace_symbols = function(opts)
     return
   end
 
+
+  opts.ignore_filename = utils.get_default(opts.ignore_filename, false)
+  opts.hide_filename = utils.get_default(opts.hide_filename, false)
+
   pickers.new(opts, {
     prompt_title = 'LSP Workspace Symbols',
     finder    = finders.new_table {
       results = locations,
-      entry_maker = make_entry.gen_from_quickfix(opts)
+      entry_maker = opts.entry_maker or make_entry.gen_from_lsp_symbols(opts)
     },
-    previewer = previewers.qflist.new(opts),
+    previewer = conf.qflist_previewer(opts),
     sorter = conf.generic_sorter(opts),
   }):find()
 end
+
+local function check_capabilities(feature)
+  local clients = vim.lsp.buf_get_clients(0)
+
+  local supported_client = false
+  for _, client in pairs(clients) do
+    supported_client = client.resolved_capabilities[feature]
+    if supported_client then goto continue end
+  end
+
+  ::continue::
+  if supported_client then
+    return true
+  else
+    if #clients == 0 then
+      print("LSP: no client attached")
+    else
+      print("LSP: server does not support " .. feature)
+    end
+    return false
+  end
+end
+
+local feature_map = {
+  ["code_actions"]      = "code_action",
+  ["document_symbols"]  = "document_symbol",
+  ["references"]        = "find_references",
+  ["workspace_symbols"] = "workspace_symbol",
+}
 
 local function apply_checks(mod)
   for k, v in pairs(mod) do
     mod[k] = function(opts)
       opts = opts or {}
 
+      local feature_name = feature_map[k]
+      if feature_name and not check_capabilities(feature_name) then
+        return
+      end
       v(opts)
     end
   end
