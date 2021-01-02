@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/nvim-lua/popup.nvim.git
 	branch = master
-	commit = 8f128cc7b2a1d759ce343ef92ea311526c6bbe13
-	parent = fee4bdd1aea6d8b246b179dfd2f39c7db70a62fb
+	commit = 6f8f4cf35278956de1095b0d10701c6b579a2a57
+	parent = 18172fb48fee784cded7127768e6ff0ed100fe48
 	method = rebase
 	cmdver = 0.4.0
