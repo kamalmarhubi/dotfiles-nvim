@@ -59,7 +59,7 @@ end
 ---@field o.command string          : Command to run
 ---@field o.args Array              : List of arguments to pass
 ---@field o.cwd string              : Working directory for job
----@field o.env Map                 : Environment
+---@field o.env Map|Array           : Environment looking like: { ['VAR'] = 'VALUE } or { 'VAR=VALUE' }
 ---@field o.enable_handlers boolean : If set to false, disables all callbacks associated with output
 ---@field o.on_start function       : Run when starting job
 ---@field o.on_stdout function      : (error: string, data: string, self? Job)
@@ -80,8 +80,25 @@ function Job:new(o)
 
   obj.command = o.command
   obj.args = o.args
-  obj.cwd = o.cwd and vim.fn.expand(o.cwd)
-  obj.env = o.env
+  obj.cwd = o.cwd and vim.fn.expand(o.cwd, true)
+  if o.env then
+    if type(o.env) ~= "table" then error('[plenary.job] env has to be a table') end
+
+    local transform = {}
+    for k, v in pairs(o.env) do
+      if type(k) == 'number' then
+        table.insert(transform, v)
+      elseif type(k) == 'string' then
+        table.insert(transform, k .. '=' .. tostring(v))
+      end
+    end
+    obj.env = transform
+  end
+  if o.interactive == nil then
+    obj.interactive = true
+  else
+    obj.interactive = o.interactive
+  end
 
   -- enable_handlers: Do you want to do ANYTHING with the stdout/stderr of the proc
   obj.enable_handlers = F.if_nil(o.enable_handlers, true, o.enable_handlers)
@@ -328,7 +345,7 @@ function Job:_prepare_pipes()
   end
 
   if not self.stdin then
-    self.stdin = uv.new_pipe(false)
+    self.stdin = self.interactive and uv.new_pipe(false) or nil
   end
 
   self.stdout = uv.new_pipe(false)
@@ -365,13 +382,21 @@ function Job:_execute()
     if Job.is_job(self.writer) then
       self.writer:_execute()
     elseif type(self.writer) == 'table' and vim.tbl_islist(self.writer) then
-      for _, v in ipairs(self.writer) do
-        self.stdin:write(v .. '\n')
+      local writer_len = #self.writer
+      for i, v in ipairs(self.writer) do
+        self.stdin:write(v)
+        if i ~= writer_len then
+          self.stdin:write('\n')
+        else
+          self.stdin:write('\n', function()
+            self.stdin:close()
+          end)
+        end
       end
-      self.stdin:close()
     elseif type(self.writer) == 'string' then
-      self.stdin:write(self.writer)
-      self.stdin:close()
+      self.stdin:write(self.writer, function()
+        self.stdin:close()
+      end)
     elseif self.writer.write then
       self.stdin = self.writer
     else
@@ -463,14 +488,18 @@ end
 function Job.join(...)
   local jobs_to_wait = {...}
 
+  local num_jobs = #jobs_to_wait
+  local completed = 0
+
   return vim.wait(10000, function()
     for index, current_job in pairs(jobs_to_wait) do
       if current_job.is_shutdown then
         jobs_to_wait[index] = nil
+        completed = completed + 1
       end
     end
 
-    return #jobs_to_wait == 0
+    return num_jobs == completed
   end)
 end
 

@@ -72,7 +72,7 @@ function win_float.centered_with_top_win(top_text, options)
   table.insert(top_text, 1, string.rep("=", 80))
   table.insert(top_text, string.rep("=", 80))
 
-  local primary_win_opts = win_float.default_opts(options)
+  local primary_win_opts = win_float.default_opts(nil, nil, options)
   local minor_win_opts = vim.deepcopy(primary_win_opts)
 
   primary_win_opts.height = primary_win_opts.height - #top_text - 1
@@ -80,8 +80,8 @@ function win_float.centered_with_top_win(top_text, options)
 
   minor_win_opts.height = #top_text
 
-  local minor_bufnr = vim.fn.nvim_create_buf(false, true)
-  local minor_win_id = vim.fn.nvim_open_win(minor_bufnr, true, minor_win_opts)
+  local minor_bufnr = vim.api.nvim_create_buf(false, true)
+  local minor_win_id = vim.api.nvim_open_win(minor_bufnr, true, minor_win_opts)
 
   vim.cmd('setlocal nocursorcolumn')
   vim.fn.nvim_win_set_option(minor_win_id, 'winblend', options.winblend)

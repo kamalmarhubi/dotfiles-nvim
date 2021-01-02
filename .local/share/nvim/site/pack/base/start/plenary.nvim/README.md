@@ -45,70 +45,84 @@ assert(result == "# plenary.nvim")
 
 ### plenary.test_harness
 
-Supports both `busted` and `luaunit` style testing.
+Supports (simple) busted-style testing. It implements a mock-ed busted interface, that will allow you to run simple
+busted style tests in separate neovim instances.
 
-#### Busted
+To run the current spec file in a floating window, you can use the keymap `<Plug>PlenaryTestFile`. For example:
 
-See test files in `./tests/plenary/bu`.
+```
+nmap <leader>t <Plug>PlenaryTestFile
+```
 
-Add the following line to the beginning of your test file:
+To run a whole directory from the command line, you could do something like:
 
+```
+nvim --headless -c 'PlenaryBustedDirectory tests/plenary/ {minimal_init = "tests/minimal_init.vim"}'
+```
+
+Where the first argument is the directory you'd like to test. It will search for files with
+the pattern `*_spec.lua` and execute them in parallel in separate neovim instances.
+
+The second argument is an optional init.vim to specify so that you can make reproducible tests!
+
+The exit code is 0 when success and 1 when fail, so you can use it easily in a `Makefile`!
+
+
+NOTE:
+
+So far, the only supported busted items are:
+
+- `describe`
+- `it`
+- `pending`
+- `assert.*` etc. (from luassert, which is bundled)
+
+OTHER NOTE:
+
+We used to support `luaunit` and original `busted` but it turns out it was way too hard and not worthwhile
+for the difficulty of getting them setup, particularly on other platforms or in CI. Now, we have a dep free
+(or at least, no other installation steps necessary) `busted` implementation that can be used more easily.
+
+Please take a look at the new APIs and make any issues for things that aren't clear. I am happy to fix them
+and make it work well :)
+
+
+### plenary.filetype
+
+Will detect the filetype based on `extension`/`special filename`/`shebang` or `modeline`
+
+- `require'plenary.filetype'.detect(filepath, opts)` is a function that does all of above and exits as soon as a filetype is found
+- `require'plenary.filetype'.detect_from_extension(filepath)`
+- `require'plenary.filetype'.detect_from_name(filepath)`
+- `require'plenary.filetype'.detect_from_modeline(filepath)`
+- `require'plenary.filetype'.detect_from_shebang(filepath)`
+
+Add filetypes by creating a new file named `~/.config/nvim/data/plenary/filetypes/foo.lua` and register that file with
+`:lua require'plenary.filetype'.add_file('foo')`. Content of the file should look like that:
 ```lua
-require('plenary.test_harness'):setup_busted()
+return {
+  extension = {
+    -- extension = filetype
+    -- example:
+    ['jl'] = 'julia',
+  },
+  file_name = {
+    -- special filenames, likes .bashrc
+    -- we provide a decent amount
+    -- name = filetype
+    -- example:
+    ['.bashrc'] = 'bash',
+  },
+  shebang = {
+    -- Shebangs are supported as well. Currently we provide
+    -- sh, bash, zsh, python, perl with different prefixes like
+    -- /usr/bin, /bin/, /usr/bin/env, /bin/env
+    -- shebang = filetype
+    -- example:
+    ['/usr/bin/node'] = 'javascript',
+  }
+}
 ```
-
-And then you can run your tests from command line by doing:
-
-```
--> nvim --headless -c 'lua require("plenary.test_harness"):test_directory("busted", "./tests/plenary/bu/", true)'
-Loading Tests For:  /home/tj/plugins/plenary.nvim/tests/plenary/bu/uses_nvim_spec.lua+
-1 success / 0 failures / 0 errors / 0 pending : 0.000263 seconds
-Loading Tests For:  /home/tj/plugins/plenary.nvim/tests/plenary/bu/simple_busted_spec.lua+
-1 success / 0 failures / 0 errors / 0 pending : 0.000255 seconds%
-```
-
-OR you can run from within Neovim (in a new nvim instance, so you don't need to worry about hot reloading or anyything like that)
-
-```vim
-lua require("plenary.test_harness"):test_directory("busted", "./tests/plenary/bu/")
-```
-
-#### LuaUnit
-
-See test files in `./tests/plenary/lu`. For example
-
-```lua
-local lu = require("luaunit")
-
-local Path = require("plenary.path")
-local test_harness = require("plenary.test_harness")
-
-TestPath = {}
-
-function TestPath:testReadme()
-    local p = Path:new("README.md")
-
-    lu.assertEquals(p.raw, "README.md")
-end
-
-function TestPath:testAbsolute()
-    local p = Path:new("README.md")
-
-    lu.assertEquals(p:absolute(), vim.fn.fnamemodify("README.md", ":p"))
-end
-```
-
-Running the command:
-
-```
-$ nvim --headless -c 'lua require("plenary.test_harness"):test_directory("luaunit", "./tests/plenary/lu/", true)'
-```
-
-This is awesome because it uses the vim lua APi in the tests and in the code! Which is always a hassle when
-writing Lua plugins for Neovim. This makes it possible to actually write tests and get the results
-
-I will make the test harness a little nicer to use in the future, but that's the general idea.
-
 
 ### plenary.popup
 

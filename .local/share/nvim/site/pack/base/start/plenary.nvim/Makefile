@@ -1,3 +1,5 @@
 test:
-	nvim --headless -c 'lua require("plenary.test_harness"):test_directory("luaunit", "./tests/plenary/lu/")'
-	nvim --headless -c 'lua require("plenary.test_harness"):test_directory("busted", "./tests/plenary/bu/")'
+	nvim --headless --noplugin -u scripts/minimal.vim -c "PlenaryBustedDirectory tests/plenary/ {minimal_init = 'tests/minimal_init.vim'}"
+
+generate_filetypes:
+	nvim --headless -c 'luafile scripts/update_filetypes_from_github.lua' -c 'qa!'
