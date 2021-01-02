@@ -1,3 +1,7 @@
+(simple_expansion) @none
+(expansion
+  "${" @punctuation.special
+  "}" @punctuation.special) @none
 [
  "("
  ")"
@@ -25,6 +29,7 @@
  "|"
  "||"
  "="
+ "=~"
  "=="
  "!="
  ] @operator
@@ -61,18 +66,16 @@
  "local"
  "readonly"
  "unset"
+ "function"
  ] @keyword
 
 (special_variable_name) @constant
 
 ((word) @constant.builtin
- (#vim-match? @constant.builtin "SIG(INT|TERM|QUIT|TIN|TOU|STP|HUP)"))
+ (#match? @constant.builtin "^SIG(INT|TERM|QUIT|TIN|TOU|STP|HUP)$"))
 
 ((word) @boolean
-  (#vim-match? @boolean "true|false"))
-
-((word) @number
-  (#vim-match? @number "^\d*$"))
+  (#match? @boolean "^(true|false)$"))
 
 (comment) @comment
 (test_operator) @string
@@ -92,10 +95,11 @@
 (command
   argument: [
              (word) @parameter
-             ((word) @number
-              (#vim-match? @number "^\d*$"))
              (concatenation (word) @parameter)
              ])
+
+((word) @number
+  (#match? @number "^[0-9]+$"))
 
 (file_redirect
   descriptor: (file_descriptor) @operator
@@ -112,4 +116,4 @@
 (case_item
   value: (word) @parameter)
 
-(concatenation (word) @parameter)
+(regex) @string.regex

@@ -5,7 +5,7 @@
 
 (if_statement
 [
-  "if" 
+  "if"
   "then"
   "end"
 ] @conditional)
@@ -13,6 +13,7 @@
 [
   "else"
   "elseif"
+  "then"
 ] @conditional
 
 (for_statement
@@ -110,7 +111,7 @@
 (function [(function_name) (identifier)] @function)
 (function ["function" "end"] @keyword.function)
 
-(local_function [(function_name) (identifier)] @function)
+(local_function (identifier) @function)
 (local_function ["function" "end"] @keyword.function)
 
 (function_definition ["function" "end"] @keyword.function)
@@ -131,6 +132,7 @@
 (string) @string
 (number) @number
 (label_statement) @label
+(shebang) @comment
 
 ;; Error
 (ERROR) @error

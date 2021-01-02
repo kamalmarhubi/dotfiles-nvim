@@ -76,15 +76,15 @@
     (identifier) @type))
  (#eq? @_isinstance "isinstance"))
 
-; Normal parameters
+;; Normal parameters
 (parameters
   (identifier) @parameter)
-; Lambda parameters
+;; Lambda parameters
 (lambda_parameters
   (identifier) @parameter)
 (lambda_parameters
-  (tuple
-    (identifier) @parameter ))
+  (tuple_pattern
+    (identifier) @parameter))
 ; Default parameters
 (keyword_argument
   name: (identifier) @parameter)
@@ -97,19 +97,19 @@
   (identifier) @parameter)
 ; Variadic parameters *args, **kwargs
 (parameters
-  (list_splat ; *args
+  (list_splat_pattern ; *args
     (identifier) @parameter))
 (parameters
-  (dictionary_splat ; **kwargs
+  (dictionary_splat_pattern ; **kwargs
     (identifier) @parameter))
 
 
-; Literals
+;; Literals
 
 (none) @constant.builtin
 [(true) (false)] @boolean
 ((identifier) @variable.builtin
- (#match? @variable.builtin "self"))
+ (#match? @variable.builtin "^self$"))
 
 (integer) @number
 (float) @float
@@ -224,8 +224,14 @@
   body: (block
           (expression_statement
             (assignment
-              left: (expression_list
-                      (identifier) @field)))))
+              left: (identifier) @field))))
+ (#vim-match? @field "^([A-Z])@!.*$"))
+((class_definition
+  body: (block
+          (expression_statement
+            (assignment
+              left: (_ 
+                     (identifier) @field)))))
  (#vim-match? @field "^([A-Z])@!.*$"))
 
 ((class_definition

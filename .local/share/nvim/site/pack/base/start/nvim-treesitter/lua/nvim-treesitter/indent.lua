@@ -40,7 +40,7 @@ function M.get_indent(lnum)
   local parser = parsers.get_parser()
   if not parser or not lnum then return -1 end
 
-  local node = get_node_at_line(parser:parse():root(), lnum-1)
+  local node = get_node_at_line(parser:parse()[1]:root(), lnum-1)
   local indent_queries = get_indents(vim.api.nvim_get_current_buf())
   local indents = indent_queries.indents
   local branches = indent_queries.branches
@@ -50,11 +50,12 @@ function M.get_indent(lnum)
     node = node:parent()
   end
 
+  local ind_size = vim.bo.softtabstop < 0 and vim.bo.shiftwidth or vim.bo.tabstop
   local ind = 0
   while node do
     node = node:parent()
     if indents[tostring(node)] then
-      ind = ind + vim.bo.tabstop
+      ind = ind + ind_size
     end
   end
 

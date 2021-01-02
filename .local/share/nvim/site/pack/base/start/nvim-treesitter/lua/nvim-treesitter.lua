@@ -1,5 +1,4 @@
---TODO(theHamsta): remove once stabilized!
-if not pcall(require,"vim.treesitter.query") then
+if not pcall(require,"vim.treesitter.languagetree") then
   error("nvim-treesitter requires a more recent Neovim nightly version!")
 end
 

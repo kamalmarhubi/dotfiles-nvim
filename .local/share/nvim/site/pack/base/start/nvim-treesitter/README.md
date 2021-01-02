@@ -29,13 +29,34 @@
   </p>
 </div>
 
+The goal of `nvim-treesitter` is both to provide a simple and easy way to use the interface for [tree-sitter](https://github.com/tree-sitter/tree-sitter) in Neovim and to provide some basic functionality such as highlighting based on it:
+
 ![cpp example](assets/example-cpp.png)
 
 Traditional highlighting (left) vs Treesitter-based highlighting (right).
-See more examples in [our gallery](https://github.com/nvim-treesitter/nvim-treesitter/wiki/Gallery).
+More examples can be found in [our gallery](https://github.com/nvim-treesitter/nvim-treesitter/wiki/Gallery).
 
-**Warning: Treesitter and Treesitter highlighting are an experimental feature of nightly versions of Neovim.
-Please consider the experience with this plug-in as experimental until Neovim 0.5 is released!**
+**Warning: Treesitter and nvim-treesitter highlighting are an experimental feature of nightly versions of Neovim.
+Please consider the experience with this plug-in as experimental until Neovim 0.5 is released!
+You can find the current roadmap [here](https://github.com/nvim-treesitter/nvim-treesitter/projects/1).
+The roadmap and all features of this plugin are open to change, and any suggestion will be highly appreciated!**
+
+Nvim-treesitter is based on three interlocking features: [**language parsers**](#language-parsers), [**queries**](#adding-queries), and [**modules**](#available-modules), where *modules* provide features – e.g., highlighting – based on *queries* for syntax objects extracted from a given buffer by *language parsers*.
+Users will generally only need to interact with parsers and modules as explained in the next section.
+For more detailed information on setting these up, see ["Advanced setup"](#advanced-setup).
+
+---
+
+### Table of contents
+
+* [Quickstart](#quickstart)
+* [Supported languages](#supported-languages)
+* [Available modules](#available-modules)
+* [Advanced setup](#advanced-setup)
+* [Extra features](#extra-features)
+* [Troubleshooting](#troubleshooting)
+
+---
 
 # Quickstart
 
@@ -47,64 +68,37 @@ Please consider the experience with this plug-in as experimental until Neovim 0.
 
 ## Installation
 
-You can install `nvim-treesitter` with your favorite package manager, or using the default `pack` feature of Neovim!
+You can install `nvim-treesitter` with your favorite package manager (or using the native `package` feature of vim, see `:h packages`).
 
-### Using a package manager
-
-If you are using [vim-plug](https://github.com/junegunn/vim-plug), put this in your `init.vim` file:
+E.g., if you are using [vim-plug](https://github.com/junegunn/vim-plug), put this in your `init.vim` file:
 
 ```vim
-Plug 'nvim-treesitter/nvim-treesitter'
+Plug 'nvim-treesitter/nvim-treesitter', {'do': ':TSUpdate'}  " We recommend updating the parsers on update
 ```
 
-### Using Neovim `pack` feature
+## Language parsers
 
-We highly recommend reading `:h packages` to learn more about this feature, but you can still follow these steps:
-
-```sh
-$ mkdir -p ~/.local/share/nvim/site/pack/nvim-treesitter/start
-$ cd ~/.local/share/nvim/site/pack/nvim-treesitter/start
-$ git clone https://github.com/nvim-treesitter/nvim-treesitter.git
+Treesitter uses a different _parser_ for every language, which needs to be generated via `tree-sitter-cli` from a `grammar.js` file, then compiled to a `.so` library that needs to be placed in neovim's `runtimepath` (typically under `parser/{language}.so`).
+To simplify this, `nvim-treesitter` provides commands to automate this process.
+If the language is already [supported by `nvim-treesitter`](#supported-languages), you can install it with
+```vim
+:TSInstall {language}
 ```
+This command supports tab expansion.
+You can also get a list of all available languages and their installation status with `:TSInstallInfo`.
+Parsers not on this list can be added manually by following the steps described under ["Adding parsers"](#adding-parsers) below.
 
-## Adding parsers
+If you update `nvim-treesitter` and want to make sure the parser is at the latest compatible version (as specified in `nvim-treesitter`'s `lockfile.json`), use `:TSUpdate {language}`.
+To update all parsers unconditionally, use `:TSUpdate all` or just `:TSUpdate`.
 
-Treesitter uses a different _parser_ for every language. It can be quite a pain to install, but fortunately `nvim-treesitter`
-provides two command to tackle this issue:
+## Modules
 
-- `TSInstall {language}` to install one or more parsers.
-  `TSInstall <tab>` will give you a list of supported languages, or select `all` to install them all.
-- `TSInstallInfo` to know which parser is installed.
-- `TSUpdate` to update already installed parsers
+Each module provides a distinct tree-sitter-based feature such as [highlighting](#highlight), [indentation](#indentation), or [folding](#folding); see [`:h nvim-treesitter-modules`](doc/nvim-treesitter.txt) or ["Available modules"](#available-modules) below for a list of modules and their options.
 
-Let's say you need parsers for `lua`, this is how you install it:
+All modules are disabled by default and need to be activated explicitly in your `init.vim`, e.g., via
 
 ```vim
-:TSInstall lua
-Downloading...
-Compiling...
-Treesitter parser for lua has been installed
-```
-
-Cool, lets see which parsers are installed:
-
-```vim
-:TSInstallInfo
-lua        [✓] installed
-c          [✗] installed
-html       [✗] not installed
-typescript [✗] not installed
-...
-```
-
-And now you should be ready to use every functionality `nvim-treesitter` provides!
-
-## Setup
-
-All modules are disabled by default,
-so you'll need to activate them by putting this in your `init.vim` file:
-
-```lua
+lua <<EOF
 require'nvim-treesitter.configs'.setup {
   ensure_installed = "maintained", -- one of "all", "maintained" (parsers with maintainers), or a list of languages
   highlight = {
@@ -112,91 +106,10 @@ require'nvim-treesitter.configs'.setup {
     disable = { "c", "rust" },  -- list of language that will be disabled
   },
 }
+EOF
 ```
 
-Check [`:h nvim-treesitter-modules`](doc/nvim-treesitter.txt)
-for a list of available modules and its options.
-
-# Available modules
-
-## Highlight
-
-Consistent syntax highlighting.
-
-```lua
-require'nvim-treesitter.configs'.setup {
-  highlight = {
-    enable = true,
-    use_languagetree = false, -- Use this to enable language injection (this is very unstable)
-    custom_captures = {
-      -- Highlight the @foo.bar capture group with the "Identifier" highlight group.
-      ["foo.bar"] = "Identifier",
-    },
-  },
-}
-```
-
-## Incremental selection
-
-Incremental selection based on the named nodes from the grammar.
-
-```lua
-require'nvim-treesitter.configs'.setup {
-  incremental_selection = {
-    enable = true,
-    keymaps = {
-      init_selection = "gnn",
-      node_incremental = "grn",
-      scope_incremental = "grc",
-      node_decremental = "grm",
-    },
-  },
-}
-```
-
-## Indentation
-
-Treesitter based indentation (`=` vim behavior)
-
-```lua
-require'nvim-treesitter.config'.setup {
-  indent = {
-    enable = true
-  }
-}
-```
-
-# External modules
-
-Other modules can be installed as plugins.
-
-- [refactor](https://github.com/nvim-treesitter/nvim-treesitter-refactor) - Refactoring and definition modules
-- [textobjects](https://github.com/nvim-treesitter/nvim-treesitter-textobjects) - Textobjects defined by tree-sitter queries
-- [playground](https://github.com/nvim-treesitter/playground) - Treesitter integrated playground
-- [context](https://github.com/romgrk/nvim-treesitter-context) - Show parent code context in a popover
-
-
-# Extra features
-
-## Syntax based code folding
-
-```vim
-set foldmethod=expr
-set foldexpr=nvim_treesitter#foldexpr()
-```
-
-This will respect your `foldnestmax` setting.
-
-## Statusline indicator
-
-```vim
-echo nvim_treesitter#statusline(90)  " 90 can be any length
-module->expression_statement->call->identifier
-```
-
-# Commands
-
-Each feature can be enabled or disabled by different means:
+Each module can also be enabled or disabled interactively through the following commands:
 
 ```vim
 :TSBufEnable {module} " enable module on current buffer
@@ -207,27 +120,31 @@ Each feature can be enabled or disabled by different means:
 ```
 
 Check [`:h nvim-treesitter-commands`](doc/nvim-treesitter.txt) for a list of all available commands.
+It may be necessary to reload the buffer (e.g., via `:e`) after enabling a module interactively.
 
-# Supported Languages
+# Supported languages
 
-For `nvim-treesitter` to work, we need to use query files such as those you can find in
-`queries/{lang}/{locals,highlights,textobjects}.scm`
+For `nvim-treesitter` to support a specific feature for a specific language requires both a parser for that language and an appropriate language-specific query file for that feature.
 
-We are looking for maintainers to write query files for their languages.
+The following is a list of languages for which a parser can be installed through `:TSInstall`; a checked box means that `nvim-treesitter` also contains queries at least for the `highlight` module.
 
-List of currently supported languages:
+We are looking for maintainers to add more parsers and to write query files for their languages.
 
 <!--This section of the README is automatically updated by a CI job-->
 <!--parserinfo-->
 - [x] [bash](https://github.com/tree-sitter/tree-sitter-bash) (maintained by @TravonteD)
 - [x] [c](https://github.com/tree-sitter/tree-sitter-c) (maintained by @vigoux)
 - [x] [c_sharp](https://github.com/tree-sitter/tree-sitter-c-sharp) (maintained by @svermeulen)
+- [x] [clojure](https://github.com/sogaiu/tree-sitter-clojure) (maintained by @sogaiu)
 - [x] [cpp](https://github.com/tree-sitter/tree-sitter-cpp) (maintained by @theHamsta)
 - [x] [css](https://github.com/tree-sitter/tree-sitter-css) (maintained by @TravonteD)
 - [x] [dart](https://github.com/UserNobody14/tree-sitter-dart) (maintained by @Akin909)
 - [ ] [elm](https://github.com/razzeee/tree-sitter-elm)
+- [x] [erlang](https://github.com/AbstractMachinesLab/tree-sitter-erlang) (maintained by @ostera)
 - [x] [fennel](https://github.com/travonted/tree-sitter-fennel) (maintained by @TravonteD)
+- [x] [Godot (gdscript)](https://github.com/PrestonKnopp/tree-sitter-gdscript) (maintained by not @tjdevries)
 - [x] [go](https://github.com/tree-sitter/tree-sitter-go) (maintained by @theHamsta, @WinWisely268)
+- [x] [graphql](https://github.com/bkegley/tree-sitter-graphql) (maintained by @bkegley)
 - [ ] [haskell](https://github.com/tree-sitter/tree-sitter-haskell)
 - [x] [html](https://github.com/tree-sitter/tree-sitter-html) (maintained by @TravonteD)
 - [x] [java](https://github.com/tree-sitter/tree-sitter-java) (maintained by @p00f)
@@ -235,8 +152,9 @@ List of currently supported languages:
 - [x] [jsdoc](https://github.com/tree-sitter/tree-sitter-jsdoc) (maintained by @steelsojka)
 - [x] [json](https://github.com/tree-sitter/tree-sitter-json) (maintained by @steelsojka)
 - [ ] [julia](https://github.com/tree-sitter/tree-sitter-julia)
+- [x] [kotlin](https://github.com/QthCN/tree-sitter-kotlin) (maintained by @tormodatt)
 - [x] [lua](https://github.com/nvim-treesitter/tree-sitter-lua) (maintained by @vigoux)
-- [ ] [nix](https://github.com/cstrahan/tree-sitter-nix)
+- [x] [nix](https://github.com/cstrahan/tree-sitter-nix) (maintained by @leo60228)
 - [x] [ocaml](https://github.com/tree-sitter/tree-sitter-ocaml) (maintained by @undu)
 - [x] [ocaml_interface](https://github.com/tree-sitter/tree-sitter-ocaml) (maintained by @undu)
 - [x] [ocamllex](https://github.com/atom-ocaml/tree-sitter-ocamllex) (maintained by @undu)
@@ -249,6 +167,7 @@ List of currently supported languages:
 - [x] [ruby](https://github.com/tree-sitter/tree-sitter-ruby) (maintained by @TravonteD)
 - [x] [rust](https://github.com/tree-sitter/tree-sitter-rust) (maintained by @vigoux)
 - [ ] [scala](https://github.com/tree-sitter/tree-sitter-scala)
+- [x] [sparql](https://github.com/BonaBeavis/tree-sitter-sparql) (maintained by @bonabeavis)
 - [ ] [swift](https://github.com/tree-sitter/tree-sitter-swift)
 - [x] [teal](https://github.com/euclidianAce/tree-sitter-teal) (maintained by @euclidianAce)
 - [x] [toml](https://github.com/ikatyang/tree-sitter-toml) (maintained by @tk-shirasaka)
@@ -259,25 +178,150 @@ List of currently supported languages:
 - [ ] [yaml](https://github.com/ikatyang/tree-sitter-yaml)
 <!--parserinfo-->
 
-# Roadmap
 
-The goal of `nvim-treesitter` is both to provide a simple and easy way to use the interface for Treesitter in Neovim,
-but also to add some functionalities to it.
+# Available modules
 
-You can find the roadmap [here](https://github.com/nvim-treesitter/nvim-treesitter/projects/1).
-The roadmap and all features of this plugin are open to change, and any suggestion will be highly appreciated!
+Modules provide the top-level features of `nvim-treesitter`.
+The following is a list of modules included in `nvim-treesitter` and their configuration via `init.vim` (where multiple modules can be combined in a single call to `setup`).
+Note that not all modules work for all languages (depending on the queries available for them).
+Additional modules can be provided as [external plugins](https://github.com/nvim-treesitter/nvim-treesitter/wiki/Extra-modules-and-plugins).
 
-# Defining Modules
+#### Highlight
 
-Users and plugin authors can take advantage of modules by creating their own. Modules provide:
+Consistent syntax highlighting.
 
-- Treesitter language detection support
-- Attach and detach to buffers
-- Works with all nvim-treesitter commands
+```vim
+lua <<EOF
+require'nvim-treesitter.configs'.setup {
+  highlight = {
+    enable = true,
+    custom_captures = {
+      -- Highlight the @foo.bar capture group with the "Identifier" highlight group.
+      ["foo.bar"] = "Identifier",
+    },
+  },
+}
+EOF
+```
 
-You can use the `define_modules` function to define one or more modules or module groups.
+#### Incremental selection
 
-```lua
+Incremental selection based on the named nodes from the grammar.
+
+```vim
+lua <<EOF
+require'nvim-treesitter.configs'.setup {
+  incremental_selection = {
+    enable = true,
+    keymaps = {
+      init_selection = "gnn",
+      node_incremental = "grn",
+      scope_incremental = "grc",
+      node_decremental = "grm",
+    },
+  },
+}
+EOF
+```
+
+#### Indentation
+
+Tree-sitter based indentation.
+
+```vim
+lua <<EOF
+require'nvim-treesitter.config'.setup {
+  indent = {
+    enable = true
+  }
+}
+EOF
+```
+
+#### Folding
+
+Tree-sitter based folding.
+
+```vim
+set foldmethod=expr
+set foldexpr=nvim_treesitter#foldexpr()
+```
+
+This will respect your `foldnestmax` setting.
+
+# Advanced setup
+
+## Adding parsers
+
+If you have a parser that is not on the list of supported languages (either as a repository on Github or in a local directory), you can add it manually for use by `nvim-treesitter` as follows:
+
+1. Clone the repository or [create a new project](https://tree-sitter.github.io/tree-sitter/creating-parsers#project-setup) in, say, `~/projects/tree-sitter-zimbu`. Make sure that the `tree-sitter-cli` executable is installed and in your path; see <https://tree-sitter.github.io/tree-sitter/creating-parsers#installation> for installation instructions.
+2. Run `tree-sitter generate` in this directory (followed by `tree-sitter test` for good measure).
+3. Add the following snippet to your `init.vim`:
+
+```vim
+lua <<EOF
+local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
+parser_config.zimbu = {
+  install_info = {
+    url = "~/projects/tree-sitter-zimbu", -- local path or git repo
+    files = {"src/parser.c"}
+  },
+  filetype = "zu", -- if filetype does not agrees with parser name
+  used_by = {"bar", "baz"} -- additional filetypes that use this parser
+}
+EOF
+```
+
+4. Start `nvim` and `:TSInstall zimbu`.
+
+You can also skip step 2 and use `:TSInstallFromGrammar zimbu` to install directly from a `grammar.js` in the top-level directory specified by `url`.
+Once the parser is installed, you can update it (from the latest revision of the `main` branch if `url` is a Github repository) with `:TSUpdate zimbu`.
+
+## Update parsers used_by
+
+Sometimes needs to use some parser for different filetype.
+
+Add the following snippet to your `init.vim`:
+
+```vim
+lua <<EOF
+local parser_config = require "nvim-treesitter.parsers".get_parser_configs()
+parser_config.typescript.used_by = "javascriptflow"
+EOF
+```
+
+## Adding queries
+
+Queries are what `nvim-treesitter` uses to extract informations from the syntax tree; they are
+located in the `queries/{language}/*` runtime directories (like the `queries` folder of this plugin), e.g., `queries/{language}/{locals,highlights,textobjects}.scm`.
+Other modules may require additional queries such as `folding.scm`.
+
+`nvim-treesitter` considers queries as any runtime file (see `:h rtp`), i.e.,
+
+- if the file is in any `after/queries/` folder, then it will be used to extend the already defined
+  queries.
+- Otherwise, it will be used as a base to define the query, the first query found (with the highest
+  priority) will be the only one to be used.
+
+This hybrid approach is the most standard way; in this case
+
+- if you want to rewrite (or write) a query, don't use `after/queries`;
+- if you want to override a part of a query (only one match for example), use the `after/queries`
+  directory.
+
+## Adding modules
+
+If you wish you write your own module, you need to support
+
+- tree-sitter language detection support;
+- attaching and detaching to buffers;
+- all nvim-treesitter commands.
+
+At the top level, you can use the `define_modules` function to define one or more modules or module groups:
+
+```vim
+lua <<EOF
 require'nvim-treesitter'.define_modules {
   my_cool_plugin = {
     attach = function(bufnr, lang)
@@ -291,18 +335,28 @@ require'nvim-treesitter'.define_modules {
     end
   }
 }
+EOF
 ```
 
-Modules can consist of the following properties:
+with the following properties:
 
-- `module_path`: A require path (string) that exports a module with an `attach` and `detach` function. This is not required if the functions are on this definition.
-- `enable`: Determines if the module is enabled by default. This is usually overridden by the user.
-- `disable`: A list of languages that this module is disabled for. This is usually overridden by the user.
-- `is_supported`: A function that takes a language and determines if this module supports that language.
-- `attach`: A function that attaches to a buffer. This is required if `module_path` is not provided.
-- `detach`: A function that detaches from a buffer. This is required if `module_path` is not provided.
+- `module_path` specifies a require path (string) that exports a module with an `attach` and `detach` function. This is not required if the functions are on this definition.
+- `enable` determines if the module is enabled by default. This is usually overridden by the user.
+- `disable` takes a list of languages that this module is disabled for. This is usually overridden by the user.
+- `is_supported` takes a function that takes a language and determines if this module supports that language.
+- `attach` takes a function that attaches to a buffer. This is required if `module_path` is not provided.
+- `detach` takes a function that detaches from a buffer. This is required if `module_path` is not provided.
 
-# Utils
+# Extra features
+
+### Statusline indicator
+
+```vim
+echo nvim_treesitter#statusline(90)  " 90 can be any length
+module->expression_statement->call->identifier
+```
+
+### Utilities
 
 You can get some utility functions with
 
@@ -312,60 +366,43 @@ local ts_utils = require 'nvim-treesitter.ts_utils'
 
 Check [`:h nvim-treesitter-utils`](doc/nvim-treesitter.txt) for more information.
 
-# User Query Extensions
-
-Queries are what `nvim-treesitter` uses to extract informations from the syntax tree, and they are
-located in the `queries/{lang}/*` runtime directories (like the `queries` folder of this plugin).
-
-`nvim-treesitter` considers queries as any runtime file (see `:h rtp`), that is :
-
-- if the file is in any `after/queries/` folder, then it will be used to extend the already defined
-  queries.
-- Otherwise, it will be used as a base to define the query, the first query found (with the highest
-  priority) will be the only one to be used.
-
-This hybrid approach is the most standard way, and according to that, here is some ideas on how to
-use is :
-- If you want to rewrite (or write) a query, don't use `after/queries`.
-- If you want to override a part of a query (only one match for example), use the `after/queries`
-  directory.
-
 # Troubleshooting
 
-Before doing anything make sure you have the latest version of this plugin and run `:checkhealth nvim_treesitter`.
-This will help you find where the bug might come from.
+Before doing anything, make sure you have the latest version of this plugin and run `:checkhealth nvim_treesitter`.
+It can also help to update the parsers via `:TSUpdate`.
 
-## Feature `X` does not work for `{language}`...
+#### Feature `X` does not work for `{language}`...
 
-First, check the `## {language} parser healthcheck` section of `:checkhealth` if you have any warning.
-If you do, it's highly possible that this is the cause of the problem.
+First, check the `## {language} parser healthcheck` section of `:checkhealth` for any warning.
+If there is one, it's highly likely that this is the cause of the problem.
 If everything is okay, then it might be an actual error.
 
-In both cases, feel free to [open an issue here](https://github.com/nvim-treesitter/nvim-treesitter/issues/new/choose).
+In that case, feel free to [open an issue here](https://github.com/nvim-treesitter/nvim-treesitter/issues/new/choose).
 
-## I get `module 'vim.treesitter.query' not found`
+#### I get `module 'vim.treesitter.query' not found`
 
 Make sure you have the latest nightly version of Neovim.
 
-## I get `Error detected while processing .../plugin/nvim-treesitter.vim` every time I open Neovim
+#### I get `Error detected while processing .../plugin/nvim-treesitter.vim` every time I open Neovim
 
 This is probably due to a change in a parser's grammar or its queries.
 Try updating the parser that you suspect has changed (`:TSUpdate {language}`) or all of them (`:TSUpdate`).
 If the error persists after updating all parsers,
 please [open an issue](https://github.com/nvim-treesitter/nvim-treesitter/issues/new/choose).
 
-## I experience weird highlighting issues similar to [#78](https://github.com/nvim-treesitter/nvim-treesitter/issues/78)
+#### I experience weird highlighting issues similar to [#78](https://github.com/nvim-treesitter/nvim-treesitter/issues/78)
 
-This is a well known issue, which arise when the tree and the buffer are getting out of sync.
-As this issue comes from upstream, we don't have any finite fix. To get around this, you can force reparsing the buffer with this command:
+This is a well known issue, which arises when the tree and the buffer have gotten out of sync.
+As this is an upstream issue, we don't have any definite fix.
+To get around this, you can force reparsing the buffer with
 
 ```vim
 :write | edit | TSBufEnable highlight
 ```
 
-This will save, restore and enable highlighting for the current buffer, fixing the issue.
+This will save, restore and enable highlighting for the current buffer.
 
-## I experience bugs when using `nvim-treesitter`'s `foldexpr` similar to [#194](https://github.com/nvim-treesitter/nvim-treesitter/issues/194)
+#### I experience bugs when using `nvim-treesitter`'s `foldexpr` similar to [#194](https://github.com/nvim-treesitter/nvim-treesitter/issues/194)
 
-This might happen, and is known to happen with `vim-clap`, to avoid those kind of errors, please use
-`setlocal` instead of `set` for the appropriate filetypes.
+This might happen, and is known to happen, with `vim-clap`.
+To avoid these kind of errors, please use `setlocal` instead of `set` for the respective filetypes.

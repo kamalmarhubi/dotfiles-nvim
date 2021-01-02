@@ -102,8 +102,15 @@
   "|"
 ] @punctuation.delimiter
 
-(className) @type
+(moduleExpr (simpleId) @namespace)
+(module name: (moduleName) @namespace)
 
+(dataclass name: (className) @type)
+(datatype name: (className) @type)
+(typeExpr name: (className) @type)
+
+(importModuleExpr name: (simpleId) @variable)
+(qualModuleExpr name: (simpleId) @variable)
 (varName) @variable
 
 (integer) @number
@@ -111,6 +118,7 @@
 
 (string) @string
 
+(charpred (className) @function)
 (aritylessPredicateExpr (literalId) @function)
 (predicateName) @function
 

@@ -23,15 +23,24 @@
 (template_function
   name: (identifier) @function)
 
-(template_method
-  name: (field_identifier) @method)
+(((field_expression
+     (field_identifier) @method)) @_parent
+ (#has-parent? @_parent template_method function_declarator call_expression))
+
+(field_initializer
+ (field_identifier) @property)
+
+(function_declarator
+  declarator: (field_identifier) @method)
 
 (template_function
   name: (scoped_identifier
     name: (identifier) @function))
 
 
-((identifier) @type (#match? @type "^[A-Z]"))
+((identifier) @type
+ (#match? @type "^[A-Z]")
+ (#not-has-parent? @type function_declarator))
 
 (namespace_identifier) @namespace
 ((namespace_identifier) @type
@@ -147,5 +156,5 @@
 ; Annotations (not fully supported by parser)
 
 ((ERROR) @attribute
-         (vim-match? @attribute  "\[?\[.*\]\]?.*$"))
+         (#vim-match? @attribute  "\[?\[.*\]\]?.*$"))
 (attribute) @attribute

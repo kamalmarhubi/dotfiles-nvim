@@ -119,7 +119,14 @@
 ]  @function.macro
 ; TODO (preproc_arg)  @embedded
 
-(field_identifier) @property
+(((field_expression
+     (field_identifier) @property)) @_parent
+ (#not-has-parent? @_parent template_method function_declarator call_expression))
+
+(((field_identifier) @property)
+ (#has-ancestor? @property field_declaration)
+ (#not-has-ancestor? @property function_declarator))
+
 (statement_identifier) @label
 
 [
@@ -135,6 +142,15 @@
 
 ((identifier) @constant
  (#match? @constant "^[A-Z][A-Z0-9_]+$"))
+
+;; Preproc def / undef
+(preproc_def
+  name: (_) @constant)
+(preproc_call
+  directive: (preproc_directive) @_u
+  argument: (_) @constant
+  (#eq? @_u "#undef"))
+
 
 (comment) @comment
 

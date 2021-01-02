@@ -5,7 +5,7 @@
    (identifier) @definition.var))
 
 ((variable_declarator
-   (field_expression object:(*) @definition.associated (property_identifier) @definition.var)))
+   (field_expression . (_) @definition.associated (property_identifier) @definition.var)))
 
 ;; Parameters
 (parameters (identifier) @definition.parameter)
@@ -27,7 +27,14 @@
 
 ((local_function
    (identifier) @definition.function) @scope)
+[
+(local_variable_declaration
+  (variable_declarator
+    (identifier) @definition.function)
+  (function_definition) @scope)
 (function_definition) @scope
+]
+
 
 (program) @scope
 ((if_statement) @scope)

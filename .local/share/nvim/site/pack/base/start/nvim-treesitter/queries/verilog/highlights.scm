@@ -14,7 +14,24 @@
   "class"
   "endclass"
   "return"
+  "default"
+  "break"
+  "interface"
+  "endinterface"
+  "modport"
+  "package"
+  "endpackage"
+  "fork"
+  "join"
+  "join_none"
+  "join_any"
+  "assert"
 ] @keyword
+
+[
+  "begin"
+  "end"
+] @label
 
 [
   (always_keyword)
@@ -23,28 +40,23 @@
   "foreach"
   "repeat"
   "forever"
+  "initial"
   "while"
 ] @repeat
 
 [
   "if"
   "else"
+  "case"
+  "endcase"
 ] @conditional
-
-[
-  "begin"
-  "end"
-  "fork"
-  "join"
-  "join_none"
-  "join_any"
-] @label
 
 (comment) @comment
 
 (include_compiler_directive) @constant.macro
 (package_import_declaration
  "import" @include)
+
 (package_import_declaration
  (package_import_item
   (package_identifier
@@ -56,6 +68,13 @@
 (package_scope
  (package_identifier
   (simple_identifier) @constant))
+
+(package_declaration
+ (package_identifier
+  (simple_identifier) @constant))
+
+(parameter_port_list
+ "#" @constructor)
 
 [
   "="
@@ -89,6 +108,7 @@
   ">>"
   "<<"
   "|="
+  (inc_or_dec_operator)
 ] @operator
 
 (cast
@@ -117,7 +137,20 @@
 (method_call_body
   (method_identifier) @field)
 
-(double_quoted_string) @string
+(interface_identifier
+ (simple_identifier) @type)
+
+(modport_identifier
+ (modport_identifier
+  (simple_identifier) @field))
+
+(net_port_type1
+ (simple_identifier) @type)
+
+[
+  (double_quoted_string)
+  (string_literal)
+] @string
 
 [
   (include_compiler_directive)
@@ -125,12 +158,18 @@
   (timescale_compiler_directive)
 ] @constant.macro
 
+; begin/end label
 (seq_block
  (simple_identifier) @comment)
 
 [
-  "::"
+ ";"
+ "::"
+ ","
+ "."
 ] @punctuation.delimiter
+
+
 (default_nettype_compiler_directive
  (default_nettype_value) @string)
 
@@ -186,13 +225,26 @@
   (system_tf_call
    (system_tf_identifier) @function.builtin)))
 
+(task_identifier
+ (task_identifier
+  (simple_identifier) @method))
+
 (assignment_pattern_expression
  (assignment_pattern
   (parameter_identifier) @field))
 
 (type_declaration
-  (data_type) @label)
+  (data_type ["packed"] @label))
+
 (struct_union) @type
+
+[
+  "enum"
+] @type
+
+(enum_name_declaration
+ (enum_identifier
+  (simple_identifier) @constant))
 
 (type_declaration
  (simple_identifier) @type)
@@ -200,6 +252,7 @@
 [
   (integer_atom_type)
   (non_integer_type)
+  "genvar"
 ] @type.builtin
 
 (struct_union_member
@@ -217,3 +270,14 @@
 
 (type_declaration
  (simple_identifier) @type)
+
+(generate_block_identifier) @comment
+
+[
+  "["
+  "]"
+  "("
+  ")"
+] @punctuation.bracket
+
+(ERROR) @error

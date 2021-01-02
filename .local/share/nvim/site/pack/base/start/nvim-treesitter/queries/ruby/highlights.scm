@@ -50,30 +50,28 @@
 ((identifier) @keyword
  (#vim-match? @keyword "^(private|protected|public)$"))
 
+[
+ "rescue"
+ "ensure"
+ ] @exception
+
+((identifier) @exception
+ (#vim-match? @exception "^(fail|raise)$"))
+
 ; Function calls
 
 "defined?" @function
 
 (call
-  [
-   receiver: (constant) @type
+   receiver: (constant)? @type
    method: [
             (identifier)
             (constant)
             ] @function
-   ])
-
-(method_call
-  [
-   receiver: (constant) @type
-   method: [
-            (identifier)
-            (constant)
-            ] @function
-   ])
+   )
 
 (program
- (method_call
+ (call
   (identifier) @include)
  (#vim-match? @include "^(require|require_relative|load)$"))
 
@@ -103,7 +101,7 @@
  ] @label
 
 ((identifier) @constant.builtin
- (#vim-match? @constant.builtin "^__(FILE|LINE|ENCODING)__$"))
+ (#vim-match? @constant.builtin "^__(callee|dir|id|method|send|ENCODING|FILE|LINE)__$"))
 
 ((constant) @constant.macro
  (#vim-match? @constant.macro "^[A-Z\\d_]+$"))

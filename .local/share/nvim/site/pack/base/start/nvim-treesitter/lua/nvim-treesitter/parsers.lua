@@ -1,7 +1,33 @@
 local api = vim.api
 local ts = vim.treesitter
 
-local list = {}
+local ft_to_parsername = {}
+
+local function update_ft_to_parsername(name, parser)
+  if type(parser.used_by) == 'table' then
+    for _, ft in pairs(parser.used_by) do
+      ft_to_parsername[ft] = name
+    end
+  end
+  ft_to_parsername[parser.filetype or name] = name
+end
+
+local list = setmetatable({}, {
+  __newindex = function(table, parsername, parserconfig)
+
+    rawset(table, parsername, setmetatable(parserconfig, {
+      __newindex = function(parserconfigtable, key, value)
+        if key == "used_by" then
+          ft_to_parsername[value] = parsername
+        else
+          rawset(parserconfigtable, key, value)
+        end
+      end
+    }))
+
+    update_ft_to_parsername(parsername, parserconfig)
+   end
+})
 
 list.javascript = {
   install_info = {
@@ -18,6 +44,14 @@ list.c = {
     files = { "src/parser.c" }
   },
   maintainers = {"@vigoux"},
+}
+
+list.clojure = {
+  install_info = {
+    url = "https://github.com/sogaiu/tree-sitter-clojure",
+    files = { "src/parser.c" }
+  },
+  maintainers = {"@sogaiu"},
 }
 
 list.cpp = {
@@ -61,6 +95,14 @@ list.go = {
   maintainers = {"@theHamsta", "@WinWisely268"},
 }
 
+list.graphql = {
+  install_info = {
+    url = "https://github.com/bkegley/tree-sitter-graphql",
+    files = { "src/parser.c" },
+  },
+  maintainers = {"@bkegley"},
+}
+
 list.ruby = {
   install_info = {
     url = "https://github.com/tree-sitter/tree-sitter-ruby",
@@ -95,6 +137,14 @@ list.java = {
   maintainers = {"@p00f"},
 }
 
+list.kotlin = {
+  install_info = {
+    url = "https://github.com/QthCN/tree-sitter-kotlin",
+    files = { "src/parser.c" },
+  },
+  maintainers = {"@tormodatt"},
+}
+
 list.html = {
   install_info = {
     url = "https://github.com/tree-sitter/tree-sitter-html",
@@ -124,6 +174,15 @@ list.css = {
     files = { "src/parser.c", "src/scanner.c" },
   },
   maintainers = {"@TravonteD"},
+}
+
+list.erlang = {
+  install_info = {
+    url = "https://github.com/AbstractMachinesLab/tree-sitter-erlang",
+    files = { "src/parser.c" },
+    branch = "main",
+  },
+  maintainers = { '@ostera' },
 }
 
 list.ocaml = {
@@ -243,7 +302,8 @@ list.nix = {
   install_info = {
     url = "https://github.com/cstrahan/tree-sitter-nix",
     files = { "src/parser.c", "src/scanner.cc" },
-  }
+  },
+  maintainers = {"@leo60228"},
 }
 
 list.dart = {
@@ -320,20 +380,27 @@ list.query = {
   maintainers = {"@steelsojka"},
 }
 
+list.sparql = {
+  install_info = {
+    url = "https://github.com/BonaBeavis/tree-sitter-sparql",
+    files = { "src/parser.c" },
+    branch = "main",
+  },
+  maintainers = { "@bonabeavis" },
+}
+
+list.gdscript = {
+  install_info = {
+    url = "https://github.com/PrestonKnopp/tree-sitter-gdscript",
+    files = { "src/parser.c", "src/scanner.cc" },
+  },
+  readme_name = "Godot (gdscript)",
+  maintainers = {"not @tjdevries"},
+}
+
 local M = {
   list = list
 }
-
-local ft_to_parsername = {}
-
-for name, obj in pairs(M.list) do
-  if type(obj.used_by) == 'table' then
-    for _, ft in pairs(obj.used_by) do
-      ft_to_parsername[ft] = name
-    end
-  end
-  ft_to_parsername[obj.filetype or name] = name
-end
 
 function M.ft_to_lang(ft)
   return ft_to_parsername[ft] or ft
@@ -382,6 +449,8 @@ function M.has_parser(lang)
   local lang = lang or M.get_buf_lang(api.nvim_get_current_buf())
 
   if not lang or #lang == 0 then return false end
+  -- HACK: nvim internal API
+  if vim._ts_has_language(lang) then return true end
   return #parser_files[lang] > 0
 end
 
@@ -397,7 +466,7 @@ end
 function M.get_tree_root(bufnr)
   local bufnr = bufnr or api.nvim_get_current_buf()
 
-  return M.get_parser(bufnr).tree:root()
+  return M.get_parser(bufnr):parse()[1]:root()
 end
 
 -- get language of given buffer

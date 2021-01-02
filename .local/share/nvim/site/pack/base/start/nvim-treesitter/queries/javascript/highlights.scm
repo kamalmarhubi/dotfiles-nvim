@@ -11,6 +11,7 @@
 ;-----------
 
 (property_identifier) @property
+(shorthand_property_identifier) @variable
 
 ; Special identifiers
 ;--------------------
@@ -112,6 +113,11 @@
     value: (arrow_function                                                                                                                                                                                    
       parameter: (identifier) @parameter))
 
+; optional parameters
+(formal_parameters
+  (assignment_pattern
+    (shorthand_property_identifier) @parameter))
+
 ; Variables
 ;----------
 (namespace_import
@@ -140,9 +146,14 @@
   "${" @punctuation.special
   "}" @punctuation.special) @embedded
 
+"..." @punctuation.special
+
 ";" @punctuation.delimiter
 "." @punctuation.delimiter
 "," @punctuation.delimiter
+"?." @punctuation.delimiter
+
+(pair ":" @punctuation.delimiter)
 
 [
   "--"
@@ -171,9 +182,26 @@
   "||"
   "%"
   "%="
+  "*"
+  "**"
+  ">>>"
+  "&"
+  "|"
+  "^"
+  "??"
+  "*="
+  ">>="
+  ">>>="
+  "^="
+  "|="
+  "&&="
+  "||="
+  "??="
 ] @operator
 
+(binary_expression "/" @operator)
 (ternary_expression ["?" ":"] @operator)
+(unary_expression ["!" "~" "-" "+" "delete" "void" "typeof"]  @operator)
 
 "(" @punctuation.bracket
 ")" @punctuation.bracket
