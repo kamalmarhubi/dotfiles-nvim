@@ -1641,7 +1641,7 @@ function! s:ReplaceCmd(cmd) abort
   let temp = tempname()
   let [err, exec_error] = s:TempCmd(temp, a:cmd)
   if exec_error
-    call s:throw((len(err) ? err : filereadable(temp) ? join(readfile(temp), ' ') : 'unknown error running ' . a:cmd))
+    call s:throw((len(err) ? err : 'unknown error running ' . a:cmd))
   endif
   setlocal noswapfile
   silent exe 'lockmarks keepalt 0read ++edit' s:fnameescape(temp)
@@ -1941,6 +1941,10 @@ function! fugitive#BufReadStatus() abort
     if empty(s:Tree())
       call s:AddHeader('Bare', 'yes')
     endif
+    if get(FugitiveConfigGetAll('advice.statusHints', config), 0, 'true') !~# '^\%(false\|no|off\|0\|\)$'
+      call s:AddHeader('Help', 'g?')
+    endif
+
     call s:AddSection('Rebasing ' . rebasing_head, rebasing)
     call s:AddSection('Untracked', untracked)
     call s:AddSection('Unstaged', unstaged)
@@ -2159,13 +2163,13 @@ function! fugitive#BufReadCmd(...) abort
           keepjumps 1
           keepjumps call search('^parent ')
           if getline('.') ==# 'parent '
-            silent keepjumps delete_
+            silent lockmarks keepjumps delete_
           else
             silent exe (exists(':keeppatterns') ? 'keeppatterns' : '') 'keepjumps s/\m\C\%(^parent\)\@<! /\rparent /e' . (&gdefault ? '' : 'g')
           endif
           keepjumps let lnum = search('^encoding \%(<unknown>\)\=$','W',line('.')+3)
           if lnum
-            silent keepjumps delete_
+            silent lockmarks keepjumps delete_
           end
           silent exe (exists(':keeppatterns') ? 'keeppatterns' : '') 'keepjumps 1,/^diff --git\|\%$/s/\r$//e'
           keepjumps 1
@@ -4887,25 +4891,30 @@ function! s:diffthis() abort
 endfunction
 
 function! s:diffoff() abort
-  if exists('w:fugitive_diff_restore')
+  if exists('w:fugitive_diff_restore') && v:version < 704
     execute w:fugitive_diff_restore
-    unlet w:fugitive_diff_restore
-  else
-    diffoff
   endif
+  unlet! w:fugitive_diff_restore
+  diffoff
 endfunction
 
 function! s:diffoff_all(dir) abort
   let curwin = winnr()
   for nr in range(1,winnr('$'))
     if getwinvar(nr, '&diff') && !empty(getwinvar(nr, 'fugitive_diff_restore'))
-      if nr != winnr()
-        execute nr.'wincmd w'
+      if v:version < 704
+        if nr != winnr()
+          execute nr.'wincmd w'
+        endif
+        execute w:fugitive_diff_restore
       endif
-      call s:diffoff()
+      call setwinvar(nr, 'fugitive_diff_restore', '')
     endif
   endfor
-  execute curwin.'wincmd w'
+  if curwin != winnr()
+    execute curwin.'wincmd w'
+  endif
+  diffoff!
 endfunction
 
 function! s:CompareAge(mine, theirs) abort
@@ -5187,7 +5196,7 @@ endfunction
 function! s:BlameCommitFileLnum(...) abort
   let line = a:0 ? a:1 : getline('.')
   let state = a:0 ? a:2 : s:TempState()
-  let commit = matchstr(line, '^\^\=\zs\x\+')
+  let commit = matchstr(line, '^\^\=[?*]*\zs\x\+')
   if commit =~# '^0\+$'
     let commit = ''
   elseif has_key(state, 'blame_reverse_end')
