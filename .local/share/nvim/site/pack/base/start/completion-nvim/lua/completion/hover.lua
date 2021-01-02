@@ -246,10 +246,10 @@ local fancy_floating_markdown = function(contents, opts)
   return bufnr, winnr
 end
 
-local callback = 'textDocument/hover'
-M.default_callback = vim.lsp.callbacks[callback]
+local handler = 'textDocument/hover'
+M.default_handler = vim.lsp.handlers[handler]
 
-local function callback_function(_, method, result)
+local function handler_function(_, method, result)
   -- if M.winnr ~= nil and api.nvim_win_is_valid(M.winnr) then
     -- api.nvim_win_close(M.winnr, true)
   -- end
@@ -272,14 +272,18 @@ local function callback_function(_, method, result)
       -- Set max width option to avoid overlapping with popup menu
       local total_column = api.nvim_get_option('columns')
       local align
+      local col = position['col']
       if position['col'] < total_column/2 then
         align = 'right'
+        if position['scrollbar'] then
+          col = col + 1
+        end
       else
         align = 'left'
       end
       bufnr, winnr = fancy_floating_markdown(markdown_lines, {
         pad_left = 0; pad_right = 1;
-        col = position['col']; width = position['width']; row = position['row']-1;
+        col = col; width = position['width']; row = position['row']-1;
         align = align
       })
       M.winnr = winnr
@@ -297,16 +301,17 @@ local function callback_function(_, method, result)
       return bufnr, winnr
     end)
   else
-    M.default_callback(_, method, result, _)
+    M.default_handler(_, method, result, _)
   end
 end
 
 M.autoOpenHoverInPopup = function()
   if vim.fn.pumvisible() ~= 1 then return end
   for _, client in pairs(vim.lsp.buf_get_clients(0)) do
-    local default_callback = client.config.callbacks['textDocument/hover'] or vim.lsp.callbacks['textDocument/hover']
-    if default_callback ~= callback_function then
-      client.config.callbacks['textDocument/hover'] = callback_function
+    local default_handler = (client.config.handlers or {})['textDocument/hover'] or vim.lsp.handlers['textDocument/hover']
+    if default_handler ~= handler_function then
+      if not client.config.handlers then client.config.handlers = {} end
+      client.config.handlers['textDocument/hover'] = handler_function
     end
   end
 
@@ -351,9 +356,14 @@ M.autoOpenHoverInPopup = function()
           M.winnr = winnr
         end
       else
+        local has_hover = false
         for _, value in pairs(vim.lsp.buf_get_clients(0)) do
-          if value.resolved_capabilities.hover == false then return end
+          if value.resolved_capabilities.hover then
+            has_hover = true
+            break
+          end
         end
+        if not has_hover then return end
         local row, col = unpack(api.nvim_win_get_cursor(0))
         row = row - 1
         local line = api.nvim_buf_get_lines(0, row, row+1, true)[1]
