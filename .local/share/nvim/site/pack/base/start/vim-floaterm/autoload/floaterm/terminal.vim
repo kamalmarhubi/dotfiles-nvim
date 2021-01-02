@@ -16,7 +16,7 @@ function! s:on_floaterm_close(callback, job, data, ...) abort
   let opts = getbufvar(bufnr, 'floaterm_opts', {})
   let autoclose = get(opts, 'autoclose', 0)
   if (autoclose == 1 && a:data == 0) || (autoclose == 2) || (a:callback isnot v:null)
-    call floaterm#window#hide_floaterm(bufnr)
+    call floaterm#window#hide(bufnr)
     try
       execute bufnr . 'bdelete!'
     catch
@@ -31,21 +31,26 @@ endfunction
 function! floaterm#terminal#open(bufnr, cmd, jobopts, opts) abort
   " for vim's popup, must close popup can we open and jump to a new window
   if !has('nvim')
-    call floaterm#window#hide_floaterm(bufnr('%'))
-  endif
-
-  " change to root directory
-  if !empty(g:floaterm_rootmarkers)
-    let dest = floaterm#path#get_root()
-    if dest !=# ''
-      call floaterm#path#chdir(dest)
-    endif
+    call floaterm#window#hide(bufnr('%'))
   endif
 
   if a:bufnr > 0
     call floaterm#window#open(a:bufnr, a:opts)
     let bufnr_res = a:bufnr
   else
+    " change to cwd
+    let curcwd = getcwd()
+    let dest = ''
+    if has_key(a:opts, 'cwd')
+      let dest = a:opts.cwd
+    elseif !empty(g:floaterm_rootmarkers)
+      let dest = floaterm#path#get_root()
+    endif
+    if !empty(dest)
+      call floaterm#path#chdir(dest)
+    endif
+
+    " spawn terminal
     if has('nvim')
       let bufnr_res = nvim_create_buf(v:false, v:true)
       call floaterm#buflist#add(bufnr_res)
@@ -68,6 +73,9 @@ function! floaterm#terminal#open(bufnr, cmd, jobopts, opts) abort
       let s:channel_map[bufnr_res] = job_getchannel(job)
       let winid = floaterm#window#open(bufnr_res, a:opts)
     endif
+
+    " back to previous cwd
+    call floaterm#path#chdir(curcwd)
   endif
 
   return bufnr_res
@@ -116,7 +124,7 @@ function! floaterm#terminal#get_bufnr(termname) abort
 endfunction
 
 function! floaterm#terminal#kill(bufnr) abort
-  call floaterm#window#hide_floaterm(a:bufnr)
+  call floaterm#window#hide(a:bufnr)
   if has('nvim')
     let jobid = getbufvar(a:bufnr, '&channel')
     if jobwait([jobid], 0)[0] == -1
@@ -124,7 +132,7 @@ function! floaterm#terminal#kill(bufnr) abort
     endif
   else
     let job = term_getjob(a:bufnr)
-    if job_status(job) !=# 'dead'
+    if job && job_status(job) !=# 'dead'
       call job_stop(job)
     endif
   endif

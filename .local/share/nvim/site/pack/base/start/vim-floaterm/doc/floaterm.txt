@@ -26,7 +26,7 @@ Use (neo)vim terminal in the floating/popup window.
 - NeoVim |api-floatwin| and Vim8 |popup-window| support
 - Open and toggle terminal window quickly
 - Manage multiple terminal instances
-- Customizable floating terminal style
+- Customizable terminal window style
 - Switch/Preview floating terminal buffers using fuzzy finder plugins such as
   |vim-clap|, |denite.nvim|, |coc.nvim|, |fzf.vim| and |LeaderF|.
 - Integrate with other external command-line tools(ranger, lf, fzf, etc.)
@@ -60,11 +60,6 @@ g:floaterm_height                                *g:floaterm_height*
     Type |Number| (number of lines) or |Float| (between 0 and 1).
     If |Float|, the height is relative to 'lines'.
     Default value is 0.6.
-
-g:floaterm_winblend                              *g:floaterm_winblend*
-	Type |Number|(0-100).
-	The transparency of the floating terminal. Only works in neovim.
-    Default value is 0.
 
 g:floaterm_position                              *g:floaterm_position*
 	Type |String|.
@@ -327,7 +322,7 @@ This plugin can be a runner for |asynctasks.vim|. To use it, copy the
 following code to your `vimrc` set |g:asynctasks_term_pos| to `'floaterm'` or
 add a `pos=floaterm` filed in your asynctasks configuration files.
  >
-	function! s:runner_proc(opts)
+	function! s:run_floaterm(opts)
 	let curr_bufnr = floaterm#curr()
 	if has_key(a:opts, 'silent') && a:opts.silent == 1
 		FloatermHide!
@@ -342,7 +337,7 @@ add a `pos=floaterm` filed in your asynctasks configuration files.
 	endfunction
 
 	let g:asyncrun_runner = get(g:, 'asyncrun_runner', {})
-	let g:asyncrun_runner.floaterm = function('s:runner_proc')
+	let g:asyncrun_runner.floaterm = function('s:run_floaterm')
 <
 Then your task will be ran in the floaterm instance. See
 https://github.com/skywind3000/asynctasks.vim/wiki/Customize-Runner for more

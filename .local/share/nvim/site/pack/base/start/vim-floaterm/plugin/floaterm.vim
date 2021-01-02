@@ -15,7 +15,6 @@ let g:floaterm_title            = get(g:, 'floaterm_title', 'floaterm($1/$2)')
 let g:floaterm_width            = get(g:, 'floaterm_width', 0.6)
 let g:floaterm_height           = get(g:, 'floaterm_height', 0.6)
 let g:floaterm_wintype          = get(g:, 'floaterm_wintype', '')
-let g:floaterm_winblend         = get(g:, 'floaterm_winblend', 0)
 let g:floaterm_autoclose        = get(g:, 'floaterm_autoclose', 0)
 let g:floaterm_autoinsert       = get(g:, 'floaterm_autoinsert', v:true)
 let g:floaterm_autohide         = get(g:, 'floaterm_autohide', v:true)
@@ -24,7 +23,7 @@ let g:floaterm_borderchars      = get(g:, 'floaterm_borderchars', ['─', '│',
 let g:floaterm_rootmarkers      = get(g:, 'floaterm_rootmarkers', [])
 let g:floaterm_open_command     = get(g:, 'floaterm_open_command', 'edit')
 let g:floaterm_gitcommit        = get(g:, 'floaterm_gitcommit', '')
-let g:floaterm_complete_options = get(g:, 'floaterm_complete_options', {'shortcut': 'floaterm', 'priority': 5})
+let g:floaterm_complete_options = get(g:, 'floaterm_complete_options', {'shortcut': 'floaterm', 'priority': 5, 'filter_length': [5, 20]})
 
 let g:floaterm_keymap_new    = get(g:, 'floaterm_keymap_new', '')
 let g:floaterm_keymap_prev   = get(g:, 'floaterm_keymap_prev', '')
@@ -40,15 +39,15 @@ command! -nargs=* -bang -complete=customlist,floaterm#cmdline#complete
                           \ FloatermNew    call floaterm#run('new', <bang>0, <f-args>)
 command! -nargs=*       -complete=customlist,floaterm#cmdline#complete
                           \ FloatermUpdate call floaterm#run('update', 0, <f-args>)
-command! -nargs=? -range=0 -bang -complete=customlist,floaterm#cmdline#floaterm_names
+command! -nargs=? -range=0 -bang -complete=customlist,floaterm#cmdline#complete_names1
                           \ FloatermShow   call floaterm#show(<bang>0, <count>, <q-args>)
-command! -nargs=? -range=0 -bang -complete=customlist,floaterm#cmdline#floaterm_names
+command! -nargs=? -range=0 -bang -complete=customlist,floaterm#cmdline#complete_names1
                           \ FloatermHide   call floaterm#hide(<bang>0, <count>, <q-args>)
-command! -nargs=? -range=0 -bang -complete=customlist,floaterm#cmdline#floaterm_names
+command! -nargs=? -range=0 -bang -complete=customlist,floaterm#cmdline#complete_names1
                           \ FloatermKill   call floaterm#kill(<bang>0, <count>, <q-args>)
-command! -nargs=? -range=0 -bang -complete=customlist,floaterm#cmdline#floaterm_names
+command! -nargs=? -range=0 -bang -complete=customlist,floaterm#cmdline#complete_names1
                           \ FloatermToggle call floaterm#toggle(<bang>0, <count>, <q-args>)
-command! -nargs=? -range   -bang -complete=customlist,floaterm#cmdline#floaterm_names2
+command! -nargs=? -range   -bang -complete=customlist,floaterm#cmdline#complete_names2
                           \ FloatermSend   call floaterm#send(<bang>0, visualmode(), <range>, <line1>, <line2>, <q-args>)
 command! -nargs=0           FloatermPrev   call floaterm#prev()
 command! -nargs=0           FloatermNext   call floaterm#next()

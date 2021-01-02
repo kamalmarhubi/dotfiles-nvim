@@ -38,95 +38,48 @@ function! s:format_title(bufnr, text) abort
   return title
 endfunction
 
-" Generate floaterm border window configuration from floaterm winid
-function! s:get_border_winconfig(winid) abort
-  let options = nvim_win_get_config(a:winid)
-
-  " After offsetting optration, if border window is over the top of the
-  " editor, i.e., it's row becomes negative To avoid the window overflow,
-  " reset the vertical position of **floaterm window**
-  let options.row -= (options.anchor[0] == 'N' ? 1 : -1)
-  if options.row < 0
-    let options.row = 1
-    call nvim_win_set_config(a:winid, options)
-    let options.row = 0
+function! s:hide_border(winid) abort
+  if s:winexists(a:winid)
+    let bd_winid = getwinvar(a:winid, 'floatermborder_winid', -1)
+    if s:winexists(bd_winid)
+      call nvim_win_close(bd_winid, v:true)
+    endif
+    call nvim_win_set_var(a:winid, 'floatermborder_winid', -1)
   endif
-
-  let [c_top, c_right, c_bottom, c_left, c_topleft, c_topright, c_botright, c_botleft] = g:floaterm_borderchars
-  let char_maxwidth_left = max(map([c_left, c_topleft, c_botleft], {_,c -> strwidth(c)}))
-  let char_maxwidth_right = max(map([c_right, c_topright, c_botright], {_,c -> strwidth(c)}))
-
-  " Same as above case, but for left overflow, which is possible.
-  " To observe the overflow(options.col becomes negative after executing the following one line):
-  " First `let g:floaterm_borderchars = ['的','的','的','的','的','的','的','的']`
-  " Then open nvim and `:set nonumber norelativenumber signcolumn=no`
-  " Use `echom` to monitor `options.col`, which will become `-1` after offsetting.
-  let options.col -= (options.anchor[1] == 'W' ? char_maxwidth_left : -char_maxwidth_left)
-  if options.col < 0
-    let options.col = char_maxwidth_left
-    call nvim_win_set_config(a:winid, options)
-    let options.col = 0
-  endif
-
-  let options.width += (char_maxwidth_left + char_maxwidth_right)
-  let options.height += 2
-  let options.style = 'minimal'
-  let options.focusable = v:false
-  return options
-endfunction
-
-function! s:render_border(title, options) abort
-  let title = empty(a:title) ? a:title : (' ' . a:title . ' ')
-  let [c_top, c_right, c_bottom, c_left, c_topleft, c_topright, c_botright, c_botleft] = g:floaterm_borderchars
-  let repeat_top = (a:options.width - strwidth(c_topleft) - strwidth(c_topright) - strwidth(title)) / strwidth(c_top)
-  let repeat_mid = (a:options.width - strwidth(c_left) - strwidth(c_right))
-  let repeat_bot = (a:options.width - strwidth(c_botleft) - strwidth(c_botright)) / strwidth(c_bottom)
-  let content = [c_topleft . title . repeat(c_top, repeat_top) . c_topright]
-  let content += repeat([c_left . repeat(' ', repeat_mid) . c_right], a:options.height - 2)
-  let content += [c_botleft . repeat(c_bottom, repeat_bot) . c_botright]
-  let border_bufnr = nvim_create_buf(v:false, v:true)
-  call nvim_buf_set_lines(border_bufnr, 0, -1, v:true, content)
-  call nvim_buf_set_option(border_bufnr, 'filetype', 'floatermborder')
-  call nvim_buf_set_option(border_bufnr, 'bufhidden', 'wipe')
-  let border_winid = nvim_open_win(border_bufnr, v:false, a:options)
-  call nvim_win_set_option(border_winid, 'winhl', 'Normal:FloatermBorder')
-  call nvim_win_set_option(border_winid, 'cursorcolumn', v:false)
-  call nvim_win_set_option(border_winid, 'colorcolumn', '')
-  return border_winid
 endfunction
 
 function! s:get_floatwin_pos(width, height, pos) abort
   if a:pos == 'topright'
-    let row = 2
-    let col = &columns - 1
+    let row = 1
+    let col = &columns
     let anchor = 'NE'
   elseif a:pos == 'topleft'
-    let row = 2
-    let col = 1
+    let row = 1
+    let col = 0
     let anchor = 'NW'
   elseif a:pos == 'bottomright'
-    let row = &lines - &cmdheight - 2
-    let col = &columns - 1
+    let row = &lines - &cmdheight - 1
+    let col = &columns
     let anchor = 'SE'
   elseif a:pos == 'bottomleft'
-    let row = &lines - &cmdheight - 2
-    let col = 1
+    let row = &lines - &cmdheight - 1
+    let col = 0
     let anchor = 'SW'
   elseif a:pos == 'top'
-    let row = 2
+    let row = 1
     let col = (&columns - a:width)/2
     let anchor = 'NW'
   elseif a:pos == 'right'
     let row = (&lines - a:height)/2
-    let col = &columns - 1
+    let col = &columns
     let anchor = 'NE'
   elseif a:pos == 'bottom'
-    let row = &lines - &cmdheight - 2
+    let row = &lines - &cmdheight - 1
     let col = (&columns - a:width)/2
     let anchor = 'SW'
   elseif a:pos == 'left'
     let row = (&lines - a:height)/2
-    let col = 1
+    let col = 0
     let anchor = 'NW'
   elseif a:pos == 'center'
     let row = (&lines - a:height)/2
@@ -140,13 +93,13 @@ function! s:get_floatwin_pos(width, height, pos) abort
     endif
   else " at the cursor place
     let winpos = win_screenpos(0)
-    " `- 1`: subtract the coordination of the window itself
     let row = winpos[0] - 1 + winline()
     let col = winpos[1] - 1 + wincol()
     if row + a:height <= &lines - &cmdheight - 1
       let vert = 'N'
     else
       let vert = 'S'
+      let row -= 1
     endif
     if col + a:width <= &columns
       let hor = 'W'
@@ -174,146 +127,170 @@ function! s:on_floaterm_open(bufnr, winid, opts) abort
   call setbufvar(a:bufnr, '&buflisted', 0)
   call setbufvar(a:bufnr, '&filetype', 'floaterm')
   if has('nvim')
-    execute 'autocmd BufHidden <buffer=' . a:bufnr . '> ++once call floaterm#window#hide_floaterm_border(' . a:bufnr . ')'
+    " TODO: need to be reworked
+    execute printf(
+          \ 'autocmd BufHidden <buffer=%s> ++once call floaterm#window#hide(%s)',
+          \ a:bufnr,
+          \ a:bufnr
+          \ )
   endif
 endfunction
 
-function! s:update_options(opts) abort
+" TODO: give this function a better name
+" @argument: opts, a floaterm local variable, will be stored as a `b:` variable
+" @return: options, generated from `opts`, has more additional info, used to
+"   config the floaterm style
+function! s:parse_options(opts) abort
   if !has_key(a:opts, 'width')
     let a:opts.width = g:floaterm_width
   endif
-
   if !has_key(a:opts, 'height')
     let a:opts.height = g:floaterm_height
   endif
-
   if !has_key(a:opts, 'wintype')
     let a:opts.wintype = s:get_wintype()
   endif
-
   if !has_key(a:opts, 'position')
     let a:opts.position = g:floaterm_position
   endif
-
   if !has_key(a:opts, 'autoclose')
     let a:opts.autoclose = g:floaterm_autoclose
   endif
-
   if !has_key(a:opts, 'title')
     let a:opts.title = g:floaterm_title
   endif
-  return a:opts
+
+  " generate and return window configs based on a:opts
+  let configs = deepcopy(a:opts)
+
+  let configs.borderchars = g:floaterm_borderchars
+
+  let width = configs.width
+  if type(width) == v:t_float | let width = width * &columns | endif
+  let configs.width = float2nr(width)
+
+  let height = configs.height
+  if type(height) == v:t_float | let height = height * (&lines - &cmdheight - 1) | endif
+  let configs.height = float2nr(height)
+
+  if configs.position == 'random'
+    let randnum = str2nr(matchstr(reltimestr(reltime()), '\v\.@<=\d+')[1:])
+    if s:get_wintype() == 'normal'
+      let configs.position = ['top', 'right', 'bottom', 'left'][randnum % 4]
+    else
+      let configs.position = ['top', 'right', 'bottom', 'left', 'center', 'topleft', 'topright', 'bottomleft', 'bottomright', 'auto'][randnum % 10]
+    endif
+  endif
+
+  let [row, col, anchor] = s:get_floatwin_pos(configs.width, configs.height, configs.position)
+  let configs['anchor'] = anchor
+  let configs['row'] = row
+  let configs['col'] = col
+  return configs
+endfunction
+
+function! s:open_float(bufnr, configs) abort
+  let options = {
+        \ 'relative': 'editor',
+        \ 'anchor': a:configs.anchor,
+        \ 'row': a:configs.row + (a:configs.anchor[0] == 'N' ? 1 : -1),
+        \ 'col': a:configs.col + (a:configs.anchor[1] == 'W' ? 1 : -1),
+        \ 'width': a:configs.width - 2,
+        \ 'height': a:configs.height - 2,
+        \ 'style':'minimal',
+        \ }
+  let winid = nvim_open_win(a:bufnr, v:true, options)
+  call s:init_win(winid, v:false)
+
+  let bd_options = {
+        \ 'relative': 'editor',
+        \ 'anchor': a:configs.anchor,
+        \ 'row': a:configs.row,
+        \ 'col': a:configs.col,
+        \ 'width': a:configs.width,
+        \ 'height': a:configs.height,
+        \ 'focusable': v:false,
+        \ 'style':'minimal',
+        \ }
+  let a:configs.title = s:format_title(a:bufnr, a:configs.title)
+  let bd_bufnr = floaterm#buffer#create_border_buf(a:configs)
+  let bd_winid = nvim_open_win(bd_bufnr, v:false, bd_options)
+  call nvim_win_set_var(winid, 'floatermborder_winid', bd_winid)
+  call s:init_win(bd_winid, v:true)
+  return winid
+endfunction
+
+function! s:open_popup(bufnr, configs) abort
+  let opts = {
+        \ 'pos': a:configs.anchor,
+        \ 'line': a:configs.row,
+        \ 'col': a:configs.col,
+        \ 'maxwidth': a:configs.width,
+        \ 'minwidth': a:configs.width,
+        \ 'maxheight': a:configs.height,
+        \ 'minheight': a:configs.height,
+        \ 'border': [1, 1, 1, 1],
+        \ 'borderchars': a:configs.borderchars,
+        \ 'borderhighlight': ['FloatermBorder'],
+        \ 'padding': [0,1,0,1],
+        \ 'highlight': 'Floaterm',
+        \ 'zindex': len(floaterm#buflist#gather()) + 1
+        \ }
+
+  " vim will pad the end of title but not begin part
+  " so we build the title as ' floaterm (idx/cnt)'
+  let opts.title = ' ' . s:format_title(a:bufnr, a:configs.title)
+  let winid = popup_create(a:bufnr, opts)
+  call s:init_win(winid, v:false)
+  return winid
+endfunction
+
+function! s:open_split(bufnr, configs) abort
+  if a:configs.position == 'top'
+    execute 'topleft' . a:configs.height . 'split'
+  elseif a:configs.position == 'left'
+    execute 'topleft' . a:configs.width . 'vsplit'
+  elseif a:configs.position == 'right'
+    execute 'botright' . a:configs.width . 'vsplit'
+  else " default position: bottom
+    execute 'botright' . a:configs.height . 'split'
+  endif
+  execute 'buffer ' . a:bufnr
+  let winid = win_getid()
+  call s:init_win(winid, v:false)
+  return winid
+endfunction
+
+function! s:init_win(winid, is_border) abort
+  if has('nvim')
+    call setwinvar(a:winid, '&winhl', 'Normal:Floaterm,NormalNC:FloatermNC')
+    if a:is_border
+      call setwinvar(a:winid, '&winhl', 'Normal:FloatermBorder')
+    endif
+  else
+    call setwinvar(a:winid, 'wincolor', 'Floaterm')
+  endif
+  call setwinvar(a:winid, '&sidescrolloff', 0)
 endfunction
 
 function! floaterm#window#open(bufnr, opts) abort
-  let opts = s:update_options(a:opts)
-  let wintype = a:opts.wintype
-  let position = a:opts.position
-  let title = a:opts.title
-
-  " NOTE: these lines can not be moved into s:update_options() cause floaterm size
-  " should be resized dynamically according to the terminal-app's size
-  " See 'test/test_options/test_width_height.vader'
-  let width = opts.width
-  if type(width) == v:t_float | let width = width * &columns | endif
-  let width = float2nr(width)
-
-  let height = opts.height
-  if type(height) == v:t_float | let height = height * (&lines - &cmdheight - 1) | endif
-  let height = float2nr(height)
-
-  if wintype == 'floating'
-    let winid = floaterm#window#open_floating(a:bufnr, width, height, position, title)
-  elseif wintype == 'popup'
-    let winid = floaterm#window#open_popup(a:bufnr, width, height, position, title)
+  let configs = s:parse_options(a:opts)
+  if configs.wintype == 'floating'
+    let winid = s:open_float(a:bufnr, configs)
+  elseif configs.wintype == 'popup'
+    let winid = s:open_popup(a:bufnr, configs)
   else
-    let winid = floaterm#window#open_split(a:bufnr, height, width, position)
+    let winid = s:open_split(a:bufnr, configs)
   endif
   call s:on_floaterm_open(a:bufnr, winid, a:opts)
 endfunction
 
-function! floaterm#window#open_floating(bufnr, width, height, pos, title) abort
-  let [row, col, anchor] = s:get_floatwin_pos(a:width, a:height, a:pos)
-  let opts = {
-    \ 'relative': 'editor',
-    \ 'anchor': anchor,
-    \ 'row': row,
-    \ 'col': col,
-    \ 'width': a:width,
-    \ 'height': a:height,
-    \ 'style':'minimal'
-    \ }
-  let winid = nvim_open_win(a:bufnr, v:true, opts)
-  call nvim_win_set_option(winid, 'winblend', g:floaterm_winblend)
-  call nvim_win_set_option(winid, 'winhl', 'Normal:Floaterm,NormalNC:FloatermNC')
-
-  let border_winid = getbufvar(a:bufnr, 'floatermborder_winid', -1)
-  " Close border that already exists and make a new border
-  " Since `bufhidden` option of floatermborder is set to 'wipe',
-  " the border_bufnr will be wiped out once the window was closed
-  if s:winexists(border_winid)
-    call nvim_win_close(border_winid, v:true)
-  endif
-  let title = s:format_title(a:bufnr, a:title)
-  let options = s:get_border_winconfig(winid)
-  let border_winid = s:render_border(title, options)
-  call setbufvar(a:bufnr, 'floatermborder_winid', border_winid)
-  return winid
-endfunction
-
-function! floaterm#window#open_popup(bufnr, width, height, pos, title) abort
-  let [row, col, anchor] = s:get_floatwin_pos(a:width, a:height, a:pos)
-  let opts = {
-    \ 'pos': anchor,
-    \ 'line': row,
-    \ 'col': col,
-    \ 'maxwidth': a:width,
-    \ 'minwidth': a:width,
-    \ 'maxheight': a:height,
-    \ 'minheight': a:height,
-    \ 'border': [1, 1, 1, 1],
-    \ 'borderchars': g:floaterm_borderchars,
-    \ 'borderhighlight': ['FloatermBorder'],
-    \ 'padding': [0,1,0,1],
-    \ 'highlight': 'Floaterm'
-    \ }
-
-  " vim will pad the end of title but not begin part
-  " so we build the title as ' floaterm (idx/cnt)'
-  let opts.title = ' ' . s:format_title(a:bufnr, a:title)
-  let opts.zindex = len(floaterm#buflist#gather()) + 1
-  let winid = popup_create(a:bufnr, opts)
-  return winid
-endfunction
-
-function! floaterm#window#open_split(bufnr, height, width, pos) abort
-  if a:pos == 'top'
-    execute 'topleft' . a:height . 'split'
-  elseif a:pos == 'left'
-    execute 'topleft' . a:width . 'vsplit'
-  elseif a:pos == 'right'
-    execute 'botright' . a:width . 'vsplit'
-  else " default position: bottom
-    execute 'botright' . a:height . 'split'
-  endif
-  execute 'buffer ' . a:bufnr
-  return win_getid()
-endfunction
-
-function! floaterm#window#hide_floaterm_border(bufnr, ...) abort
-  let winid = getbufvar(a:bufnr, 'floatermborder_winid', -1)
-  if winid != v:null && s:winexists(winid)
-    call nvim_win_close(winid, v:true)
-  endif
-  call setbufvar(a:bufnr, 'floatermborder_winid', -1)
-endfunction
-
-function! floaterm#window#hide_floaterm(bufnr) abort
+function! floaterm#window#hide(bufnr) abort
   let winid = getbufvar(a:bufnr, 'floaterm_winid', -1)
-  if winid == -1 | return | endif
+  if !s:winexists(winid) | return | endif
   if has('nvim')
-    if !s:winexists(winid) | return | endif
     call nvim_win_close(winid, v:true)
+    call s:hide_border(winid)
   else
     if exists('*win_gettype')
       if win_gettype() == 'popup'
@@ -334,10 +311,8 @@ function! floaterm#window#hide_floaterm(bufnr) abort
   silent checktime
 endfunction
 
-"-----------------------------------------------------------------------------
 " find **one** visible floaterm window
-"-----------------------------------------------------------------------------
-function! floaterm#window#find_floaterm_window() abort
+function! floaterm#window#find() abort
   let found_winnr = 0
   for winnr in range(1, winnr('$'))
     if getbufvar(winbufnr(winnr), '&filetype') ==# 'floaterm'

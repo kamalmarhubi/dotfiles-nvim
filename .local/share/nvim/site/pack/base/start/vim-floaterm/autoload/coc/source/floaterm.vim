@@ -9,19 +9,16 @@ function! coc#source#floaterm#init() abort
 endfunction
 
 function! coc#source#floaterm#complete(opt, cb) abort
-  if exists("*floaterm#buflist#gather")
-    let completion = []
-    for bufnr in floaterm#buflist#gather()
-      let lnum = getbufinfo(bufnr)[0]['lnum']
-      let lines = getbufline(bufnr, max([lnum - 100, 0]), '$')
-      for line in lines
-        let item = map(split(line, ' '), {_, val -> {
-          \ 'word': val,
-          \ 'dup': 0,
-          \ }})
-        let completion += item
-      endfor
-    endfor
-    call a:cb(completion)
-  endif
+  let lines = floaterm#util#getbufline(-1, 100)
+  let completion = []
+  let [minlength, maxlength] = g:floaterm_complete_options['filter_length']
+  for line in lines
+    let item = map(split(line, ' '), {_, val -> {
+      \ 'word': val,
+      \ 'dup': 0,
+      \ }})
+    call filter(item, {_, val -> len(val.word) >= minlength && len(val.word) <= maxlength})
+    let completion += item
+  endfor
+  call a:cb(completion)
 endfunction
