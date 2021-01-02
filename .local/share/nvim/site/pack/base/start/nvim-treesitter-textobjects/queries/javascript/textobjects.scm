@@ -35,3 +35,26 @@
 
 (call_expression) @call.outer
 (call_expression (arguments) @call.inner)
+
+;; blocks
+(_ (statement_block) @block.inner) @block.outer
+
+;; parameters
+(formal_parameters
+  (identifier) @parameter.inner)
+
+; function (v = default_value)
+(formal_parameters
+  (assignment_pattern) @parameter.inner)
+
+; function ({ x }) ...
+(formal_parameters
+  (object_pattern) @paremeter.inner)
+
+; function ([ x ]) ...
+(formal_parameters
+  (array_pattern) @paremeter.inner)
+
+;; arguments
+(arguments
+  (_) @parameter.inner)

@@ -20,34 +20,32 @@
 
 ;; conditionals
 (if_expression
-  alternative: (_ (_)? @conditional.inner)?
+  alternative: (_ (_) @conditional.inner)?
   ) @conditional.outer
 
 (if_expression
-  alternative: (block)? @conditional.inner)
+  alternative: (else_clause (block) @conditional.inner))
 
 (if_expression
   condition: (_) @conditional.inner)
 
 (if_expression
-  consequence: (block)? @conditional.inner)
+  consequence: (block) @conditional.inner)
 
 (match_arm
   (_)) @conditional.inner
 
-(match_expression
-  (match_arm)?
-  ) @conditional.outer
+(match_expression) @conditional.outer
 
 (if_let_expression
   consequence: (block)?
   @conditional.inner) @conditional.outer
 
 (if_let_expression
-  alternative: (block)? @conditional.inner)
+  alternative: (else_clause (block) @conditional.inner))
 
 (if_let_expression
-  condition: (_) @conditional.inner)
+  pattern: (_) @conditional.inner)
 
 ;; loops
 (loop_expression
@@ -73,19 +71,25 @@
 (block (_) @statement.outer)
 
 ;; parameter
-(parameter) @parameter.inner
+(((parameter) @parameter.inner . ","? @_end)
+ (#make-range! "parameter.outer" @parameter.inner @_end)) 
 
-(tuple_pattern
-  (identifier) @parameter.inner) 
+((tuple_pattern
+  (identifier) @parameter.inner . ","? @_end)
+ (#make-range! "parameter.outer" @parameter.inner @_end)) 
 
-(tuple_struct_pattern
-  (identifier) @parameter.inner)
+((tuple_struct_pattern
+  (identifier) @parameter.inner . ","? @_end)
+ (#make-range! "parameter.outer" @parameter.inner @_end)) 
 
-(closure_parameters
-  (_) @parameter.inner)
+((closure_parameters
+  (_) @parameter.inner . ","? @_end)
+ (#make-range! "parameter.outer" @parameter.inner @_end)) 
 
-(arguments
-  (_) @parameter.inner)
+(((arguments
+  (_) @parameter.inner . ","? @_end))
+ (#make-range! "parameter.outer" @parameter.inner @_end)) 
 
-(meta_arguments
-  (_) @parameter.inner)
+((meta_arguments
+  (_) @parameter.inner . ","? @_end)
+ (#make-range! "parameter.outer" @parameter.inner @_end)) 
