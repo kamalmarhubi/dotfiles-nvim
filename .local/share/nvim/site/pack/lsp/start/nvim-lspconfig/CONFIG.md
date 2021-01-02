@@ -21,6 +21,7 @@ that config.
 - [flow](#flow)
 - [fortls](#fortls)
 - [gdscript](#gdscript)
+- [ghcide](#ghcide)
 - [gopls](#gopls)
 - [groovyls](#groovyls)
 - [hie](#hie)
@@ -38,6 +39,7 @@ that config.
 - [ocamlls](#ocamlls)
 - [ocamllsp](#ocamllsp)
 - [omnisharp](#omnisharp)
+- [perlls](#perlls)
 - [purescriptls](#purescriptls)
 - [pyls](#pyls)
 - [pyls_ms](#pyls_ms)
@@ -49,9 +51,11 @@ that config.
 - [rust_analyzer](#rust_analyzer)
 - [scry](#scry)
 - [solargraph](#solargraph)
+- [sorbet](#sorbet)
 - [sourcekit](#sourcekit)
 - [sqlls](#sqlls)
 - [sumneko_lua](#sumneko_lua)
+- [svelte](#svelte)
 - [terraformls](#terraformls)
 - [texlab](#texlab)
 - [tsserver](#tsserver)
@@ -110,7 +114,7 @@ require'lspconfig'.angularls.setup{}
   Commands:
   
   Default Values:
-    cmd = { "/Users/michael/.cache/nvim/lspconfig/angularls/node_modules/.bin/angularls", "--stdio", "--tsProbeLocations", "/Users/michael/Repositories/node_modules", "--ngProbeLocations", "/Users/michael/Repositories/node_modules" }
+    cmd = { "/home/runner/.cache/nvim/lspconfig/angularls/node_modules/.bin/angularls", "--stdio", "--tsProbeLocations", "", "--ngProbeLocations", "" }
     filetypes = { "typescript", "html", "typescriptreact", "typescript.tsx" }
     root_dir = root_pattern("angular.json", ".git")
 ```
@@ -1002,6 +1006,14 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`dart.flutterAttachAdditionalArgs`**: `array`
+
+  Default: `{}`
+  
+  Array items: `{type = "string"}`
+  
+  null
+
 - **`dart.flutterCreateAndroidLanguage`**: `enum { "java", "kotlin" }`
 
   Default: `"kotlin"`
@@ -1061,6 +1073,14 @@ This server accepts configuration via the `settings` key.
   Default: `true`
   
   Whether to show the Flutter Outline tree in the sidebar\.
+
+- **`dart.flutterRunAdditionalArgs`**: `array`
+
+  Default: `{}`
+  
+  Array items: `{type = "string"}`
+  
+  null
 
 - **`dart.flutterRunLogFile`**: `null|string`
 
@@ -1783,6 +1803,25 @@ require'lspconfig'.gdscript.setup{}
     root_dir = <function 1>
 ```
 
+## ghcide
+
+https://github.com/digital-asset/ghcide
+
+A library for building Haskell IDE tooling.
+"ghcide" isn't for end users now. Use "haskell-language-server" instead of "ghcide".
+
+
+```lua
+require'lspconfig'.ghcide.setup{}
+
+  Commands:
+  
+  Default Values:
+    cmd = { "ghcide", "--lsp" }
+    filetypes = { "haskell", "lhaskell" }
+    root_dir = root_pattern("stack.yaml", "hie-bios", "BUILD.bazel", "cabal.config", "package.yaml")
+```
+
 ## gopls
 
 https://github.com/golang/tools/tree/master/gopls
@@ -2040,7 +2079,7 @@ require'lspconfig'.jdtls.setup{}
     }
     init_options = {
       jvm_args = {},
-      workspace = "/Users/michael/workspace"
+      workspace = "/home/runner/workspace"
     }
     root_dir = root_pattern(".git")
 ```
@@ -2132,7 +2171,7 @@ require'lspconfig'.jsonls.setup{}
 https://github.com/julia-vscode/julia-vscode
 `LanguageServer.jl` can be installed via `:LspInstall julials` or by yourself the `julia` and `Pkg`:
 ```sh
-julia --project=/Users/michael/.cache/nvim/lspconfig/julials -e 'using Pkg; Pkg.add("LanguageServer"); Pkg.add("SymbolServer")'
+julia --project=/home/runner/.cache/nvim/lspconfig/julials -e 'using Pkg; Pkg.add("LanguageServer"); Pkg.add("SymbolServer")'
 ```
 If you want to install the LanguageServer manually, you will have to ensure that the Julia environment is stored in this location:
 ```vim
@@ -2369,7 +2408,7 @@ require'lspconfig'.julials.setup{}
   Commands:
   
   Default Values:
-    cmd = { "julia", "--project=/Users/michael/.cache/nvim/lspconfig/julials", "--startup-file=no", "--history-file=no", "-e", '        using Pkg;\n        Pkg.instantiate()\n        using LanguageServer; using SymbolServer;\n        depot_path = get(ENV, "JULIA_DEPOT_PATH", "")\n        project_path = dirname(something(Base.current_project(pwd()), Base.load_path_expand(LOAD_PATH[2])))\n        # Make sure that we only load packages from this environment specifically.\n        empty!(LOAD_PATH)\n        push!(LOAD_PATH, "@")\n        @info "Running language server" env=Base.load_path()[1] pwd() project_path depot_path\n        server = LanguageServer.LanguageServerInstance(stdin, stdout, project_path, depot_path);\n        server.runlinter = true;\n        run(server);\n        ' }
+    cmd = { "julia", "--project=/home/runner/.cache/nvim/lspconfig/julials", "--startup-file=no", "--history-file=no", "-e", '        using Pkg;\n        Pkg.instantiate()\n        using LanguageServer; using SymbolServer;\n        depot_path = get(ENV, "JULIA_DEPOT_PATH", "")\n        project_path = dirname(something(Base.current_project(pwd()), Base.load_path_expand(LOAD_PATH[2])))\n        # Make sure that we only load packages from this environment specifically.\n        empty!(LOAD_PATH)\n        push!(LOAD_PATH, "@")\n        @info "Running language server" env=Base.load_path()[1] pwd() project_path depot_path\n        server = LanguageServer.LanguageServerInstance(stdin, stdout, project_path, depot_path);\n        server.runlinter = true;\n        run(server);\n        ' }
     filetypes = { "julia" }
     root_dir = <function 1>
 ```
@@ -2639,7 +2678,7 @@ require'lspconfig'.leanls.setup{}
   Default Values:
     cmd = { "lean-language-server", "--stdio" }
     filetypes = { "lean" }
-    root_dir = util.root_pattern(".git")
+    root_dir = root_pattern(".git") or os_homedir
 ```
 
 ## metals
@@ -2727,7 +2766,7 @@ This server accepts configuration via the `settings` key.
 
 - **`metals.serverVersion`**: `string`
 
-  Default: `"0.9.7"`
+  Default: `"0.9.8"`
   
   null
 
@@ -2929,11 +2968,131 @@ require'lspconfig'.omnisharp.setup{}
   Commands:
   
   Default Values:
-    cmd = { "/Users/michael/.cache/nvim/lspconfig/omnisharp/run", "--languageserver", "--hostPID", "45226" }
+    cmd = { "/home/runner/.cache/nvim/lspconfig/omnisharp/run", "--languageserver", "--hostPID", "2559" }
     filetypes = { "cs", "vb" }
     init_options = {}
     on_new_config = <function 1>
     root_dir = root_pattern(".csproj", ".sln")
+```
+
+## perlls
+
+    https://github.com/richterger/Perl-LanguageServer/tree/master/clients/vscode/perl
+
+    `Perl-LanguageServer`, a language server for Perl.
+
+    To use the language server, ensure that you have Perl::LanguageServer installed and perl command is on your path.
+    
+This server accepts configuration via the `settings` key.
+<details><summary>Available settings:</summary>
+
+- **`perl.debugAdapterPort`**: `string`
+
+  Default: `"13603"`
+  
+  port to use for connection between vscode and debug adapter inside Perl\:\:LanguageServer\. On a multi user system every user must use a differnt port\.
+
+- **`perl.enable`**: `boolean`
+
+  Default: `true`
+  
+  enable\/disable this extension
+
+- **`perl.fileFilter`**: `array`
+
+  Default: `vim.NIL`
+  
+  array for filtering perl file\, defaults to \*\.pm|\*\.pl
+
+- **`perl.ignoreDirs`**: `array`
+
+  Default: `vim.NIL`
+  
+  directories to ignore\, defaults to \.vscode\, \.git\, \.svn
+
+- **`perl.logLevel`**: `integer`
+
+  Default: `0`
+  
+  Log level 0\-2
+
+- **`perl.pathMap`**: `array`
+
+  Default: `vim.NIL`
+  
+  mapping of local to remote paths
+
+- **`perl.perlCmd`**: `string`
+
+  Default: `vim.NIL`
+  
+  defaults to perl
+
+- **`perl.perlInc`**: `array`
+
+  Default: `vim.NIL`
+  
+  array with paths to add to perl library path
+
+- **`perl.showLocalVars`**: `boolean`
+
+  if true\, show also local variables in symbol view
+
+- **`perl.sshAddr`**: `string`
+
+  Default: `vim.NIL`
+  
+  ip address of remote system
+
+- **`perl.sshArgs`**: `string`
+
+  Default: `vim.NIL`
+  
+  optional arguments for ssh
+
+- **`perl.sshCmd`**: `string`
+
+  Default: `vim.NIL`
+  
+  defaults to ssh on unix and plink on windows
+
+- **`perl.sshPort`**: `string`
+
+  Default: `vim.NIL`
+  
+  optional\, port for ssh to remote system
+
+- **`perl.sshUser`**: `string`
+
+  Default: `vim.NIL`
+  
+  user for ssh login
+
+- **`perl.sshWorkspaceRoot`**: `string`
+
+  Default: `vim.NIL`
+  
+  path of the workspace root on remote system
+
+</details>
+
+```lua
+require'lspconfig'.perlls.setup{}
+
+  Commands:
+  
+  Default Values:
+    cmd = { "perl", "-MPerl::LanguageServer", "-e", "Perl::LanguageServer::run", "--", "--port 13603", "--nostdio 0", "--version 2.1.0" }
+    filetypes = { "perl" }
+    root_dir = vim's starting directory
+    settings = {
+      perl = {
+        fileFilter = { ".pm", ".pl" },
+        ignoreDirs = ".git",
+        perlCmd = "perl",
+        perlInc = " "
+      }
+    }
 ```
 
 ## purescriptls
@@ -4034,12 +4193,11 @@ This server accepts configuration via the `settings` key.
 
   Default: `vim.empty_dict()`
   
-  Optional settings passed to the debug engine\. Example\:
-  \{ \"lldb\"\: \{ \"terminal\"\:\"external\"\} \}
+  null
 
 - **`rust-analyzer.debug.openDebugPane`**: `boolean`
 
-  Whether to open up the Debug Pane on debugging start\.
+  null
 
 - **`rust-analyzer.debug.sourceFileMap`**: `object`
 
@@ -4135,7 +4293,7 @@ This server accepts configuration via the `settings` key.
 
   Default: `true`
   
-  Whether to show inlay hints
+  Whether to show inlay hints\.
 
 - **`rust-analyzer.inlayHints.maxLength`**: `null|integer`
 
@@ -4211,7 +4369,7 @@ This server accepts configuration via the `settings` key.
 
   Default: `vim.NIL`
   
-  Environment variables passed to the runnable launched using \`Test \` or \`Debug\` lens or \`rust\-analyzer\.run\` command\.
+  null
 
 - **`rust-analyzer.runnables.cargoExtraArgs`**: `array`
 
@@ -4249,27 +4407,33 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`rust-analyzer.server.extraEnv`**: `null|object`
+
+  Default: `vim.NIL`
+  
+  null
+
 - **`rust-analyzer.serverPath`**: `null|string`
 
   Default: `vim.NIL`
   
-  Path to rust\-analyzer executable \(points to bundled binary by default\)\. If this is set\, then \"rust\-analyzer\.updates\.channel\" setting is not used
+  null
 
 - **`rust-analyzer.trace.extension`**: `boolean`
 
-  Enable logging of VS Code extensions itself
+  Enable logging of VS Code extensions itself\.
 
 - **`rust-analyzer.trace.server`**: `enum { "off", "messages", "verbose" }`
 
   Default: `"off"`
   
-  Trace requests to the rust\-analyzer \(this is usually overly verbose and not recommended for regular users\)
+  Trace requests to the rust\-analyzer \(this is usually overly verbose and not recommended for regular users\)\.
 
 - **`rust-analyzer.updates.askBeforeDownload`**: `boolean`
 
   Default: `true`
   
-  Whether to ask for permission before downloading any files from the Internet
+  Whether to ask for permission before downloading any files from the Internet\.
 
 - **`rust-analyzer.updates.channel`**: `enum { "stable", "nightly" }`
 
@@ -4285,6 +4449,109 @@ require'lspconfig'.rust_analyzer.setup{}
   Commands:
   
   Default Values:
+    capabilities = {
+      callHierarchy = {
+        dynamicRegistration = false
+      },
+      textDocument = {
+        codeAction = {
+          codeActionLiteralSupport = {
+            codeActionKind = {
+              valueSet = { "", "Empty", "QuickFix", "Refactor", "RefactorExtract", "RefactorInline", "RefactorRewrite", "Source", "SourceOrganizeImports", "quickfix", "refactor", "refactor.extract", "refactor.inline", "refactor.rewrite", "source", "source.organizeImports" }
+            }
+          },
+          dynamicRegistration = false
+        },
+        completion = {
+          completionItem = {
+            commitCharactersSupport = false,
+            deprecatedSupport = false,
+            documentationFormat = { "markdown", "plaintext" },
+            preselectSupport = false,
+            snippetSupport = false
+          },
+          completionItemKind = {
+            valueSet = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25 }
+          },
+          contextSupport = false,
+          dynamicRegistration = false
+        },
+        declaration = {
+          linkSupport = true
+        },
+        definition = {
+          linkSupport = true
+        },
+        documentHighlight = {
+          dynamicRegistration = false
+        },
+        documentSymbol = {
+          dynamicRegistration = false,
+          hierarchicalDocumentSymbolSupport = true,
+          symbolKind = {
+            valueSet = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 }
+          }
+        },
+        hover = {
+          contentFormat = { "markdown", "plaintext" },
+          dynamicRegistration = false
+        },
+        implementation = {
+          linkSupport = true
+        },
+        references = {
+          dynamicRegistration = false
+        },
+        rename = {
+          dynamicRegistration = false,
+          prepareSupport = true,
+          prepareSupportDefaultBehavior = 1
+        },
+        signatureHelp = {
+          dynamicRegistration = false,
+          signatureInformation = {
+            documentationFormat = { "markdown", "plaintext" }
+          }
+        },
+        synchronization = {
+          didSave = true,
+          dynamicRegistration = false,
+          willSave = false,
+          willSaveWaitUntil = false
+        },
+        typeDefinition = {
+          linkSupport = true
+        }
+      },
+      window = {
+        showDocument = {
+          support = false
+        },
+        showMessage = {
+          messageActionItem = {
+            additionalPropertiesSupport = false
+          }
+        },
+        workDoneProgress = true
+      },
+      workspace = {
+        applyEdit = true,
+        symbol = {
+          dynamicRegistration = false,
+          hierarchicalWorkspaceSymbolSupport = true,
+          symbolKind = {
+            valueSet = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 }
+          }
+        },
+        workspaceEdit = {
+          changeAnnotationSupport = {
+            groupsOnLabel = true
+          },
+          normalizesLineEndings = true
+        },
+        workspaceFolders = true
+      }
+    }
     cmd = { "rust-analyzer" }
     filetypes = { "rust" }
     root_dir = root_pattern("Cargo.toml", "rust-project.json")
@@ -4433,6 +4700,31 @@ require'lspconfig'.solargraph.setup{}
     root_dir = root_pattern("Gemfile", ".git")
 ```
 
+## sorbet
+
+https://sorbet.org
+
+Sorbet is a fast, powerful type checker designed for Ruby.
+
+You can install Sorbet via gem install. You might also be interested in how to set
+Sorbet up for new projects: https://sorbet.org/docs/adopting.
+
+```sh
+gem install sorbet
+```
+    
+
+```lua
+require'lspconfig'.sorbet.setup{}
+
+  Commands:
+  
+  Default Values:
+    cmd = { "srb", "tc", "--lsp" }
+    filetypes = { "ruby" }
+    root_dir = root_pattern("Gemfile", ".git")
+```
+
 ## sourcekit
 
 https://github.com/apple/sourcekit-lsp
@@ -4563,6 +4855,12 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`Lua.completion.workspaceWord`**: `boolean`
+
+  Default: `true`
+  
+  null
+
 - **`Lua.develop.debuggerPort`**: `integer`
 
   Default: `11412`
@@ -4657,6 +4955,12 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`Lua.runtime.nonstandardSymbol`**: `array`
+
+  Array items: `{enum = { "//", "/**/", "`", "+=", "-=", "*=", "/=", "||", "&&", "!", "!=", "continue" },type = "string"}`
+  
+  null
+
 - **`Lua.runtime.path`**: `array`
 
   Default: `{ "?.lua", "?/init.lua", "?/?.lua" }`
@@ -4737,7 +5041,29 @@ require'lspconfig'.sumneko_lua.setup{}
   Default Values:
     filetypes = { "lua" }
     log_level = 2
-    root_dir = root_pattern(".git") or os_homedir
+    root_dir = root_pattern(".git") or bufdir
+```
+
+## svelte
+
+https://github.com/sveltejs/language-tools/tree/master/packages/language-server
+
+`svelte-language-server` can be installed via `:LspInstall svelte` or by yourself with `npm`:
+```sh
+npm install -g svelte-language-server
+```
+
+Can be installed in Nvim with `:LspInstall svelte`
+
+```lua
+require'lspconfig'.svelte.setup{}
+
+  Commands:
+  
+  Default Values:
+    cmd = { "svelteserver", "--stdio" }
+    filetypes = { "svelte" }
+    root_dir = root_pattern("package.json", ".git")
 ```
 
 ## terraformls
@@ -4799,6 +5125,7 @@ require'lspconfig'.texlab.setup{}
 
   Commands:
   - TexlabBuild: Build the current buffer
+  - TexlabForward: Forward search from current position
   
   Default Values:
     cmd = { "texlab" }
@@ -4846,7 +5173,7 @@ require'lspconfig'.tsserver.setup{}
   Default Values:
     cmd = { "typescript-language-server", "--stdio" }
     filetypes = { "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact", "typescript.tsx" }
-    root_dir = root_pattern("package.json", "tsconfig.json", ".git")
+    root_dir = root_pattern("package.json", "tsconfig.json", "jsconfig.json", ".git")
 ```
 
 ## vimls
