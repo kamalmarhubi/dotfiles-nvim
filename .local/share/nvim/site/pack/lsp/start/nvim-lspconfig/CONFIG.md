@@ -13,6 +13,8 @@ that config.
 - [codeqlls](#codeqlls)
 - [cssls](#cssls)
 - [dartls](#dartls)
+- [denols](#denols)
+- [dhall_lsp_server](#dhall_lsp_server)
 - [diagnosticls](#diagnosticls)
 - [dockerls](#dockerls)
 - [efm](#efm)
@@ -45,6 +47,7 @@ that config.
 - [pyls_ms](#pyls_ms)
 - [pyright](#pyright)
 - [r_language_server](#r_language_server)
+- [racket_langserver](#racket_langserver)
 - [rls](#rls)
 - [rnix](#rnix)
 - [rome](#rome)
@@ -68,7 +71,7 @@ that config.
 
 https://github.com/AdaCore/ada_language_server
 
-Ada language server. Use `LspInstall als` to install it.
+Installation instructions can be found [here](https://github.com/AdaCore/ada_language_server#Install).
 
 Can be configured by passing a "settings" object to `als.setup{}`:
 
@@ -83,7 +86,6 @@ require('lspconfig').als.setup{
 }
 ```
 
-Can be installed in Nvim with `:LspInstall als`
 
 
 ```lua
@@ -101,12 +103,22 @@ require'lspconfig'.als.setup{}
 
 https://github.com/angular/vscode-ng-language-service
 
-`angular-language-server` can be installed via `:LspInstall angularls`
+`angular-language-server` can be installed via npm `npm install -g @angular/language-server`.
 
-If you prefer to install this yourself you can through npm `npm install @angular/language-server`.
-Be aware there is no global binary and must be run via `node_modules/@angular/language-server/index.js`
+Note, that if you override the default `cmd`, you must also update `on_new_config` to set `new_config.cmd` during startup.
+
+```lua
+local project_library_path = "/path/to/project/lib"
+local cmd = {"ngserver", "--stdio", "--tsProbeLocations", project_library_path , "--ngProbeLocations", project_library_path}
+
+require'lspconfig'.angularls.setup{
+  cmd = cmd,
+  on_new_config = function(new_config,new_root_dir)
+    new_config.cmd = cmd
+  end,
+}
+```
     
-Can be installed in Nvim with `:LspInstall angularls`
 
 ```lua
 require'lspconfig'.angularls.setup{}
@@ -114,7 +126,7 @@ require'lspconfig'.angularls.setup{}
   Commands:
   
   Default Values:
-    cmd = { "/home/runner/.cache/nvim/lspconfig/angularls/node_modules/.bin/angularls", "--stdio", "--tsProbeLocations", "", "--ngProbeLocations", "" }
+    cmd = { "ngserver", "--stdio", "--tsProbeLocations", "", "--ngProbeLocations", "" }
     filetypes = { "typescript", "html", "typescriptreact", "typescript.tsx" }
     root_dir = root_pattern("angular.json", ".git")
 ```
@@ -125,7 +137,6 @@ https://github.com/mads-hartmann/bash-language-server
 
 Language server for bash, written using tree sitter in typescript.
 
-Can be installed in Nvim with `:LspInstall bashls`
 
 ```lua
 require'lspconfig'.bashls.setup{}
@@ -146,438 +157,25 @@ ccls relies on a [JSON compilation database](https://clang.llvm.org/docs/JSONCom
 as compile_commands.json or, for simpler projects, a compile_flags.txt.
 For details on how to automatically generate one using CMake look [here](https://cmake.org/cmake/help/latest/variable/CMAKE_EXPORT_COMPILE_COMMANDS.html).
 
-This server accepts configuration via the `settings` key.
-<details><summary>Available settings:</summary>
+Customization options are passed to ccls at initialization time via init_options, a list of available options can be found [here](https://github.com/MaskRay/ccls/wiki/Customization#initialization-options). For example:
+
+```lua
+local lspconfig = require'lspconfig'
+lspconfig.ccls.setup {
+  init_options = {
+	  compilationDatabaseDirectory = "build";
+    index = {
+      threads = 0;
+    };
+    clang = {
+      excludeArgs = { "-frounding-math"} ;
+    };
+  }
+}
+
+```
 
-- **`ccls.cache.directory`**: `string`
 
-  Default: `".ccls-cache"`
-  
-  Absolute or relative \(from the project root\) path to the directory that the cached index will be stored in\. Try to have this directory on an SSD\. If empty\, cached indexes will not be saved on disk\.
-  
-  \$\{workspaceFolder\} will be replaced by the folder where \.vscode\/settings\.json resides\.
-  
-  Cache directories are project\-wide\, so this should be configured in the workspace settings so multiple indexes do not clash\.
-  
-  Example value\: \"\/work\/ccls\-cache\/chrome\/\"
-
-- **`ccls.cache.hierarchicalPath`**: `boolean`
-
-  If false\, store cache files as \$directory\/\@a\@b\/c\.cc\.blob
-  
-  If true\, \$directory\/a\/b\/c\.cc\.blob\.
-
-- **`ccls.callHierarchy.qualified`**: `boolean`
-
-  Default: `true`
-  
-  If true\, use qualified names in the call hiearchy
-
-- **`ccls.clang.excludeArgs`**: `array`
-
-  Default: `{}`
-  
-  An set of command line arguments to strip before passing to clang when indexing\. Each list entry is a separate argument\.
-
-- **`ccls.clang.extraArgs`**: `array`
-
-  Default: `{}`
-  
-  An extra set of command line arguments to give clang when indexing\. Each list entry is a separate argument\.
-
-- **`ccls.clang.pathMappings`**: `array`
-
-  Default: `{}`
-  
-  Translate paths in compile\_commands\.json entries\, \.ccls options and cache files\. This allows to reuse cache files built otherwhere if the source paths are different\.
-
-- **`ccls.clang.resourceDir`**: `string`
-
-  Default: `""`
-  
-  Default value to use for clang \-resource\-dir argument\. This will be automatically supplied by ccls if not provided\.
-
-- **`ccls.codeLens.enabled`**: `boolean`
-
-  Default: `true`
-  
-  Specifies whether the references CodeLens should be shown\.
-
-- **`ccls.codeLens.localVariables`**: `boolean`
-
-  Set to false to hide code lens on parameters and function local variables\.
-
-- **`ccls.codeLens.renderInline`**: `boolean`
-
-  Enables a custom code lens renderer so code lens are displayed inline with code\. This removes any vertical\-space footprint at the cost of horizontal space\.
-
-- **`ccls.completion.caseSensitivity`**: `integer`
-
-  Default: `2`
-  
-  Case sensitivity when code completion is filtered\. 0\: case\-insensitive\, 1\: case\-folded\, i\.e\. insensitive if no input character is uppercase\, 2\: case\-sensitive
-
-- **`ccls.completion.detailedLabel`**: `boolean`
-
-  When this option is enabled\, the completion item label is very detailed\, it shows the full signature of the candidate\.
-
-- **`ccls.completion.duplicateOptional`**: `boolean`
-
-  For functions with default arguments\, generate one more item per default argument\.
-
-- **`ccls.completion.enableSnippetInsertion`**: `boolean`
-
-  If true\, parameter declarations are inserted as snippets in function\/method call arguments when completing a function\/method call
-
-- **`ccls.completion.include.blacklist`**: `array`
-
-  Default: `{}`
-  
-  ECMAScript regex that checks absolute path\. If it partially matches\, the file is not added to include path auto\-complete\. An example is \"\/CACHE\/\"
-
-- **`ccls.completion.include.maxPathSize`**: `integer`
-
-  Default: `37`
-  
-  Maximum length for path in \#include proposals\. If the path length goes beyond this number it will be elided\. Set to 0 to always display the full path\.
-
-- **`ccls.completion.include.suffixWhitelist`**: `array`
-
-  Default: `{ ".h", ".hpp", ".hh" }`
-  
-  Only files ending in one of these values will be shown in include auto\-complete\. Set to the empty\-list to disable include auto\-complete\.
-
-- **`ccls.completion.include.whitelist`**: `array`
-
-  Default: `{}`
-  
-  ECMAScript regex that checks absolute file path\. If it does not partially match\, the file is not added to include path auto\-complete\. An example is \"\/src\/\"
-
-- **`ccls.diagnostics.blacklist`**: `array`
-
-  Default: `{}`
-  
-  Files that match these patterns won\'t be displayed in diagnostics view\.
-
-- **`ccls.diagnostics.onChange`**: `integer`
-
-  Default: `1000`
-  
-  Time in milliseconds to wait before computing diagnostics on type\. \-1\: disable diagnostics on type\.
-
-- **`ccls.diagnostics.onOpen`**: `integer`
-
-  Default: `0`
-  
-  Time in milliseconds to wait before computing diagnostics when a file is opened\.
-
-- **`ccls.diagnostics.onSave`**: `integer`
-
-  Default: `0`
-  
-  Time in milliseconds to wait before computing diagnostics when a file is saved\.
-
-- **`ccls.diagnostics.spellChecking`**: `boolean`
-
-  Default: `true`
-  
-  Whether to do spell checking on undefined symbol names when computing diagnostics\.
-
-- **`ccls.diagnostics.whitelist`**: `array`
-
-  Default: `{}`
-  
-  Files that match these patterns will be displayed in diagnostics view\.
-
-- **`ccls.highlight.blacklist`**: `array|null`
-
-  Default: `vim.NIL`
-  
-  Files that match these patterns won\'t have semantic highlight\.
-
-- **`ccls.highlight.enum.face`**: `array`
-
-  Default: `{ "variable", "member" }`
-  
-  null
-
-- **`ccls.highlight.function.colors`**: `array`
-
-  Default: `{ "#e5b124", "#927754", "#eb992c", "#e2bf8f", "#d67c17", "#88651e", "#e4b953", "#a36526", "#b28927", "#d69855" }`
-  
-  Colors to use for semantic highlight\. A good generator is http\:\/\/tools\.medialab\.sciences\-po\.fr\/iwanthue\/\. If multiple colors are specified\, semantic highlight will cycle through them for successive symbols\.
-
-- **`ccls.highlight.function.face`**: `array`
-
-  Default: `{}`
-  
-  null
-
-- **`ccls.highlight.global.face`**: `array`
-
-  Default: `{ "fontWeight: bolder" }`
-  
-  null
-
-- **`ccls.highlight.globalVariable.face`**: `array`
-
-  Default: `{ "variable", "global" }`
-  
-  null
-
-- **`ccls.highlight.largeFileSize`**: `integer|null`
-
-  Default: `vim.NIL`
-  
-  Disable semantic highlight for files larger than the size\.
-
-- **`ccls.highlight.macro.colors`**: `array`
-
-  Default: `{ "#e79528", "#c5373d", "#e8a272", "#d84f2b", "#a67245", "#e27a33", "#9b4a31", "#b66a1e", "#e27a71", "#cf6d49" }`
-  
-  Colors to use for semantic highlight\. A good generator is http\:\/\/tools\.medialab\.sciences\-po\.fr\/iwanthue\/\. If multiple colors are specified\, semantic highlight will cycle through them for successive symbols\.
-
-- **`ccls.highlight.macro.face`**: `array`
-
-  Default: `{ "variable" }`
-  
-  null
-
-- **`ccls.highlight.member.face`**: `array`
-
-  Default: `{ "fontStyle: italic" }`
-  
-  null
-
-- **`ccls.highlight.memberFunction.face`**: `array`
-
-  Default: `{ "function", "member" }`
-  
-  null
-
-- **`ccls.highlight.memberVariable.face`**: `array`
-
-  Default: `{ "variable", "member" }`
-  
-  null
-
-- **`ccls.highlight.namespace.colors`**: `array`
-
-  Default: `{ "#429921", "#58c1a4", "#5ec648", "#36815b", "#83c65d", "#417b2f", "#43cc71", "#7eb769", "#58bf89", "#3e9f4a" }`
-  
-  Colors to use for semantic highlight\. A good generator is http\:\/\/tools\.medialab\.sciences\-po\.fr\/iwanthue\/\. If multiple colors are specified\, semantic highlight will cycle through them for successive symbols\.
-
-- **`ccls.highlight.namespace.face`**: `array`
-
-  Default: `{ "type" }`
-  
-  null
-
-- **`ccls.highlight.parameter.face`**: `array`
-
-  Default: `{ "variable" }`
-  
-  null
-
-- **`ccls.highlight.static.face`**: `array`
-
-  Default: `{ "fontWeight: bold" }`
-  
-  null
-
-- **`ccls.highlight.staticMemberFunction.face`**: `array`
-
-  Default: `{ "function", "static" }`
-  
-  null
-
-- **`ccls.highlight.staticMemberVariable.face`**: `array`
-
-  Default: `{ "variable", "static" }`
-  
-  null
-
-- **`ccls.highlight.staticVariable.face`**: `array`
-
-  Default: `{ "variable", "static" }`
-  
-  null
-
-- **`ccls.highlight.type.colors`**: `array`
-
-  Default: `{ "#e1afc3", "#d533bb", "#9b677f", "#e350b6", "#a04360", "#dd82bc", "#de3864", "#ad3f87", "#dd7a90", "#e0438a" }`
-  
-  Colors to use for semantic highlight\. A good generator is http\:\/\/tools\.medialab\.sciences\-po\.fr\/iwanthue\/\. If multiple colors are specified\, semantic highlight will cycle through them for successive symbols\.
-
-- **`ccls.highlight.type.face`**: `array`
-
-  Default: `{}`
-  
-  null
-
-- **`ccls.highlight.typeAlias.face`**: `array`
-
-  Default: `{ "type" }`
-  
-  null
-
-- **`ccls.highlight.variable.colors`**: `array`
-
-  Default: `{ "#587d87", "#26cdca", "#397797", "#57c2cc", "#306b72", "#6cbcdf", "#368896", "#3ea0d2", "#48a5af", "#7ca6b7" }`
-  
-  Colors to use for semantic highlight\. A good generator is http\:\/\/tools\.medialab\.sciences\-po\.fr\/iwanthue\/\. If multiple colors are specified\, semantic highlight will cycle through them for successive symbols\.
-
-- **`ccls.highlight.variable.face`**: `array`
-
-  Default: `{}`
-  
-  null
-
-- **`ccls.highlight.whitelist`**: `array|null`
-
-  Default: `vim.NIL`
-  
-  Files that match these patterns will have semantic highlight\.
-
-- **`ccls.index.blacklist`**: `array`
-
-  Default: `{}`
-  
-  A translation unit \(cc\/cpp file\) is not indexed if any of the ECMAScript regexes in this list partially matches translation unit\'s the absolute path\.
-
-- **`ccls.index.initialBlacklist`**: `array`
-
-  Default: `{}`
-  
-  Files matched by the regexes should not be indexed on initialization\. Indexing is deferred to when they are opened\.
-
-- **`ccls.index.initialWhitelist`**: `array`
-
-  Default: `{}`
-  
-  Files matched by the regexes should be indexed on initialization\.
-
-- **`ccls.index.maxInitializerLines`**: `integer`
-
-  Default: `15`
-  
-  Number of lines of the initializer \/ macro definition showed in hover\.
-
-- **`ccls.index.multiVersion`**: `integer`
-
-  Default: `0`
-  
-  If not 0\, a file will be indexed in each tranlation unit that includes it\.
-
-- **`ccls.index.onChange`**: `boolean`
-
-  Allow indexing on textDocument\/didChange\. May be too slow for big projects\, so it is off by default\.
-
-- **`ccls.index.threads`**: `number`
-
-  Default: `0`
-  
-  Number of indexer threads\. If 0\, 80\% of cores are used\.
-
-- **`ccls.index.trackDependency`**: `integer`
-
-  Default: `2`
-  
-  Whether to reparse a file if write times of its dependencies have changed\. The file will always be reparsed if its own write time changes\.
-  
-  0\: no\, 1\: only during initial load of project\, 2\: yes
-
-- **`ccls.index.whitelist`**: `array`
-
-  Default: `{}`
-  
-  If a translation unit\'s absolute path partially matches any ECMAScript regex in this list\, it will be indexed\. The whitelist takes priority over the blacklist\. To only index files in the whitelist\, make \"ccls\.index\.blacklist\" match everything\, ie\, set it to \"\.\*\"\.
-
-- **`ccls.launch.args`**: `array`
-
-  Default: `{}`
-  
-  Array containing extra arguments to pass to the ccls binary
-
-- **`ccls.launch.command`**: `string`
-
-  Default: `"ccls"`
-  
-  Path to the ccls binary \(default assumes the binary is in the PATH\)
-
-- **`ccls.misc.compilationDatabaseCommand`**: `string`
-
-  Default: `""`
-  
-  If not empty\, the compilation database command to use
-
-- **`ccls.misc.compilationDatabaseDirectory`**: `string`
-
-  Default: `""`
-  
-  If not empty\, the compilation database directory to use instead of the project root
-
-- **`ccls.misc.showInactiveRegions`**: `boolean`
-
-  Default: `true`
-  
-  If true\, ccls will highlight skipped ranges\.
-
-- **`ccls.statusUpdateInterval`**: `integer`
-
-  Default: `2000`
-  
-  Interval between updating ccls status in milliseconds\. Set to 0 to disable\.
-
-- **`ccls.theme.dark.skippedRange.backgroundColor`**: `string`
-
-  Default: `"rgba(18, 18, 18, 0.3)"`
-  
-  CSS color to apply to the background when the code region has been disabled by the preprocessor in a dark theme\.
-
-- **`ccls.theme.dark.skippedRange.textColor`**: `string`
-
-  Default: `"rgb(100, 100, 100)"`
-  
-  CSS color to apply to text when the code region has been disabled by the preprocessor in a dark theme\.
-
-- **`ccls.theme.light.skippedRange.backgroundColor`**: `string`
-
-  Default: `"rgba(220, 220, 220, 0.3)"`
-  
-  CSS color to apply to the background when the code region has been disabled by the preprocessor in a light theme\.
-
-- **`ccls.theme.light.skippedRange.textColor`**: `string`
-
-  Default: `"rgb(100, 100, 100)"`
-  
-  CSS color to apply to text when the code region has been disabled by the preprocessor in a light theme\.
-
-- **`ccls.trace.websocketEndpointUrl`**: `string`
-
-  Default: `""`
-  
-  When set\, logs all LSP messages to specified WebSocket endpoint\.
-
-- **`ccls.treeViews.doubleClickTimeoutMs`**: `number`
-
-  Default: `500`
-  
-  If a tree view entry is double\-clicked within this timeout value\, vscode will navigate to the entry\.
-
-- **`ccls.workspaceSymbol.caseSensitivity`**: `integer`
-
-  Default: `1`
-  
-  Case sensitivity when searching workspace symbols\. 0\: case\-insensitive\, 1\: case\-folded\, i\.e\. insensitive if no input character is uppercase\, 2\: case\-sensitive
-
-- **`ccls.workspaceSymbol.maxNum`**: `number|null`
-
-  Default: `vim.NIL`
-  
-  The maximum number of global search \(ie\, Ctrl+P + \#foo\) search results to report\. For small search strings on large projects there can be a massive number of results \(ie\, over 1\,000\,000\) so this limit is important to avoid extremely long delays\. null means use the default value provided by the ccls language server\.
-
-</details>
 
 ```lua
 require'lspconfig'.ccls.setup{}
@@ -743,12 +341,11 @@ require'lspconfig'.codeqlls.setup{}
 
 https://github.com/vscode-langservers/vscode-css-languageserver-bin
 
-`css-languageserver` can be installed via `:LspInstall cssls` or by yourself with `npm`:
+`css-languageserver` can be installed via `npm`:
 ```sh
 npm install -g vscode-css-languageserver-bin
 ```
 
-Can be installed in Nvim with `:LspInstall cssls`
 
 ```lua
 require'lspconfig'.cssls.setup{}
@@ -1018,17 +615,17 @@ This server accepts configuration via the `settings` key.
 
   Default: `"kotlin"`
   
-  The programming language to use for Android apps when creating new projects using the \'Flutter\: New Project\' command\.
+  The programming language to use for Android apps when creating new projects using the \'Flutter\: New Application Project\' command\.
 
 - **`dart.flutterCreateIOSLanguage`**: `enum { "objc", "swift" }`
 
   Default: `"swift"`
   
-  The programming language to use for iOS apps when creating new projects using the \'Flutter\: New Project\' command\.
+  The programming language to use for iOS apps when creating new projects using the \'Flutter\: New Application Project\' command\.
 
 - **`dart.flutterCreateOffline`**: `boolean`
 
-  Whether to use offline mode when creating new projects with the \'Flutter\: New Project\' command\.
+  Whether to use offline mode when creating new projects with the \'Flutter\: New Application Project\' command\.
 
 - **`dart.flutterCreateOrganization`**: `null|string`
 
@@ -1290,6 +887,12 @@ This server accepts configuration via the `settings` key.
   
   Whether to show CodeLens actions in the editor for quick running \/ debugging scripts with main functions\.
 
+- **`dart.showSkippedTests`**: `boolean`
+
+  Default: `true`
+  
+  null
+
 - **`dart.showTestCodeLens`**: `boolean`
 
   Default: `true`
@@ -1370,13 +973,55 @@ require'lspconfig'.dartls.setup{}
     root_dir = root_pattern("pubspec.yaml")
 ```
 
+## denols
+
+https://github.com/denoland/deno
+
+Deno's built-in language server
+
+
+```lua
+require'lspconfig'.denols.setup{}
+
+  Commands:
+  
+  Default Values:
+    cmd = { "deno", "lsp" }
+    filetypes = { "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact", "typescript.tsx" }
+    init_options = {
+      enable = true,
+      lint = false,
+      unstable = false
+    }
+    root_dir = root_pattern("package.json", "tsconfig.json", ".git")
+```
+
+## dhall_lsp_server
+
+
+```lua
+require'lspconfig'.dhall_lsp_server.setup{}
+
+  Commands:
+  
+  Default Values:
+    cmd = { "dhall-lsp-server" }
+    docs = {
+      default_config = {
+        root_dir = 'root_pattern(".git", vim.fn.getcwd())'
+      },
+      description = "https://github.com/dhall-lang/dhall-haskell/tree/master/dhall-lsp-server\n\nlanguage server for dhall\n\n`dhall-lsp-server` can be installed via cabal:\n```sh\ncabal install dhall-lsp-server\n```\nprebuilt binaries can be found [here](https://github.com/dhall-lang/dhall-haskell/releases).\n"
+    }
+    filetypes = { "dhall" }
+    root_dir = <function 1>
+```
+
 ## diagnosticls
 
 https://github.com/iamcco/diagnostic-languageserver
 
 Diagnostic language server integrate with linters.
 
-Can be installed in Nvim with `:LspInstall diagnosticls`
 
 ```lua
 require'lspconfig'.diagnosticls.setup{}
@@ -1393,12 +1038,11 @@ require'lspconfig'.diagnosticls.setup{}
 
 https://github.com/rcjsuen/dockerfile-language-server-nodejs
 
-`docker-langserver` can be installed via `:LspInstall dockerls` or by yourself with `npm`:
+`docker-langserver` can be installed via `npm`:
 ```sh
 npm install -g dockerfile-language-server-nodejs
 ```
     
-Can be installed in Nvim with `:LspInstall dockerls`
 
 ```lua
 require'lspconfig'.dockerls.setup{}
@@ -1432,22 +1076,27 @@ require'lspconfig'.efm.setup{}
 
 https://github.com/elixir-lsp/elixir-ls
 
-`elixir-ls` can be installed via `:LspInstall elixirls` or by yourself by following the instructions [here](https://github.com/elixir-lsp/elixir-ls#building-and-running).
+`elixir-ls` can be installed by following the instructions [here](https://github.com/elixir-lsp/elixir-ls#building-and-running).
 
-This language server does not provide a global binary, but must be installed manually. The command `:LspInstaller elixirls` makes an attempt at installing the binary by
-Fetching the elixir-ls repository from GitHub, compiling it and then installing it.
+```bash
+curl -fLO https://github.com/elixir-lsp/elixir-ls/releases/latest/download/elixir-ls.zip
+unzip elixir-ls.zip -d /path/to/elixir-ls
+# Unix
+chmod +x /path/to/elixir-ls/language_server.sh
+```
+
+**By default, elixir-ls doesn't have a `cmd` set.** This is because nvim-lspconfig does not make assumptions about your path. You must add the following to your init.vim or init.lua to set `cmd` to the absolute path ($HOME and ~ are not expanded) of you unzipped elixir-ls.
 
 ```lua
 require'lspconfig'.elixirls.setup{
     -- Unix
-    cmd = { "path/to/language_server.sh" };
+    cmd = { "/path/to/elixir-ls/language_server.sh" };
     -- Windows
-    cmd = { "path/to/language_server.bat" };
+    cmd = { "/path/to/elixir-ls/language_server.bat" };
     ...
 }
 ```
 
-Can be installed in Nvim with `:LspInstall elixirls`
 This server accepts configuration via the `settings` key.
 <details><summary>Available settings:</summary>
 
@@ -1501,7 +1150,6 @@ require'lspconfig'.elixirls.setup{}
   Commands:
   
   Default Values:
-    cmd = { "language_server.sh" }
     filetypes = { "elixir", "eelixir" }
     root_dir = root_pattern("mix.exs", ".git") or vim.loop.os_homedir()
 ```
@@ -1515,7 +1163,6 @@ If you don't want to use Nvim to install it, then you can use:
 npm install -g elm elm-test elm-format @elm-tooling/elm-language-server
 ```
 
-Can be installed in Nvim with `:LspInstall elmls`
 This server accepts configuration via the `settings` key.
 <details><summary>Available settings:</summary>
 
@@ -1540,6 +1187,10 @@ This server accepts configuration via the `settings` key.
   Default: `""`
   
   The path to your elm\-test executable\. Should be empty by default\, in that case it will assume the name and try to first get it from a local npm installation or a global one\. If you set it manually it will not try to load from the npm folder\.
+
+- **`elmLS.skipInstallPackageConfirmation`**: `boolean`
+
+  Skips confirmation for the Install Package code action
 
 - **`elmLS.trace.server`**: `enum { "off", "messages", "verbose" }`
 
@@ -1848,12 +1499,9 @@ Requirements:
  - Linux/macOS (for now)
  - Java 11+
 
-`groovyls` can be installed via `:LspInstall groovyls` or by yourself by following the instructions [here](https://github.com/prominic/groovy-language-server.git#build).
+`groovyls` can be installed by following the instructions [here](https://github.com/prominic/groovy-language-server.git#build).
 
-The command `:LspInstall groovyls` makes an attempt at installing the binary by
-Fetching the groovyls repository from GitHub, compiling it and then expose a binary.
-
-If you installed groovy language server by yourself, you can set the `cmd` custom path as follow:
+If you have installed groovy language server, you can set the `cmd` custom path as follow:
 
 ```lua
 require'lspconfig'.groovyls.setup{
@@ -1863,7 +1511,6 @@ require'lspconfig'.groovyls.setup{
 }
 ```
 
-Can be installed in Nvim with `:LspInstall groovyls`
 
 ```lua
 require'lspconfig'.groovyls.setup{}
@@ -2009,12 +1656,24 @@ require'lspconfig'.hls.setup{}
 
 https://github.com/vscode-langservers/vscode-html-languageserver-bin
 
-`html-languageserver` can be installed via `:LspInstall html` or by yourself with `npm`:
+`vscode-html-languageserver` can be installed via `npm`:
 ```sh
 npm install -g vscode-html-languageserver-bin
 ```
 
-Can be installed in Nvim with `:LspInstall html`
+Neovim does not currently include built-in snippets. `vscode-html-languageserver` only provides completions when snippet support is enabled.
+To enable completion, install a snippet plugin and add the following override to your language client capabilities during setup.
+
+```lua
+--Enable (broadcasting) snippet capability for completion
+local capabilities = vim.lsp.protocol.make_client_capabilities()
+capabilities.textDocument.completion.completionItem.snippetSupport = true
+
+require'lspconfig'.html.setup {
+  capabilities = capabilities,
+}
+```
+
 
 ```lua
 require'lspconfig'.html.setup{}
@@ -2039,12 +1698,11 @@ require'lspconfig'.html.setup{}
 
 https://intelephense.com/
 
-`intelephense` can be installed via `:LspInstall intelephense` or by yourself with `npm`:
+`intelephense` can be installed via `npm`:
 ```sh
 npm install -g intelephense
 ```
 
-Can be installed in Nvim with `:LspInstall intelephense`
 
 ```lua
 require'lspconfig'.intelephense.setup{}
@@ -2059,13 +1717,24 @@ require'lspconfig'.intelephense.setup{}
 
 ## jdtls
 
+
 https://projects.eclipse.org/projects/eclipse.jdt.ls
 
-Language server can be installed with `:LspInstall jdtls`
-
 Language server for Java.
+
+See project page for installation instructions.
+
+Due to the nature of java, the settings for eclipse jdtls cannot be automatically
+inferred. Please set the following environmental variables to match your installation. You can set these locally for your project with the help of [direnv](https://github.com/direnv/direnv). Note version numbers will change depending on your project's version of java, your version of eclipse, and in the case of JDTLS_CONFIG, your OS.
+
+```bash
+export JAR=/path/to/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/plugins/org.eclipse.equinox.launcher_1.6.0.v20200915-1508.jar
+export GRADLE_HOME=$HOME/gradle
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-11.0.9.11-9.fc33.x86_64/
+export JDTLS_CONFIG=/path/to/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/config_linux
+export WORKSPACE=$HOME/workspace
+```
     
-Can be installed in Nvim with `:LspInstall jdtls`
 
 ```lua
 require'lspconfig'.jdtls.setup{}
@@ -2073,6 +1742,11 @@ require'lspconfig'.jdtls.setup{}
   Commands:
   
   Default Values:
+    cmd = { "/usr/lib/jvm/adoptopenjdk-8-hotspot-amd64/bin/java", "-Declipse.application=org.eclipse.jdt.ls.core.id1", "-Dosgi.bundles.defaultStartLevel=4", "-Declipse.product=org.eclipse.jdt.ls.core.product", "-Dlog.protocol=true", "-Dlog.level=ALL", "-Xms1g", "-Xmx2G", "-jar", "vim.NIL", "-configuration", "vim.NIL", "-data", "vim.NIL", "--add-modules=ALL-SYSTEM", "--add-opens java.base/java.util=ALL-UNNAMED", "--add-opens java.base/java.lang=ALL-UNNAMED" }
+    cmd_env = {
+      GRADLE_HOME = "/usr/share/gradle",
+      JAR = vim.NIL
+    }
     filetypes = { "java" }
     handlers = {
       ["textDocument/codeAction"] = <function 1>
@@ -2108,12 +1782,25 @@ https://github.com/vscode-langservers/vscode-json-languageserver
 
 vscode-json-languageserver, a language server for JSON and JSON schema
 
-`vscode-json-languageserver` can be installed via `:LspInstall jsonls` or by yourself with `npm`:
+`vscode-json-languageserver` can be installed via `npm`:
 ```sh
 npm install -g vscode-json-languageserver
 ```
 
-Can be installed in Nvim with `:LspInstall jsonls`
+vscode-json-languageserver only provides range formatting. You can map a command that applies range formatting to the entire document:
+
+```lua
+require'lspconfig'.jsonls.setup {
+    commands = {
+      Format = {
+        function()
+          vim.lsp.buf.range_formatting({},{0,0},{vim.fn.line("$"),0})
+        end
+      }
+    }
+}
+```
+
 This server accepts configuration via the `settings` key.
 <details><summary>Available settings:</summary>
 
@@ -2163,22 +1850,59 @@ require'lspconfig'.jsonls.setup{}
   Default Values:
     cmd = { "vscode-json-languageserver", "--stdio" }
     filetypes = { "json" }
+    init_options = {
+      provideFormatter = true
+    }
     root_dir = root_pattern(".git", vim.fn.getcwd())
 ```
 
 ## julials
 
 https://github.com/julia-vscode/julia-vscode
-`LanguageServer.jl` can be installed via `:LspInstall julials` or by yourself the `julia` and `Pkg`:
+
+`LanguageServer.jl` can be installed with `julia` and `Pkg`:
 ```sh
-julia --project=/home/runner/.cache/nvim/lspconfig/julials -e 'using Pkg; Pkg.add("LanguageServer"); Pkg.add("SymbolServer")'
+julia -e 'using Pkg; Pkg.add("LanguageServer"); Pkg.add("SymbolServer")'
 ```
-If you want to install the LanguageServer manually, you will have to ensure that the Julia environment is stored in this location:
-```vim
-:lua print(require'lspconfig'.util.path.join(require'lspconfig'.util.base_install_dir, "julials"))
+The default config lazily evaluates the location of the julia language server from the your global julia packages.
+This adds a small overhead on first opening of a julia file. To avoid this overhead, replace server_path in on_new_config with
+a hard-coded path to the server.
+
+```lua
+require'lspconfig'.julials.setup{
+    on_new_config = function(new_config,new_root_dir)
+      server_path = "/path/to/directory/containing/LanguageServer.jl/src"
+      cmd = {
+        "julia",
+        "--project="..server_path,
+        "--startup-file=no",
+        "--history-file=no",
+        "-e", [[
+          using Pkg;
+          Pkg.instantiate()
+          using LanguageServer; using SymbolServer;
+          depot_path = get(ENV, "JULIA_DEPOT_PATH", "")
+          project_path = dirname(something(Base.current_project(pwd()), Base.load_path_expand(LOAD_PATH[2])))
+          # Make sure that we only load packages from this environment specifically.
+          @info "Running language server" env=Base.load_path()[1] pwd() project_path depot_path
+          server = LanguageServer.LanguageServerInstance(stdin, stdout, project_path, depot_path);
+          server.runlinter = true;
+          run(server);
+        \]\]
+    };
+      new_config.cmd = cmd
+    end
+}
 ```
+You can find the path to the globally installed LanguageServer.jl package with the following command:
+
+```bash
+julia -e 'print(Base.find_package("LanguageServer"))'
+```
+
+Note: the directory passed to `--project=...` should terminate with src, not LanguageServer.jl.
+
     
-Can be installed in Nvim with `:LspInstall julials`
 This server accepts configuration via the `settings` key.
 <details><summary>Available settings:</summary>
 
@@ -2192,7 +1916,7 @@ This server accepts configuration via the `settings` key.
 
   Default: `{}`
   
-  Additional julia arguments\.
+  Additional Julia arguments\.
 
 - **`julia.enableCrashReporter`**: `boolean|null`
 
@@ -2221,6 +1945,12 @@ This server accepts configuration via the `settings` key.
 - **`julia.execution.codeInREPL`**: `boolean`
 
   Print executed code in REPL and append it to the REPL history\.
+
+- **`julia.execution.inlineResults.colors`**: `object`
+
+  Default: `vim.empty_dict()`
+  
+  null
 
 - **`julia.execution.resultType`**: `enum { "REPL", "inline", "both" }`
 
@@ -2372,6 +2102,12 @@ This server accepts configuration via the `settings` key.
   
   Check that all declared arguments are used within the function body\.
 
+- **`julia.liveTestFile`**: `string`
+
+  Default: `"test/runtests.jl"`
+  
+  A workspace relative path to a Julia file that contains the tests that should be run for live testing\.
+
 - **`julia.packageServer`**: `string`
 
   Default: `""`
@@ -2392,7 +2128,13 @@ This server accepts configuration via the `settings` key.
 
   Default: `true`
   
-  Display plots within vscode\.
+  Display plots within VS Code\. Might require a restart of the Julia process\.
+
+- **`julia.useProgressFrontend`**: `boolean`
+
+  Default: `true`
+  
+  null
 
 - **`julia.useRevise`**: `boolean`
 
@@ -2408,8 +2150,9 @@ require'lspconfig'.julials.setup{}
   Commands:
   
   Default Values:
-    cmd = { "julia", "--project=/home/runner/.cache/nvim/lspconfig/julials", "--startup-file=no", "--history-file=no", "-e", '        using Pkg;\n        Pkg.instantiate()\n        using LanguageServer; using SymbolServer;\n        depot_path = get(ENV, "JULIA_DEPOT_PATH", "")\n        project_path = dirname(something(Base.current_project(pwd()), Base.load_path_expand(LOAD_PATH[2])))\n        # Make sure that we only load packages from this environment specifically.\n        empty!(LOAD_PATH)\n        push!(LOAD_PATH, "@")\n        @info "Running language server" env=Base.load_path()[1] pwd() project_path depot_path\n        server = LanguageServer.LanguageServerInstance(stdin, stdout, project_path, depot_path);\n        server.runlinter = true;\n        run(server);\n        ' }
+    cmd = { "julia", "--startup-file=no", "--history-file=no", "-e", '    using Pkg;\n    Pkg.instantiate()\n    using LanguageServer; using SymbolServer;\n    depot_path = get(ENV, "JULIA_DEPOT_PATH", "")\n    project_path = dirname(something(Base.current_project(pwd()), Base.load_path_expand(LOAD_PATH[2])))\n    # Make sure that we only load packages from this environment specifically.\n    @info "Running language server" env=Base.load_path()[1] pwd() project_path depot_path\n    server = LanguageServer.LanguageServerInstance(stdin, stdout, project_path, depot_path);\n    server.runlinter = true;\n    run(server);\n  ' }
     filetypes = { "julia" }
+    on_new_config = <function 1>
     root_dir = <function 1>
 ```
 
@@ -2550,7 +2293,7 @@ This server accepts configuration via the `settings` key.
 
   Default: `"lean"`
   
-  Path to the Lean executable to use\. DO NOT CHANGE from the default \`lean\` unless you know what you\'re doing\!
+  null
 
 - **`lean.extraOptions`**: `array`
 
@@ -2558,35 +2301,35 @@ This server accepts configuration via the `settings` key.
   
   Array items: `{description = "a single command-line argument",type = "string"}`
   
-  Extra command\-line options for the Lean server\.
+  null
 
 - **`lean.infoViewAllErrorsOnLine`**: `boolean`
 
-  Info view\: show all errors on the current line\, instead of just the ones on the right of the cursor\.
+  null
 
 - **`lean.infoViewAutoOpen`**: `boolean`
 
   Default: `true`
   
-  Info view\: open info view when Lean extension is activated\.
+  null
 
 - **`lean.infoViewAutoOpenShowGoal`**: `boolean`
 
   Default: `true`
   
-  Info view\: auto open shows goal and messages for the current line \(instead of all messages for the whole file\)
+  null
 
 - **`lean.infoViewFilterIndex`**: `number`
 
   Default: `-1`
   
-  Index of the filter applied to the tactic state \(in the array infoViewTacticStateFilters\)\. An index of \-1 means no filter is applied\.
+  null
 
 - **`lean.infoViewStyle`**: `string`
 
   Default: `""`
   
-  Add an additional CSS snippet to the info view\.
+  null
 
 - **`lean.infoViewTacticStateFilters`**: `array`
 
@@ -2594,13 +2337,7 @@ This server accepts configuration via the `settings` key.
   
   Array items: `{description = "an object with required properties 'regex': string, 'match': boolean, and 'flags': string, and optional property 'name': string",properties = {flags = {description = "additional flags passed to the RegExp constructor, e.g. 'i' for ignore case",type = "string"},match = {description = "whether tactic state lines matching the value of 'regex' should be included (true) or excluded (false)",type = "boolean"},name = {description = "name displayed in the dropdown",type = "string"},regex = {description = "a properly-escaped regex string, e.g. '^_' matches any string beginning with an underscore",type = "string"}},required = { "regex", "match", "flags" },type = "object"}`
   
-  An array of objects containing regular expression strings that can be used to filter \(positively or negatively\) the tactic state in the info view\. Set to an empty array \'\[\]\' to hide the filter select dropdown\.
-   
-   Each object must contain the following keys\: \'regex\'\: string\, \'match\'\: boolean\, \'flags\'\: string\.
-   \'regex\' is a properly\-escaped regex string\,
-   \'match\' \= true \(false\) means blocks in the tactic state matching \'regex\' will be included \(excluded\) in the info view\, 
-   \'flags\' are additional flags passed to the JavaScript RegExp constructor\.
-   The \'name\' key is optional and may contain a string that is displayed in the dropdown instead of the full regex details\.
+  null
 
 - **`lean.input.customTranslations`**: `object`
 
@@ -2608,13 +2345,19 @@ This server accepts configuration via the `settings` key.
   
   Array items: `{description = "Unicode character to translate to",type = "string"}`
   
-  Add additional input Unicode translations\. Example\: \`\{\"foo\"\: \"☺\"\}\` will correct \`\\foo\` to \`☺\`\.
+  null
+
+- **`lean.input.eagerReplacementEnabled`**: `boolean`
+
+  Default: `true`
+  
+  null
 
 - **`lean.input.enabled`**: `boolean`
 
   Default: `true`
   
-  Enable Lean input mode\.
+  null
 
 - **`lean.input.languages`**: `array`
 
@@ -2622,51 +2365,51 @@ This server accepts configuration via the `settings` key.
   
   Array items: `{description = "the name of a language, e.g. 'lean', 'markdown'",type = "string"}`
   
-  Enable Lean Unicode input in other file types\.
+  null
 
 - **`lean.input.leader`**: `string`
 
   Default: `"\\"`
   
-  Leader key to trigger input mode\.
+  null
 
 - **`lean.leanpkgPath`**: `string`
 
   Default: `"leanpkg"`
   
-  Path to the leanpkg executable to use\. DO NOT CHANGE from the default \`leanpkg\` unless you know what you\'re doing\!
+  null
 
 - **`lean.memoryLimit`**: `number`
 
   Default: `4096`
   
-  Set a memory limit \(in megabytes\) for the Lean server\.
+  null
 
 - **`lean.progressMessages`**: `boolean`
 
-  Show error messages where Lean is still checking\.
+  null
 
 - **`lean.roiModeDefault`**: `string`
 
   Default: `"visible"`
   
-  Set the default region of interest mode \(nothing\, visible\, lines\, linesAndAbove\, open\, or project\) for the Lean extension\.
+  null
 
 - **`lean.timeLimit`**: `number`
 
   Default: `100000`
   
-  Set a deterministic timeout \(it is approximately the maximum number of memory allocations in thousands\) for the Lean server\.
+  null
 
 - **`lean.typeInStatusBar`**: `boolean`
 
   Default: `true`
   
-  Show the type of term under the cursor in the status bar\.
+  null
 
 - **`lean.typesInCompletionList`**: `boolean`
 
-  Display types of all items in the list of completions\. By default\, only the type of the highlighted item is shown\.
+  null
 
 </details>
 
@@ -2685,108 +2428,26 @@ require'lspconfig'.leanls.setup{}
 
 https://scalameta.org/metals/
 
-To target a specific version on Metals, set the following.
-If nothing is set, the latest stable will be used.
-```vim
-let g:metals_server_version = '0.8.4+106-5f2b9350-SNAPSHOT'
+Scala language server with rich IDE features.
+
+See full instructions in the Metals documentation:
+
+https://scalameta.org/metals/docs/editors/vim.html#using-an-alternative-lsp-client
+
+Note: that if you're using [nvim-metals](https://github.com/scalameta/nvim-metals), that plugin fully handles the setup and installation of Metals, and you shouldn't set up Metals both with it and this plugin.
+
+To install Metals, make sure to have [coursier](https://get-coursier.io/docs/cli-installation) installed, and once you do you can install the latest Metals with `cs install metals`. You can also manually bootstrap Metals with the following command.
+
+```bash
+cs bootstrap \
+  --java-opt -Xss4m \
+  --java-opt -Xms100m \
+  org.scalameta:metals_2.12:<enter-version-here> \
+  -r bintray:scalacenter/releases \
+  -r sonatype:snapshots \
+  -o /usr/local/bin/metals -f
 ```
 
-Scala language server with rich IDE features.
-`metals` can be installed via `:LspInstall metals`.
-
-Can be installed in Nvim with `:LspInstall metals`
-This server accepts configuration via the `settings` key.
-<details><summary>Available settings:</summary>
-
-- **`metals.ammoniteJvmProperties`**: `array`
-
-  Array items: `{type = "string"}`
-  
-  null
-
-- **`metals.bloopSbtAlreadyInstalled`**: `boolean`
-
-  null
-
-- **`metals.bloopVersion`**: `string`
-
-  null
-
-- **`metals.customRepositories`**: `array`
-
-  Array items: `{type = "string"}`
-  
-  null
-
-- **`metals.enableStripMarginOnTypeFormatting`**: `boolean`
-
-  Default: `true`
-  
-  null
-
-- **`metals.excludedPackages`**: `array`
-
-  Default: `{}`
-  
-  null
-
-- **`metals.gradleScript`**: `string`
-
-  null
-
-- **`metals.javaHome`**: `string`
-
-  null
-
-- **`metals.mavenScript`**: `string`
-
-  null
-
-- **`metals.millScript`**: `string`
-
-  null
-
-- **`metals.sbtScript`**: `string`
-
-  null
-
-- **`metals.scalafixConfigPath`**: `string`
-
-  null
-
-- **`metals.scalafmtConfigPath`**: `string`
-
-  null
-
-- **`metals.serverProperties`**: `array`
-
-  Array items: `{type = "string"}`
-  
-  null
-
-- **`metals.serverVersion`**: `string`
-
-  Default: `"0.9.8"`
-  
-  null
-
-- **`metals.showImplicitArguments`**: `boolean`
-
-  null
-
-- **`metals.showImplicitConversionsAndClasses`**: `boolean`
-
-  null
-
-- **`metals.showInferredType`**: `boolean`
-
-  null
-
-- **`metals.superMethodLensesEnabled`**: `boolean`
-
-  Enable\/disable goto super method code lens\.
-
-</details>
 
 ```lua
 require'lspconfig'.metals.setup{}
@@ -2810,12 +2471,11 @@ require'lspconfig'.metals.setup{}
 ## nimls
 
 https://github.com/PMunch/nimlsp
-`nimlsp` can be installed via `:LspInstall nimls` or by yourself the `nimble` package manager:
+`nimlsp` can be installed via the `nimble` package manager:
 ```sh
 nimble install nimlsp
 ```
     
-Can be installed in Nvim with `:LspInstall nimls`
 This server accepts configuration via the `settings` key.
 <details><summary>Available settings:</summary>
 
@@ -2913,12 +2573,11 @@ require'lspconfig'.nimls.setup{}
 
 https://github.com/ocaml-lsp/ocaml-language-server
 
-`ocaml-language-server` can be installed via `:LspInstall ocamlls` or by yourself with `npm`
+`ocaml-language-server` can be installed via `npm`
 ```sh
 npm install -g ocaml-langauge-server
 ```
     
-Can be installed in Nvim with `:LspInstall ocamlls`
 
 ```lua
 require'lspconfig'.ocamlls.setup{}
@@ -2960,7 +2619,30 @@ require'lspconfig'.ocamllsp.setup{}
 https://github.com/omnisharp/omnisharp-roslyn
 OmniSharp server based on Roslyn workspaces
 
-Can be installed in Nvim with `:LspInstall omnisharp`
+`omnisharp-roslyn` can be installed by downloading and extracting a release from [here](https://github.com/OmniSharp/omnisharp-roslyn/releases).
+Omnisharp can also be built from source by following the instructions [here](https://github.com/omnisharp/omnisharp-roslyn#downloading-omnisharp).
+
+Omnisharp requires the [dotnet-sdk](https://dotnet.microsoft.com/download) to be installed.
+
+**By default, omnisharp-roslyn doesn't have a `cmd` set.** This is because nvim-lspconfig does not make assumptions about your path. You must add the following to your init.vim or init.lua to set `cmd` to the absolute path ($HOME and ~ are not expanded) of the unzipped run script or binary.
+
+```lua
+local pid = vim.fn.getpid()
+-- On linux/darwin if using a release build, otherwise under scripts/OmniSharp(.Core)(.cmd)
+local omnisharp_bin = "/path/to/omnisharp-repo/run"
+-- on Windows
+-- local omnisharp_bin = "/path/to/omnisharp/OmniSharp.exe"
+require'lspconfig'.omnisharp.setup{
+    cmd = { omnisharp_bin, "--languageserver" , "--hostPID", tostring(pid) };
+    ...
+}
+```
+
+Note, if you download the executable for darwin you will need to strip the quarantine label to run:
+```bash
+find /path/to/omnisharp-osx | xargs xattr -r -d com.apple.quarantine
+```
+
 
 ```lua
 require'lspconfig'.omnisharp.setup{}
@@ -2968,10 +2650,8 @@ require'lspconfig'.omnisharp.setup{}
   Commands:
   
   Default Values:
-    cmd = { "/home/runner/.cache/nvim/lspconfig/omnisharp/run", "--languageserver", "--hostPID", "2559" }
     filetypes = { "cs", "vb" }
     init_options = {}
-    on_new_config = <function 1>
     root_dir = root_pattern(".csproj", ".sln")
 ```
 
@@ -2992,6 +2672,10 @@ This server accepts configuration via the `settings` key.
   
   port to use for connection between vscode and debug adapter inside Perl\:\:LanguageServer\. On a multi user system every user must use a differnt port\.
 
+- **`perl.disableCache`**: `boolean`
+
+  if true\, the LanguageServer will not cache the result of parsing source files on disk\, so it can be used within readonly directories
+
 - **`perl.enable`**: `boolean`
 
   Default: `true`
@@ -3009,6 +2693,12 @@ This server accepts configuration via the `settings` key.
   Default: `vim.NIL`
   
   directories to ignore\, defaults to \.vscode\, \.git\, \.svn
+
+- **`perl.logFile`**: `string`
+
+  Default: `vim.NIL`
+  
+  If set\, log output is written to the given logfile\, insetad of displaying it in the vscode output pane\. Log output is always appended so you are responsible for rotating the file\.
 
 - **`perl.logLevel`**: `integer`
 
@@ -3032,7 +2722,7 @@ This server accepts configuration via the `settings` key.
 
   Default: `vim.NIL`
   
-  array with paths to add to perl library path
+  array with paths to add to perl library path\. This setting is used by the syntax checker and for the debugee and also for the LanguageServer itself\.
 
 - **`perl.showLocalVars`**: `boolean`
 
@@ -3098,12 +2788,11 @@ require'lspconfig'.perlls.setup{}
 ## purescriptls
 
 https://github.com/nwolverson/purescript-language-server
-`purescript-language-server` can be installed via `:LspInstall purescriptls` or by yourself with `npm`
+`purescript-language-server` can be installed via `npm`
 ```sh
 npm install -g purescript-language-server
 ```
 
-Can be installed in Nvim with `:LspInstall purescriptls`
 This server accepts configuration via the `settings` key.
 <details><summary>Available settings:</summary>
 
@@ -3572,9 +3261,9 @@ Requires [.NET Core](https://docs.microsoft.com/en-us/dotnet/core/tools/dotnet-i
 curl -L https://dot.net/v1/dotnet-install.sh | sh
 ```
 
-`python-language-server` can be installed via `:LspInstall pyls_ms` or you can [build](https://github.com/microsoft/python-language-server/blob/master/CONTRIBUTING.md#setup) your own.
+`python-language-server` can be installed via [build](https://github.com/microsoft/python-language-server/blob/master/CONTRIBUTING.md#setup).
 
-If you want to use your own build, set cmd to point to `Microsoft.Python.languageServer.dll`.
+Set cmd to point to `Microsoft.Python.languageServer.dll`.
 
 ```lua
 cmd = { "dotnet", "exec", "path/to/Microsoft.Python.languageServer.dll" };
@@ -3590,7 +3279,6 @@ Version = "3.8"
 This server accepts configuration via the `settings` key.
 
     
-Can be installed in Nvim with `:LspInstall pyls_ms`
 
 ```lua
 require'lspconfig'.pyls_ms.setup{}
@@ -3610,7 +3298,6 @@ require'lspconfig'.pyls_ms.setup{}
         }
       }
     }
-    on_new_config = <function 1>
     root_dir = vim's starting directory
     settings = {
       python = {
@@ -3629,7 +3316,6 @@ https://github.com/microsoft/pyright
 
 `pyright`, a static type checker and language server for python
 
-Can be installed in Nvim with `:LspInstall pyright`
 
 ```lua
 require'lspconfig'.pyright.setup{}
@@ -3729,6 +3415,28 @@ require'lspconfig'.r_language_server.setup{}
     root_dir = root_pattern(".git") or os_homedir
 ```
 
+## racket_langserver
+
+[https://github.com/jeapostrophe/racket-langserver](https://github.com/jeapostrophe/racket-langserver)
+
+The Racket language server. This project seeks to use
+[DrRacket](https://github.com/racket/drracket)'s public API to provide
+functionality that mimics DrRacket's code tools as closely as possible.
+
+Install via `raco`: `raco pkg install racket-langserver`
+
+
+```lua
+require'lspconfig'.racket_langserver.setup{}
+
+  Commands:
+  
+  Default Values:
+    cmd = { "racket", "--lib", "racket-langserver" }
+    filetypes = { "racket", "scheme" }
+    root_dir = <function 1>
+```
+
 ## rls
 
 https://github.com/rust-lang/rls
@@ -3737,6 +3445,20 @@ rls, a language server for Rust
 
 See https://github.com/rust-lang/rls#setup to setup rls itself.
 See https://github.com/rust-lang/rls#configuration for rls-specific settings.
+All settings listed on the rls configuration section of the readme
+must be set under settings.rust as follows:
+
+```lua
+nvim_lsp.rls.setup {
+  settings = {
+    rust = {
+      unstable_features = true,
+      build_on_save = false,
+      all_features = true,
+    },
+  },
+}
+```
 
 If you want to use rls for a particular build, eg nightly, set cmd as follows:
 
@@ -3744,229 +3466,6 @@ If you want to use rls for a particular build, eg nightly, set cmd as follows:
 cmd = {"rustup", "run", "nightly", "rls"}
 ```
     
-This server accepts configuration via the `settings` key.
-<details><summary>Available settings:</summary>
-
-- **`rust-client.autoStartRls`**: `boolean`
-
-  Default: `true`
-  
-  Start RLS automatically when opening a file or project\.
-
-- **`rust-client.channel`**
-
-  Default: `"default"`
-  
-  Rust channel to invoke rustup with\. Ignored if rustup is disabled\. By default\, uses the same channel as your currently open project\.
-
-- **`rust-client.disableRustup`**: `boolean`
-
-  Disable usage of rustup and use rustc\/rls\/rust\-analyzer from PATH\.
-
-- **`rust-client.enableMultiProjectSetup`**: `boolean|null`
-
-  Default: `vim.NIL`
-  
-  Allow multiple projects in the same folder\, along with removing the constraint that the cargo\.toml must be located at the root\. \(Experimental\: might not work for certain setups\)
-
-- **`rust-client.engine`**: `enum { "rls", "rust-analyzer" }`
-
-  Default: `"rls"`
-  
-  The underlying LSP server used to provide IDE support for Rust projects\.
-
-- **`rust-client.logToFile`**: `boolean`
-
-  When set to true\, RLS stderr is logged to a file at workspace root level\. Requires reloading extension after change\.
-
-- **`rust-client.revealOutputChannelOn`**: `enum { "info", "warn", "error", "never" }`
-
-  Default: `"never"`
-  
-  Specifies message severity on which the output channel will be revealed\. Requires reloading extension after change\.
-
-- **`rust-client.rlsPath`**: `string|null`
-
-  Default: `vim.NIL`
-  
-  Override RLS path\. Only required for RLS developers\. If you set this and use rustup\, you should also set \`rust\-client\.channel\` to ensure your RLS sees the right libraries\. If you don\'t use rustup\, make sure to set \`rust\-client\.disableRustup\`\.
-
-- **`rust-client.rustupPath`**: `string`
-
-  Default: `"rustup"`
-  
-  Path to rustup executable\. Ignored if rustup is disabled\.
-
-- **`rust-client.trace.server`**: `enum { "off", "messages", "verbose" }`
-
-  Default: `"off"`
-  
-  Traces the communication between VS Code and the Rust language server\.
-
-- **`rust-client.updateOnStartup`**: `boolean`
-
-  Update the Rust toolchain and its required components whenever the extension starts up\.
-
-- **`rust.all_features`**: `boolean`
-
-  Enable all Cargo features\.
-
-- **`rust.all_targets`**: `boolean`
-
-  Default: `true`
-  
-  Checks the project as if you were running cargo check \-\-all\-targets \(I\.e\.\, check all targets and integration tests too\)\.
-
-- **`rust.build_bin`**: `string|null`
-
-  Default: `vim.NIL`
-  
-  Specify to run analysis as if running \`cargo check \-\-bin \<name\>\`\. Use \`null\` to auto\-detect\. \(unstable\)
-
-- **`rust.build_command`**: `string|null`
-
-  Default: `vim.NIL`
-  
-  EXPERIMENTAL \(requires \`unstable\_features\`\)
-  If set\, executes a given program responsible for rebuilding save\-analysis to be loaded by the RLS\. The program given should output a list of resulting \.json files on stdout\. 
-  Implies \`rust\.build\_on\_save\`\: true\.
-
-- **`rust.build_lib`**: `boolean|null`
-
-  Default: `vim.NIL`
-  
-  Specify to run analysis as if running \`cargo check \-\-lib\`\. Use \`null\` to auto\-detect\. \(unstable\)
-
-- **`rust.build_on_save`**: `boolean`
-
-  Only index the project when a file is saved and not on change\.
-
-- **`rust.cfg_test`**: `boolean`
-
-  Build cfg\(test\) code\. \(unstable\)
-
-- **`rust.clear_env_rust_log`**: `boolean`
-
-  Default: `true`
-  
-  Clear the RUST\_LOG environment variable before running rustc or cargo\.
-
-- **`rust.clippy_preference`**: `enum { "on", "opt-in", "off" }`
-
-  Default: `"opt-in"`
-  
-  Controls eagerness of clippy diagnostics when available\. Valid values are \(case\-insensitive\)\:
-   \- \"off\"\: Disable clippy lints\.
-   \- \"on\"\: Display the same diagnostics as command\-line clippy invoked with no arguments \(\`clippy\:\:all\` unless overridden\)\.
-   \- \"opt\-in\"\: Only display the lints explicitly enabled in the code\. Start by adding \`\#\!\[warn\(clippy\:\:all\)\]\` to the root of each crate you want linted\.
-  You need to install clippy via rustup if you haven\'t already\.
-
-- **`rust.crate_blacklist`**: `array|null`
-
-  Default: `{ "cocoa", "gleam", "glium", "idna", "libc", "openssl", "rustc_serialize", "serde", "serde_json", "typenum", "unicode_normalization", "unicode_segmentation", "winapi" }`
-  
-  Overrides the default list of packages for which analysis is skipped\.
-  Available since RLS 1\.38
-
-- **`rust.features`**: `array`
-
-  Default: `{}`
-  
-  A list of Cargo features to enable\.
-
-- **`rust.full_docs`**: `boolean|null`
-
-  Default: `vim.NIL`
-  
-  Instructs cargo to enable full documentation extraction during save\-analysis while building the crate\.
-
-- **`rust.jobs`**: `number|null`
-
-  Default: `vim.NIL`
-  
-  Number of Cargo jobs to be run in parallel\.
-
-- **`rust.no_default_features`**: `boolean`
-
-  Do not enable default Cargo features\.
-
-- **`rust.racer_completion`**: `boolean`
-
-  Default: `true`
-  
-  Enables code completion using racer\.
-
-- **`rust.rust-analyzer`**: `object`
-
-  Default: `vim.empty_dict()`
-  
-  Settings passed down to rust\-analyzer server
-
-- **`rust.rust-analyzer.path`**: `string|null`
-
-  Default: `vim.NIL`
-  
-  When specified\, uses the rust\-analyzer binary at a given path
-
-- **`rust.rust-analyzer.releaseTag`**: `string`
-
-  Default: `"nightly"`
-  
-  Which binary release to download and use
-
-- **`rust.rustflags`**: `string|null`
-
-  Default: `vim.NIL`
-  
-  Flags added to RUSTFLAGS\.
-
-- **`rust.rustfmt_path`**: `string|null`
-
-  Default: `vim.NIL`
-  
-  When specified\, RLS will use the Rustfmt pointed at the path instead of the bundled one
-
-- **`rust.show_hover_context`**: `boolean`
-
-  Default: `true`
-  
-  Show additional context in hover tooltips when available\. This is often the type local variable declaration\.
-
-- **`rust.show_warnings`**: `boolean`
-
-  Default: `true`
-  
-  Show warnings\.
-
-- **`rust.sysroot`**: `string|null`
-
-  Default: `vim.NIL`
-  
-  \-\-sysroot
-
-- **`rust.target`**: `string|null`
-
-  Default: `vim.NIL`
-  
-  \-\-target
-
-- **`rust.target_dir`**: `string|null`
-
-  Default: `vim.NIL`
-  
-  When specified\, it places the generated analysis files at the specified target directory\. By default it is placed target\/rls directory\.
-
-- **`rust.unstable_features`**: `boolean`
-
-  Enable unstable features\.
-
-- **`rust.wait_to_build`**: `number|null`
-
-  Default: `vim.NIL`
-  
-  Time in milliseconds between receiving a change notification and starting build\.
-
-</details>
 
 ```lua
 require'lspconfig'.rls.setup{}
@@ -3990,7 +3489,6 @@ To install manually, run `cargo install rnix-lsp`. If you are using nix, rnix-ls
 This server accepts configuration via the `settings` key.
 
     
-Can be installed in Nvim with `:LspInstall rnix`
 
 ```lua
 require'lspconfig'.rnix.setup{}
@@ -4001,7 +3499,6 @@ require'lspconfig'.rnix.setup{}
     cmd = { "rnix-lsp" }
     filetypes = { "nix" }
     init_options = {}
-    on_new_config = <function 1>
     root_dir = vim's starting directory
     settings = {}
 ```
@@ -4039,7 +3536,7 @@ See [docs](https://github.com/rust-analyzer/rust-analyzer/tree/master/docs/user#
 This server accepts configuration via the `settings` key.
 <details><summary>Available settings:</summary>
 
-- **`rust-analyzer.assist.importMergeBehaviour`**: `enum { "none", "full", "last" }`
+- **`rust-analyzer.assist.importMergeBehavior`**: `enum { "none", "full", "last" }`
 
   Default: `"full"`
   
@@ -4335,6 +3832,10 @@ This server accepts configuration via the `settings` key.
 
   null
 
+- **`rust-analyzer.lens.references`**: `boolean`
+
+  null
+
 - **`rust-analyzer.lens.run`**: `boolean`
 
   Default: `true`
@@ -4363,6 +3864,12 @@ This server accepts configuration via the `settings` key.
 
 - **`rust-analyzer.procMacro.enable`**: `boolean`
 
+  null
+
+- **`rust-analyzer.procMacro.server`**: `null|string`
+
+  Default: `vim.NIL`
+  
   null
 
 - **`rust-analyzer.runnableEnv`**
@@ -4413,7 +3920,7 @@ This server accepts configuration via the `settings` key.
   
   null
 
-- **`rust-analyzer.serverPath`**: `null|string`
+- **`rust-analyzer.server.path`**: `null|string`
 
   Default: `vim.NIL`
   
@@ -4449,109 +3956,6 @@ require'lspconfig'.rust_analyzer.setup{}
   Commands:
   
   Default Values:
-    capabilities = {
-      callHierarchy = {
-        dynamicRegistration = false
-      },
-      textDocument = {
-        codeAction = {
-          codeActionLiteralSupport = {
-            codeActionKind = {
-              valueSet = { "", "Empty", "QuickFix", "Refactor", "RefactorExtract", "RefactorInline", "RefactorRewrite", "Source", "SourceOrganizeImports", "quickfix", "refactor", "refactor.extract", "refactor.inline", "refactor.rewrite", "source", "source.organizeImports" }
-            }
-          },
-          dynamicRegistration = false
-        },
-        completion = {
-          completionItem = {
-            commitCharactersSupport = false,
-            deprecatedSupport = false,
-            documentationFormat = { "markdown", "plaintext" },
-            preselectSupport = false,
-            snippetSupport = false
-          },
-          completionItemKind = {
-            valueSet = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25 }
-          },
-          contextSupport = false,
-          dynamicRegistration = false
-        },
-        declaration = {
-          linkSupport = true
-        },
-        definition = {
-          linkSupport = true
-        },
-        documentHighlight = {
-          dynamicRegistration = false
-        },
-        documentSymbol = {
-          dynamicRegistration = false,
-          hierarchicalDocumentSymbolSupport = true,
-          symbolKind = {
-            valueSet = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 }
-          }
-        },
-        hover = {
-          contentFormat = { "markdown", "plaintext" },
-          dynamicRegistration = false
-        },
-        implementation = {
-          linkSupport = true
-        },
-        references = {
-          dynamicRegistration = false
-        },
-        rename = {
-          dynamicRegistration = false,
-          prepareSupport = true,
-          prepareSupportDefaultBehavior = 1
-        },
-        signatureHelp = {
-          dynamicRegistration = false,
-          signatureInformation = {
-            documentationFormat = { "markdown", "plaintext" }
-          }
-        },
-        synchronization = {
-          didSave = true,
-          dynamicRegistration = false,
-          willSave = false,
-          willSaveWaitUntil = false
-        },
-        typeDefinition = {
-          linkSupport = true
-        }
-      },
-      window = {
-        showDocument = {
-          support = false
-        },
-        showMessage = {
-          messageActionItem = {
-            additionalPropertiesSupport = false
-          }
-        },
-        workDoneProgress = true
-      },
-      workspace = {
-        applyEdit = true,
-        symbol = {
-          dynamicRegistration = false,
-          hierarchicalWorkspaceSymbolSupport = true,
-          symbolKind = {
-            valueSet = { 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 11, 12, 13, 14, 15, 16, 17, 18, 19, 20, 21, 22, 23, 24, 25, 26 }
-          }
-        },
-        workspaceEdit = {
-          changeAnnotationSupport = {
-            groupsOnLabel = true
-          },
-          normalizesLineEndings = true
-        },
-        workspaceFolders = true
-      }
-    }
     cmd = { "rust-analyzer" }
     filetypes = { "rust" }
     root_dir = root_pattern("Cargo.toml", "rust-project.json")
@@ -4587,7 +3991,7 @@ solargraph, a language server for Ruby
 You can install solargraph via gem install.
 
 ```sh
-gem install solargraph
+gem install --user-install solargraph
 ```
     
 This server accepts configuration via the `settings` key.
@@ -4698,6 +4102,11 @@ require'lspconfig'.solargraph.setup{}
     cmd = { "solargraph", "stdio" }
     filetypes = { "ruby" }
     root_dir = root_pattern("Gemfile", ".git")
+    settings = {
+      solargraph = {
+        diagnostics = true
+      }
+    }
 ```
 
 ## sorbet
@@ -4777,7 +4186,7 @@ require'lspconfig'.sourcekit.setup{}
 
 https://github.com/joe-re/sql-language-server
 
-`cmd` value is **not set** by default. An installer is provided via the `:LspInstall` command that uses the *nvm_lsp node_modules* directory to find the sql-language-server executable. The `cmd` value can be overriden in the `setup` table;
+`cmd` value is **not set** by default. The `cmd` value can be overriden in the `setup` table;
 
 ```lua
 require'lspconfig'.sqlls.setup{
@@ -4786,10 +4195,9 @@ require'lspconfig'.sqlls.setup{
 }
 ```
 
-This LSP can be installed via `:LspInstall sqlls` or with `npm`. If using LspInstall, run `:LspInstallInfo sqlls` to view installation paths. Find further instructions on manual installation of the sql-language-server at [joe-re/sql-language-server](https://github.com/joe-re/sql-language-server).
+This LSP can be installed via  `npm`. Find further instructions on manual installation of the sql-language-server at [joe-re/sql-language-server](https://github.com/joe-re/sql-language-server).
 <br>
     
-Can be installed in Nvim with `:LspInstall sqlls`
 
 ```lua
 require'lspconfig'.sqlls.setup{}
@@ -4806,22 +4214,54 @@ require'lspconfig'.sqlls.setup{}
 
 https://github.com/sumneko/lua-language-server
 
-Lua language server. **By default, this doesn't have a `cmd` set.** This is
-because it doesn't provide a global binary. We provide an installer for Linux
-and macOS using `:LspInstall`.  If you wish to install it yourself, [here is a
-guide](https://github.com/sumneko/lua-language-server/wiki/Build-and-Run-(Standalone)).
-So you should set `cmd` yourself like this.
+Lua language server.
+
+`lua-language-server` can be installed by following the instructions [here](https://github.com/sumneko/lua-language-server/wiki/Build-and-Run-(Standalone)).
+
+**By default, lua-language-server doesn't have a `cmd` set.** This is because nvim-lspconfig does not make assumptions about your path. You must add the following to your init.vim or init.lua to set `cmd` to the absolute path ($HOME and ~ are not expanded) of you unzipped and compiled lua-language-server.
 
 ```lua
-require'lspconfig'.sumneko_lua.setup{
-  cmd = {"path", "to", "cmd"};
-  ...
+local system_name
+if vim.fn.has("mac") == 1 then
+  system_name = "macOS"
+elseif vim.fn.has("unix") == 1 then
+  system_name = "Linux"
+elseif vim.fn.has('win32') == 1 then
+  system_name = "Windows"
+else
+  print("Unsupported system for sumneko")
+end
+
+-- set the path to the sumneko installation; if you previously installed via the now deprecated :LspInstall, use
+local sumneko_root_path = vim.fn.stdpath('cache')..'/lspconfig/sumneko_lua/lua-language-server'
+local sumneko_binary = sumneko_root_path.."/bin/"..system_name.."/lua-language-server"
+
+require'lspconfig'.sumneko_lua.setup {
+  cmd = {sumneko_binary, "-E", sumneko_root_path .. "/main.lua"};
+  settings = {
+    Lua = {
+      runtime = {
+        -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
+        version = 'LuaJIT',
+        -- Setup your lua path
+        path = vim.split(package.path, ';'),
+      },
+      diagnostics = {
+        -- Get the language server to recognize the `vim` global
+        globals = {'vim'},
+      },
+      workspace = {
+        -- Make the server aware of Neovim runtime files
+        library = {
+          [vim.fn.expand('$VIMRUNTIME/lua')] = true,
+          [vim.fn.expand('$VIMRUNTIME/lua/vim/lsp')] = true,
+        },
+      },
+    },
+  },
 }
 ```
 
-If you install via our installer, if you execute `:LspInstallInfo sumneko_lua`, you can know `cmd` value.
-
-Can be installed in Nvim with `:LspInstall sumneko_lua`
 This server accepts configuration via the `settings` key.
 <details><summary>Available settings:</summary>
 
@@ -4969,6 +4409,12 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`Lua.runtime.plugin`**: `string`
+
+  Default: `".vscode/lua/plugin.lua"`
+  
+  null
+
 - **`Lua.runtime.special`**: `object`
 
   null
@@ -5048,12 +4494,11 @@ require'lspconfig'.sumneko_lua.setup{}
 
 https://github.com/sveltejs/language-tools/tree/master/packages/language-server
 
-`svelte-language-server` can be installed via `:LspInstall svelte` or by yourself with `npm`:
+`svelte-language-server` can be installed via `npm`:
 ```sh
 npm install -g svelte-language-server
 ```
 
-Can be installed in Nvim with `:LspInstall svelte`
 
 ```lua
 require'lspconfig'.svelte.setup{}
@@ -5083,6 +4528,10 @@ This server accepts configuration via the `settings` key.
   Array items: `{type = "string"}`
   
   Per\-workspace list of module directories for the language server to exclude
+
+- **`terraform-ls.experimentalFeatures`**: `object`
+
+  Experimental \(opt\-in\) terraform\-ls features
 
 - **`terraform-ls.rootModules`**: `array`
 
@@ -5139,7 +4588,7 @@ require'lspconfig'.texlab.setup{}
       },
       latex = {
         build = {
-          args = { "-pdf", "-interaction=nonstopmode", "-synctex=1" },
+          args = { "-pdf", "-interaction=nonstopmode", "-synctex=1", "%f" },
           executable = "latexmk",
           onSave = false
         },
@@ -5158,12 +4607,11 @@ require'lspconfig'.texlab.setup{}
 
 https://github.com/theia-ide/typescript-language-server
 
-`typescript-language-server` can be installed via `:LspInstall tsserver` or by yourself with `npm`:
+`typescript-language-server` depends on `typescript`. Both packages can be installed via `npm`:
 ```sh
-npm install -g typescript-language-server
+npm install -g typescript typescript-language-server
 ```
 
-Can be installed in Nvim with `:LspInstall tsserver`
 
 ```lua
 require'lspconfig'.tsserver.setup{}
@@ -5178,6 +4626,13 @@ require'lspconfig'.tsserver.setup{}
 
 ## vimls
 
+https://github.com/iamcco/vim-language-server
+
+You can install vim-language-server via npm:
+```sh
+npm install -g vim-language-server
+```
+
 
 ```lua
 require'lspconfig'.vimls.setup{}
@@ -5186,9 +4641,6 @@ require'lspconfig'.vimls.setup{}
   
   Default Values:
     cmd = { "vim-language-server", "--stdio" }
-    docs = {
-      description = "https://github.com/iamcco/vim-language-server\n\nIf you don't want to use Nvim to install it, then you can use:\n```sh\nnpm install -g vim-language-server\n```\n"
-    }
     filetypes = { "vim" }
     init_options = {
       diagnostic = {
@@ -5208,7 +4660,6 @@ require'lspconfig'.vimls.setup{}
       },
       vimruntime = ""
     }
-    on_new_config = <function 1>
     root_dir = <function 1>
 ```
 
@@ -5217,12 +4668,11 @@ require'lspconfig'.vimls.setup{}
 https://github.com/vuejs/vetur/tree/master/server
 
 Vue language server(vls)
-`vue-language-server` can be installed via `:LspInstall vuels` or by yourself with `npm`:
+`vue-language-server` can be installed via `npm`:
 ```sh
 npm install -g vls
 ```
 
-Can be installed in Nvim with `:LspInstall vuels`
 This server accepts configuration via the `settings` key.
 <details><summary>Available settings:</summary>
 
@@ -5491,12 +4941,11 @@ require'lspconfig'.vuels.setup{}
 
 https://github.com/redhat-developer/yaml-language-server
 
-`yaml-language-server` can be installed via `:LspInstall yamlls` or by yourself with `npm`:
+`yaml-language-server` can be installed via `npm`:
 ```sh
 npm install -g yaml-language-server
 ```
 
-Can be installed in Nvim with `:LspInstall yamlls`
 This server accepts configuration via the `settings` key.
 <details><summary>Available settings:</summary>
 

@@ -5,95 +5,33 @@ local path = util.path
 
 local server_name = "jdtls"
 
-local function make_installer()
-  local install_dir = path.join { util.base_install_dir, server_name }
-  local tar_name = "jdt-language-server-latest.tar.gz"
-  local script = string.format([[
-    curl -LO http://download.eclipse.org/jdtls/snapshots/%s > %s
-    tar xf %s
-  ]], tar_name, tar_name, tar_name)
-  local launcher_ls = "ls " .. path.join { install_dir, "plugins", "org.eclipse.equinox.launcher_*.jar" }
-
-  local X = {}
-
-  function X.install()
-    if not util.has_bins("curl", "tar") then
-      error('Need the binaries "curl", "tar" to install this.')
-      return
-    end
-
-    vim.fn.mkdir(install_dir, "p")
-    util.sh(script, install_dir)
-  end
-
-  function X.info()
-    return {
-      is_installed = util.path.exists(install_dir, 'features') ~= false;
-      install_dir = install_dir;
-    }
-  end
-
-  function X.get_os_config()
-    if vim.fn.has("osx") == 1 then
-      return "config_mac"
-    elseif vim.fn.has("unix") == 1 then
-      return "config_linux"
-    else
-      return "config_win"
-    end
-  end
-
-  function X.get_launcher()
-    local file = io.popen(launcher_ls)
-    local results = {}
-
-    for line in file:lines() do
-      table.insert(results, line)
-    end
-
-    if #results == 1 then
-      return results[1]
-    end
-
-    error("Could not find launcher for jdtls.")
-  end
-
-  function X.configure(config)
-    local install_info = X.info()
-    local launcher_path = X.get_launcher()
-
-    if install_info.is_installed then
-      config.cmd = vim.list_extend(
-        vim.list_extend(
-          {
-            "java",
-            "-Declipse.application=org.eclipse.jdt.ls.core.id1",
-            "-Dosgi.bundles.defaultStartLevel=4",
-            "-Declipse.product=org.eclipse.jdt.ls.core.product",
-            "-Dlog.level=ALL",
-            "-noverify",
-            "-Xmx1G",
-          },
-          config.init_options.jvm_args),
-        {
-          "-jar", launcher_path,
-          "-configuration", path.join { install_dir, config.init_options.os_config or X.get_os_config() },
-          "-data", config.init_options.workspace,
-          -- TODO: Handle Java versions 8 and under. This may just work...
-          "--add-modules=ALL-SYSTEM",
-          "--add-opens", "java.base/java.util=ALL-UNNAMED",
-          "--add-opens", "java.base/java.lang=ALL-UNNAMED"
-        })
-    end
-  end
-
-  return X
-end
-
-local installer = make_installer()
+local cmd = {
+  util.path.join(tostring(vim.fn.getenv("JAVA_HOME")), "/bin/java"),
+  "-Declipse.application=org.eclipse.jdt.ls.core.id1",
+  "-Dosgi.bundles.defaultStartLevel=4",
+  "-Declipse.product=org.eclipse.jdt.ls.core.product",
+  "-Dlog.protocol=true",
+  "-Dlog.level=ALL",
+  "-Xms1g",
+  "-Xmx2G",
+  "-jar",
+  tostring(vim.fn.getenv("JAR")),
+  "-configuration",
+  tostring(vim.fn.getenv("JDTLS_CONFIG")),
+  "-data",
+  tostring(vim.fn.getenv("WORKSPACE")),
+  "--add-modules=ALL-SYSTEM",
+  "--add-opens java.base/java.util=ALL-UNNAMED",
+  "--add-opens java.base/java.lang=ALL-UNNAMED",
+}
 
 configs[server_name] = {
   default_config = {
+    cmd = cmd,
+    cmd_env = {
+      JAR=vim.fn.getenv("JAR"),
+      GRADLE_HOME=vim.fn.getenv("GRADLE_HOME"),
+    },
     filetypes = { "java" };
     root_dir = util.root_pattern('.git');
     init_options = {
@@ -127,22 +65,28 @@ configs[server_name] = {
       end
     };
   };
-  on_new_config = function(config)
-    installer.configure(config)
-  end;
   docs = {
     description = [[
+
 https://projects.eclipse.org/projects/eclipse.jdt.ls
 
-Language server can be installed with `:LspInstall jdtls`
-
 Language server for Java.
+
+See project page for installation instructions.
+
+Due to the nature of java, the settings for eclipse jdtls cannot be automatically
+inferred. Please set the following environmental variables to match your installation. You can set these locally for your project with the help of [direnv](https://github.com/direnv/direnv). Note version numbers will change depending on your project's version of java, your version of eclipse, and in the case of JDTLS_CONFIG, your OS.
+
+```bash
+export JAR=/path/to/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/plugins/org.eclipse.equinox.launcher_1.6.0.v20200915-1508.jar
+export GRADLE_HOME=$HOME/gradle
+export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-11.0.9.11-9.fc33.x86_64/
+export JDTLS_CONFIG=/path/to/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/config_linux
+export WORKSPACE=$HOME/workspace
+```
     ]];
     default_config = {
       root_dir = [[root_pattern(".git")]];
     };
   };
 }
-
-configs[server_name].install = installer.install
-configs[server_name].install_info = installer.info

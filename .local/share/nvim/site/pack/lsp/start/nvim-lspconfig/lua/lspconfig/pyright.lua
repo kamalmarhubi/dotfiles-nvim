@@ -7,17 +7,22 @@ if vim.fn.has('win32') == 1 then
   bin_name = bin_name..".cmd"
 end
 
-local installer = util.npm_installer {
-  server_name = server_name;
-  packages = {server_name};
-  binaries = {bin_name};
+local root_files = {
+  'setup.py',
+  'pyproject.toml',
+  'setup.cfg',
+  'requirements.txt',
+  '.git',
 }
 
 configs[server_name] = {
   default_config = {
     cmd = {bin_name, "--stdio"};
     filetypes = {"python"};
-    root_dir = util.root_pattern(".git", "setup.py",  "setup.cfg", "pyproject.toml", "requirements.txt");
+    root_dir = function(filename)
+      return util.root_pattern(unpack(root_files))(filename) or
+             util.path.dirname(filename)
+    end;
     settings = {
       python = {
         analysis = {
@@ -36,6 +41,4 @@ https://github.com/microsoft/pyright
   };
 }
 
-configs[server_name].install = installer.install
-configs[server_name].install_info = installer.info
 -- vim:et ts=2 sw=2

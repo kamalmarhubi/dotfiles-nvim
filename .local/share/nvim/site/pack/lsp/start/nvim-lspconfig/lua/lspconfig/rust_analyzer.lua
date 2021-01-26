@@ -1,26 +1,24 @@
 local configs = require 'lspconfig/configs'
 local util = require 'lspconfig/util'
 
--- neovim doesn't support the full 3.16 spec, but latest rust-analyzer requires the following capabilities.
--- Remove once implemented.
-local default_capabilities = vim.lsp.protocol.make_client_capabilities()
-default_capabilities.workspace.workspaceEdit = {
-  normalizesLineEndings = true;
-  changeAnnotationSupport = {
-    groupsOnLabel = true;
-  };
-};
-default_capabilities.textDocument.rename.prepareSupportDefaultBehavior = 1;
-
 configs.rust_analyzer = {
   default_config = {
     cmd = {"rust-analyzer"};
     filetypes = {"rust"};
-    root_dir = util.root_pattern("Cargo.toml", "rust-project.json");
+    root_dir = function(fname)
+      local cargo_metadata = vim.fn.system("cargo metadata --format-version 1")
+      local cargo_root = nil
+      if vim.v.shell_handler == 0 then
+        cargo_root = vim.fn.json_decode(cargo_metadata)["workspace_root"]
+      end
+      return cargo_root or
+        util.find_git_ancestor(fname) or
+        util.root_pattern("rust-project.json")(fname) or
+        util.root_pattern("Cargo.toml")(fname)
+    end;
     settings = {
       ["rust-analyzer"] = {}
     };
-    capabilities = default_capabilities;
   };
   docs = {
     package_json = "https://raw.githubusercontent.com/rust-analyzer/rust-analyzer/master/editors/code/package.json";
