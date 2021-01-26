@@ -37,23 +37,20 @@ endif
 
 " ----------------------------------------------------------------------------
 " wrapper function for `floaterm#new()` and `floaterm#update()` since they
-" share the same argument: `opts`
+" share the same argument: `config`
 " ----------------------------------------------------------------------------
 function! floaterm#run(action, bang, ...) abort
-  let [cmd, opts] = floaterm#cmdline#parse(a:000)
+  let [cmd, config] = floaterm#cmdline#parse(a:000)
   if a:action == 'new'
-    call floaterm#new(a:bang, cmd, {}, opts)
+    call floaterm#new(a:bang, cmd, {}, config)
   elseif a:action == 'update'
-    call floaterm#update(opts)
+    call floaterm#update(config)
   endif
 endfunction
 
-" ----------------------------------------------------------------------------
-" create a floaterm. `jobopts` is not used inside this pugin actually, it's
-" reserved for outer invoke
-" ----------------------------------------------------------------------------
-function! floaterm#new(bang, cmd, jobopts, opts) abort
-  call floaterm#util#autohide()
+" create a floaterm. return bufnr of the terminal
+" argument `jobopts` is passed by user in the case using this function as API
+function! floaterm#new(bang, cmd, jobopts, config) abort
   if a:cmd != ''
     let wrappers_path = globpath(&runtimepath, 'autoload/floaterm/wrapper/*vim', 0, 1)
     let wrappers = map(wrappers_path, "substitute(fnamemodify(v:val, ':t'), '\\..\\{-}$', '', '')")
@@ -62,19 +59,19 @@ function! floaterm#new(bang, cmd, jobopts, opts) abort
       let WrapFunc = function(printf('floaterm#wrapper#%s#', maybe_wrapper))
       let [name, jobopts, send2shell] = WrapFunc(a:cmd)
       if send2shell
-        let bufnr = floaterm#terminal#open(-1, g:floaterm_shell, {}, a:opts)
+        let bufnr = floaterm#terminal#open(-1, g:floaterm_shell, {}, a:config)
         call floaterm#terminal#send(bufnr, [name])
       else
-        let bufnr = floaterm#terminal#open(-1, name, jobopts, a:opts)
+        let bufnr = floaterm#terminal#open(-1, name, jobopts, a:config)
       endif
     elseif a:bang
-      let bufnr = floaterm#terminal#open(-1, g:floaterm_shell, a:jobopts, a:opts)
+      let bufnr = floaterm#terminal#open(-1, g:floaterm_shell, a:jobopts, a:config)
       call floaterm#terminal#send(bufnr, [a:cmd])
     else
-      let bufnr = floaterm#terminal#open(-1, a:cmd, a:jobopts, a:opts)
+      let bufnr = floaterm#terminal#open(-1, a:cmd, a:jobopts, a:config)
     endif
   else
-    let bufnr = floaterm#terminal#open(-1, g:floaterm_shell, a:jobopts, a:opts)
+    let bufnr = floaterm#terminal#open(-1, g:floaterm_shell, a:jobopts, a:config)
   endif
   return bufnr
 endfunction
@@ -86,13 +83,14 @@ function! floaterm#toggle(bang, bufnr, name)  abort
   if a:bang
     let found_winnr = floaterm#window#find()
     if found_winnr > 0
-      for bufnr in floaterm#buflist#gather()
-        call floaterm#window#hide(bufnr)
-      endfor
+      call floaterm#hide(1, 0, '')
     else
-      for bufnr in floaterm#buflist#gather()
-        call floaterm#terminal#open_existing(bufnr)
-      endfor
+      let buffers = floaterm#buflist#gather()
+      if empty(buffers)
+        let curr_bufnr = floaterm#new(v:true, '', {}, {})
+      else
+        call floaterm#show(1, 0, '')
+      endif
     endif
     return
   endif
@@ -110,7 +108,7 @@ function! floaterm#toggle(bang, bufnr, name)  abort
     else
       let found_winnr = floaterm#window#find()
       if found_winnr > 0
-        noautocmd execute found_winnr . 'wincmd w'
+        execute found_winnr . 'wincmd w'
       else
         call floaterm#curr()
       endif
@@ -119,7 +117,7 @@ function! floaterm#toggle(bang, bufnr, name)  abort
     if bufnr == bufnr('%')
       call floaterm#window#hide(bufnr)
     elseif bufwinnr(bufnr) > -1
-      noautocmd execute bufwinnr(bufnr) . 'wincmd w'
+      execute bufwinnr(bufnr) . 'wincmd w'
     else
       call floaterm#terminal#open_existing(bufnr)
     endif
@@ -131,15 +129,15 @@ endfunction
 " ----------------------------------------------------------------------------
 " update the attributes of a floaterm
 " ----------------------------------------------------------------------------
-function! floaterm#update(opts) abort
+function! floaterm#update(config) abort
   if &filetype !=# 'floaterm'
-    call floaterm#util#show_msg('You have to be in a floaterm window to change window opts.', 'error')
+    call floaterm#util#show_msg('You have to be in a floaterm window to change window config.', 'error')
     return
   endif
 
   let bufnr = bufnr('%')
   call floaterm#window#hide(bufnr)
-  call floaterm#util#update_opts(bufnr, a:opts)
+  call floaterm#buffer#set_config_dict(bufnr, a:config)
   call floaterm#terminal#open_existing(bufnr)
 endfunction
 
@@ -149,7 +147,6 @@ function! floaterm#next()  abort
     let msg = 'No more floaterms'
     call floaterm#util#show_msg(msg, 'warning')
   else
-    call floaterm#util#autohide()
     call floaterm#terminal#open_existing(next_bufnr)
   endif
 endfunction
@@ -160,7 +157,6 @@ function! floaterm#prev()  abort
     let msg = 'No more floaterms'
     call floaterm#util#show_msg(msg, 'warning')
   else
-    call floaterm#util#autohide()
     call floaterm#terminal#open_existing(prev_bufnr)
   endif
 endfunction
@@ -180,7 +176,6 @@ function! floaterm#first() abort
   if first_bufnr == -1
     call floaterm#util#show_msg('No more floaterms', 'warning')
   else
-    call floaterm#util#autohide()
     call floaterm#terminal#open_existing(first_bufnr)
   endif
 endfunction
@@ -190,7 +185,6 @@ function! floaterm#last() abort
   if last_bufnr == -1
     call floaterm#util#show_msg('No more floaterms', 'warning')
   else
-    call floaterm#util#autohide()
     call floaterm#terminal#open_existing(last_bufnr)
   endif
 endfunction
@@ -220,6 +214,7 @@ endfunction
 
 function! floaterm#show(bang, bufnr, name) abort
   if a:bang
+    call floaterm#hide(1, 0, '')
     for bufnr in floaterm#buflist#gather()
       call floaterm#terminal#open_existing(bufnr)
     endfor
@@ -235,7 +230,6 @@ function! floaterm#show(bang, bufnr, name) abort
   endif
 
   if bufnr > 0
-    call floaterm#util#autohide()
     call floaterm#terminal#open_existing(bufnr)
   else
     call floaterm#util#show_msg('No floaterms with the bufnr or name', 'error')
@@ -272,8 +266,8 @@ function! floaterm#send(bang, visualmode, range, line1, line2, argstr) abort
     return
   endif
 
-  let [cmd, opts] = floaterm#cmdline#parse(split(a:argstr))
-  let termname = get(opts, 'termname', '')
+  let [cmd, config] = floaterm#cmdline#parse(split(a:argstr))
+  let termname = get(config, 'termname', '')
   if !empty(termname)
     let bufnr = floaterm#terminal#get_bufnr(termname)
     if bufnr == -1

@@ -1,34 +1,38 @@
 " vim:ft=vim
 
-# related: #115
 Execute(Set g:floaterm_width and g:floaterm_height):
   let g:floaterm_height = 0.6
   let g:floaterm_width = 0.6
   let columns_origin = &columns
 
-Execute(FloatermNew):
-  FloatermNew
-  AssertEqual b:floaterm_opts.width, 0.6
-  AssertEqual float2nr(0.6*&columns)-2, winwidth(0)
-  AssertEqual b:floaterm_opts.height, 0.6
-  AssertEqual float2nr(0.6*(&lines - &cmdheight - 1))-2, winheight(0)
+  Log '# Basic'
+    FloatermNew
+    AssertEqual b:floaterm_width, 0.6
+    AssertEqual float2nr(0.6*&columns)-2, winwidth(0)
+    AssertEqual b:floaterm_height, 0.6
+    AssertEqual float2nr(0.6*(&lines - &cmdheight - 1))-2, winheight(0)
 
-Execute(FloatermHide and change `&columns`):
-  FloatermHide
-  let &columns = float2nr(&columns/2)
+  " https://github.com/voldikss/vim-floaterm/issues/115
+  Log '# Change `&columns` and reopen'
+    FloatermHide
+    let &columns = float2nr(&columns/2)
 
-Execute(FloatermShow: reopen it):
-  FloatermShow
-  AssertEqual b:floaterm_opts.width, 0.6
-  AssertEqual float2nr(0.6*&columns)-2, winwidth(0)
-  AssertEqual b:floaterm_opts.height, 0.6
-  AssertEqual float2nr(0.6*(&lines - &cmdheight - 1))-2, winheight(0)
+    FloatermShow
+    AssertEqual b:floaterm_width, 0.6
+    AssertEqual float2nr(0.6*&columns)-2, winwidth(0)
+    AssertEqual b:floaterm_height, 0.6
+    AssertEqual float2nr(0.6*(&lines - &cmdheight - 1))-2, winheight(0)
 
-Execute(Restore `&columns`):
-  let &columns = columns_origin
+    let &columns = columns_origin
 
-Execute(Exit):
-  call feedkeys("\<Esc>")
+  " https://github.com/voldikss/vim-floaterm/issues/235
+  Log '# Given the height or width less than 3'
+    FloatermNew --height=0
+    FloatermNew --height=1
+    FloatermNew --height=2
+    FloatermNew --width=0
+    FloatermNew --width=1
+    FloatermNew --width=2
+
   FloatermKill!
-  sleep 100m
-  call feedkeys("\<CR>")
+  stopinsert

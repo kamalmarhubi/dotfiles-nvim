@@ -48,8 +48,8 @@ g:floaterm_title                                 *g:floaterm_title*
 
 g:floaterm_wintype                               *g:floaterm_wintype*
     Type |String|.
-	'floating'(neovim) or 'popup'(vim) by default. Set it to 'normal' if your
-	vim/nvim doesn't support |api-floatwin| or |popup-window|.
+    'float'(nvim's floatwin or vim's popupwin) by default. Set it to
+    'split' or 'vsplit'if you don't want to use floating or popup window. 
 
 g:floaterm_width                                 *g:floaterm_width*
     Type: |Number| (number of columns) or |Float| (between 0 and 1).
@@ -64,24 +64,31 @@ g:floaterm_height                                *g:floaterm_height*
 g:floaterm_position                              *g:floaterm_position*
 	Type |String|.
 	The position of the floaterm window.
-	If |g:floaterm_wintype| is 'normal', the value can be 'top', 'right',
-	'bottom', 'left'. Default value is 'bottom'.
-	If |g:floaterm_wintype| is 'floating' or 'popup', the value can be 'top',
-	'right', 'bottom', 'left', 'center', 'topleft', 'topright', 'bottomleft',
-	'bottomright', 'auto'(at the cursor place). Default value is 'center'.
+    If |g:floaterm_wintype| is 'split' or 'vsplit': 'leftabove', 'aboveleft',
+    'rightbelow', 'belowright', 'topleft', 'botright'.
+    Default: 'botright'.
+    It's recommended to have a look at those options meanings, e.g.
+>
+        `:help :leftabove`.
+<
+    If |g:floaterm_wintype| is 'float': 'top', 'bottom', 'left', 'right',
+    'topleft', 'topright', 'bottomleft', 'bottomright', 'center', 'auto'(at the
+    cursor place).
+    Default: 'center'
 
 g:floaterm_borderchars                           *g:floaterm_borderchars*
-	Type |List| of |String|.
-	Characters of the floating window border.
-    Default value is ['─', '│', '─', '│', '┌', '┐', '┘', '└'].
+	Type |String|.
+    8 characters of the floating window border(top, right, bottom, left, topleft,
+    topright, botright, botleft).
+    Default value is '─│─│┌┐┘└'.
 
 g:floaterm_rootmarkers                           *g:floaterm_rootmarkers*
-	Type |List| of |String|.
-	Markers used to detect the project root directory. If not empty, floaterm
-	will be opened in the project root directory. For example, ['.project',
-	'.git', '.hg', '.svn', '.root', '.gitignore'].
-	Default value is [], which means the floaterm will be opened just at the
-	current directory.
+    Type |List| of |String|.
+    Markers used to detect the project root directory when running
+    >
+        :FloatermNew --cwd=<root>
+<
+    Default: `['.project', '.git', '.hg', '.svn', '.root']`
 
 g:floaterm_open_command                          *g:floaterm_open_command*
 	Type |String|.
@@ -101,20 +108,24 @@ g:floaterm_gitcommit                             *g:floaterm_gitcommit*
 g:floaterm_autoclose                             *g:floaterm_autoclose*
 	Type |Number|.
 	Whether to close floaterm window once a job gets finished.
-	0 - Always do NOT close floaterm window.
-	1 - Close window only if the job exits normally
-	2 - Always close floaterm window.
+        0 - Always do NOT close floaterm window.
+        1 - Close window only if the job exits normally
+        2 - Always close floaterm window.
 	Default value is 0.
+
+g:floaterm_autohide                              *g:floaterm_autohide*
+	Type |Number|.
+    Whether to hide previous floaterms before switching to or opening a another
+    one.
+        0 - Always do NOT hide previous floaterm windows
+        1 - Only hide those whose position (`b:floaterm_position`) is identical to
+            that of the floaterm which will be opened
+        2 - Always hide them
+	Default value is 1.
 
 g:floaterm_autoinsert                            *g:floaterm_autoinsert*
 	Type |Boolean|.
 	Whether to enter |Terminal-mode| after opening a floaterm.
-	Default value is |v:true|.
-
-g:floaterm_autohide                              *g:floaterm_autohide*
-	Type |Boolean|.
-	Decide whether to hide previous floaterms before switching to or opening
-	another one.
 	Default value is |v:true|.
 
 g:floaterm_complete_options                      *g:floaterm_complete_options*
@@ -216,21 +227,17 @@ https://github.com/voldikss/vim-floaterm#commands
 HIGHLIGHT                                        *floaterm-highlight*
 
 This plugin provides two |highlight-groups| to specify the bg/fg color of
-floaterm(also the border color if |g:floaterm_wintype| is 'floating' or
-'popup')window.
+floaterm (also the border color if |g:floaterm_wintype| is 'float')window.
 
-By default, they are both linked to |hl-Normal|. To customize, use |hi|
-command together with the colors you prefer.  For example,
+To customize, use |hi| command together with the colors you prefer.  For example,
  >
-
 	" Set floaterm window's background to black
 	hi Floaterm guibg=black
 	" Set floating window border line color to cyan, and background to orange
 	hi FloatermBorder guibg=orange guifg=cyan
 <
 Besides, there is a neovim only |hi-group| which can be used to configure
-no-current-focused window(:help |hl-NormalNC|). It's also linked to
-|hi-Normal| by default.
+no-current-focused window(:help |hl-NormalNC|).
 
 ==============================================================================
 EXTENSIONS                                       *floaterm-extensions*
@@ -322,23 +329,41 @@ This plugin can be a runner for |asynctasks.vim|. To use it, copy the
 following code to your `vimrc` set |g:asynctasks_term_pos| to `'floaterm'` or
 add a `pos=floaterm` filed in your asynctasks configuration files.
  >
-	function! s:run_floaterm(opts)
-	let curr_bufnr = floaterm#curr()
-	if has_key(a:opts, 'silent') && a:opts.silent == 1
-		FloatermHide!
-	endif
-	let cmd = 'cd ' . shellescape(getcwd())
-	call floaterm#terminal#send(curr_bufnr, [cmd])
-	call floaterm#terminal#send(curr_bufnr, [a:opts.cmd])
-	stopinsert
-	if &filetype == 'floaterm' && g:floaterm_autoinsert
-		call floaterm#util#startinsert()
-	endif
-	endfunction
-
-	let g:asyncrun_runner = get(g:, 'asyncrun_runner', {})
-	let g:asyncrun_runner.floaterm = function('s:run_floaterm')
-<
+    function! s:run_in_floaterm(opts)
+        execute 'FloatermNew --position=bottomright' .
+                        \ ' --wintype=float' .
+                        \ ' --height=0.4' .
+                        \ ' --width=0.4' .
+                        \ ' --title=floaterm_runner' .
+                        \ ' --autoclose=0' .
+                        \ ' --silent=' . get(a:opts, 'silent', 0)
+                        \ ' --cwd=' . a:opts.cwd
+                        \ ' ' . a:opts.cmd
+        " Do not focus on floaterm window, and close it once cursor moves
+        " If you want to jump to the floaterm window, use <C-w>p
+        " You can choose whether to use the following code or not
+        stopinsert | noa wincmd p
+        augroup close-floaterm-runner
+            autocmd!
+            autocmd CursorMoved,InsertEnter * ++nested
+                \ call timer_start(100, { -> s:close_floaterm_runner() })
+        augroup END
+    endfunction
+    function! s:close_floaterm_runner() abort
+        if &ft == 'floaterm' | return | endif
+        for b in tabpagebuflist()
+            if getbufvar(b, '&ft') == 'floaterm' &&
+                \ getbufvar(b, 'floaterm_jobexists') == v:false
+            execute b 'bwipeout!'
+            break
+            endif
+        endfor
+        autocmd! close-floaterm-runner
+    endfunction
+    let g:asyncrun_runner = get(g:, 'asyncrun_runner', {})
+    let g:asyncrun_runner.floaterm = function('s:run_in_floaterm')
+    let g:asynctasks_term_pos = 'floaterm'
+    <
 Then your task will be ran in the floaterm instance. See
 https://github.com/skywind3000/asynctasks.vim/wiki/Customize-Runner for more
 information.

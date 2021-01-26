@@ -1,82 +1,97 @@
 " vim:ft=vim
 
-"=============================================================================
-" let g:floaterm_autohide = v:true
-"=============================================================================
-Execute(Enable autohide):
-  let g:floaterm_autohide = v:true
+Execute(Include base):
+  source test/base_vader.vim
 
-Execute(FloatermNew: the first should be closed, the second should be opened):
-  FloatermNew
-  let buffer1 = bufnr('%')
-  FloatermNew
-  let buffer2 = bufnr('%')
-  AssertEqual -1,bufwinnr(buffer1)
-  AssertNotEqual -1,bufwinnr(buffer2)
+Execute(let g:floaterm_autohide = 0):
+  " NOTE: Vim does not support multiple popup terminals
+  if !has('nvim') | finish | endif
+  let g:floaterm_autohide = 0
+  Log '# FloatermNew'
+    FloatermNew
+    let buffer1 = bufnr('%')
+    FloatermNew
+    let buffer2 = bufnr('%')
+    Assert BufWinExists(buffer1)
+    Assert BufWinExists(buffer2)
 
-Execute(FloatermPrev: the first should be opened, the second should be closed):
-  FloatermPrev
-  AssertNotEqual -1,bufwinnr(buffer1)
-  AssertEqual -1,bufwinnr(buffer2)
+  Log '# FloatermPrev'
+    FloatermPrev
+    Assert BufWinExists(buffer1)
+    Assert BufWinExists(buffer2)
 
-Execute(FloatermNext: the first should be closed, the second should be opened):
-  FloatermNext
-  AssertEqual -1,bufwinnr(buffer1)
-  AssertNotEqual -1,bufwinnr(buffer2)
+  Log '# FloatermNext'
+    FloatermNext
+    Assert BufWinExists(buffer1)
+    Assert BufWinExists(buffer2)
 
-
-"-----------------------------------------------------------------------------
-# FloatermShow/FloatermHide/FloatermToggle should works normally regardless of this option
-"-----------------------------------------------------------------------------
-
-Execute(FloatermShow!: both floaterms should be opened):
-  FloatermShow!
-  AssertNotEqual -1,bufwinnr(buffer1)
-  AssertNotEqual -1,bufwinnr(buffer2)
-
-Execute(FloatermHide!: both floaterms should be closed):
-  FloatermHide!
-  AssertEqual -1,bufwinnr(buffer1)
-  AssertEqual -1,bufwinnr(buffer2)
-
-Execute(FloatermToggle!: both floaterms should be opened):
-  FloatermToggle!
-  AssertNotEqual -1,bufwinnr(buffer1)
-  AssertNotEqual -1,bufwinnr(buffer2)
-
-Execute(FloatermToggle!: both floaterms should be closed):
-  FloatermToggle!
-  AssertEqual -1,bufwinnr(buffer1)
-  AssertEqual -1,bufwinnr(buffer2)
-
-Execute(FloatermKill!: kill all floaterms):
   FloatermKill!
 
 
-"=============================================================================
-" let g:floaterm_autohide = v:false
-"=============================================================================
-Execute(Disable autohide):
-  let g:floaterm_autohide = v:false
+Execute(let g:floaterm_autohide = 1):
+  if !has('nvim') | finish | endif
+  let g:floaterm_autohide = 1
+  Log '# Overlaied: true'
+    Log '  * FloatermNew'
+      FloatermNew
+      let buffer1 = bufnr('%')
+      FloatermNew
+      let buffer2 = bufnr('%')
+      Assert !BufWinExists(buffer1)
+      Assert BufWinExists(buffer2)
 
-Execute(FloatermNew && FloatermPrev && FloatermNext: both floaterms should always be opened):
-  FloatermNew
-  let buffer1 = bufnr('%')
-  FloatermNew
-  let buffer2 = bufnr('%')
-  AssertNotEqual -1,bufwinnr(buffer1)
-  AssertNotEqual -1,bufwinnr(buffer2)
+    Log '  * FloatermPrev'
+      FloatermPrev
+      Assert BufWinExists(buffer1)
+      Assert !BufWinExists(buffer2)
 
-  FloatermPrev
-  AssertNotEqual -1,bufwinnr(buffer1)
-  AssertNotEqual -1,bufwinnr(buffer2)
+    Log '  * FloatermNext'
+      FloatermNext
+      Assert !BufWinExists(buffer1)
+      Assert BufWinExists(buffer2)
 
-  FloatermNext
-  AssertNotEqual -1,bufwinnr(buffer1)
-  AssertNotEqual -1,bufwinnr(buffer2)
+  Log '# Overlaied: false'
+    Log '  * FloatermNew'
+      FloatermNew --position=left
+      let buffer1 = bufnr('%')
+      FloatermNew --position=right
+      let buffer2 = bufnr('%')
+      Assert BufWinExists(buffer1)
+      Assert BufWinExists(buffer2)
 
-Execute (Exit):
-  call feedkeys("\<Esc>")
+    Log '  * FloatermPrev'
+      FloatermPrev
+      Assert BufWinExists(buffer1)
+      Assert BufWinExists(buffer2)
+
+    Log '  * FloatermNext'
+      FloatermNext
+      Assert BufWinExists(buffer1)
+      Assert BufWinExists(buffer2)
+
   FloatermKill!
-  sleep 100m
-  call feedkeys("\<CR>")
+
+
+Execute(let g:floaterm_autohide = 2):
+  if !has('nvim') | finish | endif
+  let g:floaterm_autohide = 2
+  Log '# FloatermNew'
+    FloatermNew --position=left
+    let buffer1 = bufnr('%')
+    FloatermNew --position=right
+    let buffer2 = bufnr('%')
+      Assert !BufWinExists(buffer1)
+      Assert BufWinExists(buffer2)
+
+  Log '# FloatermPrev'
+    FloatermPrev
+      Assert BufWinExists(buffer1)
+      Assert !BufWinExists(buffer2)
+
+  Log '# FloatermNext'
+    FloatermNext
+      Assert !BufWinExists(buffer1)
+      Assert BufWinExists(buffer2)
+
+  FloatermKill!
+  stopinsert
