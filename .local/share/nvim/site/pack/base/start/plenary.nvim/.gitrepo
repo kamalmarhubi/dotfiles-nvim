@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/nvim-lua/plenary.nvim.git
 	branch = master
-	commit = 08c0eabcb1fdcc5b72f60c3a328ae8eeb7ad374e
-	parent = 54336b98ec18e0064ad86d8e8f0eeb799c64f440
+	commit = cf4537efbae62222d3cdd239b7105c8ed4361a14
+	parent = 98e23d3d4d8a98fc0935634a7edd8b57807fd5aa
 	method = rebase
 	cmdver = 0.4.0
