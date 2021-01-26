@@ -47,7 +47,7 @@ internal.builtin = function(opts)
     previewer = previewers.builtin.new(opts),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(_)
-      actions.goto_file_selection_edit:replace(actions.run_builtin)
+      actions.select:replace(actions.run_builtin)
       return true
     end
   }):find()
@@ -82,7 +82,7 @@ internal.planets = function(opts)
     previewer = previewers.cat.new(opts),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions.goto_file_selection_edit:replace(function()
+      actions.select:replace(function()
         local selection = actions.get_selected_entry()
         actions.close(prompt_bufnr)
 
@@ -137,7 +137,7 @@ internal.symbols = function(opts)
     },
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(_)
-      actions.goto_file_selection_edit:replace(actions.insert_symbol)
+      actions.select:replace(actions.insert_symbol)
       return true
     end
   }):find()
@@ -168,7 +168,7 @@ internal.commands = function(opts)
     },
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions.goto_file_selection_edit:replace(function()
+      actions.select:replace(function()
         local selection = actions.get_selected_entry()
         actions.close(prompt_bufnr)
         local val = selection.value
@@ -229,11 +229,15 @@ internal.loclist = function(opts)
 end
 
 internal.oldfiles = function(opts)
+  local results = vim.tbl_filter(function(val)
+    return 0 ~= vim.fn.filereadable(val)
+  end, vim.v.oldfiles)
   pickers.new(opts, {
     prompt_title = 'Oldfiles',
-    finder = finders.new_table(vim.tbl_filter(function(val)
-      return 0 ~= vim.fn.filereadable(val)
-    end, vim.v.oldfiles)),
+    finder = finders.new_table{
+      results = results,
+      entry_maker = opts.entry_maker or make_entry.gen_from_file(opts),
+    },
     sorter = conf.file_sorter(opts),
     previewer = conf.file_previewer(opts),
   }):find()
@@ -281,7 +285,7 @@ internal.vim_options = function(opts)
     -- previewer = previewers.help.new(opts),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function()
-      actions.goto_file_selection_edit:replace(function()
+      actions.select:replace(function()
         local selection = actions.get_selected_entry()
         local esc = ""
 
@@ -329,36 +333,62 @@ internal.vim_options = function(opts)
 end
 
 internal.help_tags = function(opts)
-  local all_tag_files = {}
-  local all_help_files = {}
-  for _, v in ipairs(vim.split(vim.fn.globpath(vim.o.runtimepath, 'doc/*', 1), '\n')) do
-    local split_path = vim.split(v, path.separator, true)
-    local filename = split_path[#split_path]
-    if filename == 'tags' then
-      table.insert(all_tag_files, v)
-    else
-      all_help_files[filename] = v
+  opts.lang = utils.get_default(opts.lang, vim.o.helplang)
+  opts.fallback = utils.get_default(opts.fallback, true)
+
+  local langs = vim.split(opts.lang, ',', true)
+  if opts.fallback and not vim.tbl_contains(langs, 'en') then
+    table.insert(langs, 'en')
+  end
+  local langs_map = {}
+  for _, lang in ipairs(langs) do
+    langs_map[lang] = true
+  end
+
+  local tag_files = {}
+  local function add_tag_file(lang, file)
+    if langs_map[lang] then
+      if tag_files[lang] then
+        table.insert(tag_files[lang], file)
+      else
+        tag_files[lang] = {file}
+      end
     end
   end
 
-  local delim = string.char(9)
+  local help_files = {}
+  local all_files = vim.fn.globpath(vim.o.runtimepath, 'doc/*', 1, 1)
+  for _, fullpath in ipairs(all_files) do
+    local file = utils.path_tail(fullpath)
+    if file == 'tags' then
+      add_tag_file('en', fullpath)
+    elseif file:match('^tags%-..$') then
+      local lang = file:sub(-2)
+      add_tag_file(lang, fullpath)
+    else
+      help_files[file] = fullpath
+    end
+  end
+
   local tags = {}
-  for _, file in ipairs(all_tag_files) do
-    local data = vim.split(path.read_file(file), '\n')
-    for _, line in ipairs(data) do
-      if line ~= '' then
-        local matches = {}
-
-        for match in (line..delim):gmatch("(.-)" .. delim) do
-          table.insert(matches, match)
-        end
-
-        if table.getn(matches) ~= 0 then
-          table.insert(tags, {
-            name = matches[1],
-            filename = all_help_files[matches[2]],
-            cmd = matches[3]
-          })
+  local tags_map = {}
+  local delimiter = string.char(9)
+  for _, lang in ipairs(langs) do
+    for _, file in ipairs(tag_files[lang] or {}) do
+      local lines = vim.split(path.read_file(file), '\n', true)
+      for _, line in ipairs(lines) do
+        -- TODO: also ignore tagComment starting with ';'
+        if not line:match'^!_TAG_' then
+          local fields = vim.split(line, delimiter, true)
+          if #fields == 3 and not tags_map[fields[1]] then
+            table.insert(tags, {
+              name = fields[1],
+              filename = help_files[fields[2]],
+              cmd = fields[3],
+              lang = lang,
+            })
+            tags_map[fields[1]] = true
+          end
         end
       end
     end
@@ -370,7 +400,7 @@ internal.help_tags = function(opts)
       results = tags,
       entry_maker = function(entry)
         return {
-          value = entry.name,
+          value = entry.name .. '@' .. entry.lang,
           display = entry.name,
           ordinal = entry.name,
           filename = entry.filename,
@@ -381,7 +411,7 @@ internal.help_tags = function(opts)
     previewer = previewers.help.new(opts),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions._goto_file_selection:replace(function(_, cmd)
+      actions._select:replace(function(_, cmd)
         local selection = actions.get_selected_entry()
         actions.close(prompt_bufnr)
         if cmd == 'edit' or cmd == 'new' then
@@ -399,23 +429,18 @@ internal.help_tags = function(opts)
 end
 
 internal.man_pages = function(opts)
-  local pages = utils.get_os_command_output(opts.man_cmd or "apropos --sections=1 ''")
-
-  local lines = {}
-  for s in pages:gmatch("[^\r\n]+") do
-    table.insert(lines, s)
-  end
+  local pages = utils.get_os_command_output(opts.man_cmd or { 'apropos', '--sections=1', '' })
 
   pickers.new(opts, {
     prompt_title = 'Man',
     finder    = finders.new_table {
-      results = lines,
+      results = pages,
       entry_maker = opts.entry_maker or make_entry.gen_from_apropos(opts),
     },
     previewer = previewers.man.new(opts),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions._goto_file_selection:replace(function(_, cmd)
+      actions._select:replace(function(_, cmd)
         local selection = actions.get_selected_entry()
 
         actions.close(prompt_bufnr)
@@ -458,7 +483,7 @@ internal.reloader = function(opts)
     sorter = conf.generic_sorter(opts),
 
     attach_mappings = function(prompt_bufnr)
-      actions.goto_file_selection_edit:replace(function()
+      actions.select:replace(function()
         local selection = actions.get_selected_entry()
 
         actions.close(prompt_bufnr)
@@ -473,10 +498,16 @@ end
 
 internal.buffers = function(opts)
   local bufnrs = filter(function(b)
-    return
-      (opts.show_all_buffers
-      or vim.api.nvim_buf_is_loaded(b))
-      and 1 == vim.fn.buflisted(b)
+    if 1 ~= vim.fn.buflisted(b) then
+        return false
+    end
+    if not opts.show_all_buffers and not vim.api.nvim_buf_is_loaded(b) then
+      return false
+    end
+    if opts.ignore_current_buffer and b == vim.api.nvim_get_current_buf() then
+      return false
+    end
+    return true
   end, vim.api.nvim_list_bufs())
   if not next(bufnrs) then return end
 
@@ -485,7 +516,7 @@ internal.buffers = function(opts)
   for _, bufnr in ipairs(bufnrs) do
     local flag = bufnr == vim.fn.bufnr('') and '%' or (bufnr == vim.fn.bufnr('#') and '#' or ' ')
 
-    if opts.sort_lastused and flag == "#" then
+    if opts.sort_lastused and not opts.ignore_current_buffer and flag == "#" then
       default_selection_idx = 2
     end
 
@@ -531,7 +562,7 @@ internal.colorscheme = function(opts)
     -- TODO: better preview?
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions.goto_file_selection_edit:replace(function()
+      actions.select:replace(function()
         local selection = actions.get_selected_entry()
 
         actions.close(prompt_bufnr)
@@ -583,7 +614,7 @@ internal.registers = function(opts)
     -- use levenshtein as n-gram doesn't support <2 char matches
     sorter = sorters.get_levenshtein_sorter(),
     attach_mappings = function(_, map)
-      actions.goto_file_selection_edit:replace(actions.paste_register)
+      actions.select:replace(actions.paste_register)
       map('i', '<C-e>', actions.edit_register)
 
       return true
@@ -622,7 +653,7 @@ internal.keymaps = function(opts)
     },
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions.goto_file_selection_edit:replace(function()
+      actions.select:replace(function()
         local selection = actions.get_selected_entry()
         vim.api.nvim_feedkeys(
           vim.api.nvim_replace_termcodes(selection.value.lhs, true, false, true),
@@ -644,7 +675,7 @@ internal.filetypes = function(opts)
     },
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions.goto_file_selection_edit:replace(function()
+      actions.select:replace(function()
         local selection = actions.get_selected_entry()
         actions.close(prompt_bufnr)
         vim.cmd('setfiletype ' .. selection[1])
@@ -665,7 +696,7 @@ internal.highlights = function(opts)
     },
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions.goto_file_selection_edit:replace(function()
+      actions.select:replace(function()
         local selection = actions.get_selected_entry()
         actions.close(prompt_bufnr)
         vim.cmd('hi ' .. selection.value)
@@ -756,12 +787,36 @@ internal.autocommands = function(opts)
     previewer = previewers.autocommands.new(opts),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions._goto_file_selection:replace(function(_, vim_cmd)
+      actions._select:replace(function(_, vim_cmd)
         local selection = actions.get_selected_entry()
         actions.close(prompt_bufnr)
         vim.cmd(vim_cmd .. ' ' .. selection.value)
       end)
 
+      return true
+    end
+  }):find()
+end
+
+internal.spell_suggest = function(opts)
+  if not vim.wo.spell then return false end
+
+  local cursor_word = vim.fn.expand("<cword>")
+  local suggestions = vim.fn.spellsuggest(cursor_word)
+
+  pickers.new(opts, {
+    prompt_title = 'Spelling Suggestions',
+    finder = finders.new_table {
+      results = suggestions,
+    },
+    sorter = conf.generic_sorter(opts),
+    attach_mappings = function(prompt_bufnr)
+      actions.select:replace(function()
+        local selection = actions.get_selected_entry()
+        actions.close(prompt_bufnr)
+        vim.cmd('normal! ciw' .. selection[1])
+        vim.cmd('stopinsert')
+      end)
       return true
     end
   }):find()

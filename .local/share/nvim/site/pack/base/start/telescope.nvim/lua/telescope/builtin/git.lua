@@ -11,6 +11,10 @@ local git = {}
 
 git.files = function(opts)
   local show_untracked = utils.get_default(opts.show_untracked, true)
+  local recurse_submodules = utils.get_default(opts.recurse_submodules, false)
+  if show_untracked and recurse_submodules then
+    error("Git does not suppurt both --others and --recurse-submodules")
+  end
 
   -- By creating the entry maker after the cwd options,
   -- we ensure the maker uses the cwd options when being created.
@@ -19,7 +23,11 @@ git.files = function(opts)
   pickers.new(opts, {
     prompt_title = 'Git File',
     finder = finders.new_oneshot_job(
-      { "git", "ls-files", "--exclude-standard", "--cached", show_untracked and "--others" },
+      vim.tbl_flatten( {
+        "git", "ls-files", "--exclude-standard", "--cached",
+        show_untracked and "--others" or nil,
+        recurse_submodules and "--recurse-submodules" or nil
+      } ),
       opts
     ),
     previewer = conf.file_previewer(opts),
@@ -28,8 +36,7 @@ git.files = function(opts)
 end
 
 git.commits = function(opts)
-  local cmd = 'git log --pretty=oneline --abbrev-commit'
-  local results = vim.split(utils.get_os_command_output(cmd), '\n')
+  local results = utils.get_os_command_output({ 'git', 'log', '--pretty=oneline', '--abbrev-commit' })
 
   pickers.new(opts, {
     prompt_title = 'Git Commits',
@@ -40,15 +47,16 @@ git.commits = function(opts)
     previewer = previewers.git_commit_diff.new(opts),
     sorter = conf.file_sorter(opts),
     attach_mappings = function()
-      actions.goto_file_selection_edit:replace(actions.git_checkout)
+      actions.select:replace(actions.git_checkout)
       return true
     end
   }):find()
 end
 
 git.bcommits = function(opts)
-  local cmd = 'git log --pretty=oneline --abbrev-commit ' .. vim.fn.expand('%')
-  local results = vim.split(utils.get_os_command_output(cmd), '\n')
+  local results = utils.get_os_command_output({
+    'git', 'log', '--pretty=oneline', '--abbrev-commit', vim.fn.expand('%')
+  })
 
   pickers.new(opts, {
     prompt_title = 'Git BCommits',
@@ -59,7 +67,7 @@ git.bcommits = function(opts)
     previewer = previewers.git_commit_diff.new(opts),
     sorter = conf.file_sorter(opts),
     attach_mappings = function()
-      actions.goto_file_selection_edit:replace(actions.git_checkout)
+      actions.select:replace(actions.git_checkout)
       return true
     end
   }):find()
@@ -68,13 +76,13 @@ end
 git.branches = function(opts)
   -- Does this command in lua (hopefully):
   -- 'git branch --all | grep -v HEAD | sed "s/.* //;s#remotes/[^/]*/##" | sort -u'
-  local output = vim.split(utils.get_os_command_output('git branch --all'), '\n')
+  local output = utils.get_os_command_output({ 'git', 'branch', '--all' })
 
   local tmp_results = {}
   for _, v in ipairs(output) do
     if not string.match(v, 'HEAD') and v ~= '' then
       v = string.gsub(v, '.* ', '')
-      v = string.gsub(v, '^remotes/.*/', '')
+      v = string.gsub(v, '^remotes/[^/]*/', '')
       tmp_results[v] = true
     end
   end
@@ -99,16 +107,16 @@ git.branches = function(opts)
     previewer = previewers.git_branch_log.new(opts),
     sorter = conf.file_sorter(opts),
     attach_mappings = function()
-      actions.goto_file_selection_edit:replace(actions.git_checkout)
+      actions.select:replace(actions.git_checkout)
       return true
     end
   }):find()
 end
 
 git.status = function(opts)
-  local output = utils.get_os_command_output('git status -s')
+  local output = utils.get_os_command_output{ 'git', 'status', '-s' }
 
-  if output == '' then
+  if table.getn(output) == 0 then
     print('No changes found')
     return
   end
@@ -116,17 +124,8 @@ git.status = function(opts)
   pickers.new(opts, {
     prompt_title = 'Git Status',
     finder = finders.new_table {
-      results = vim.split(output, '\n'),
-      entry_maker = function(entry)
-        if entry == '' then return nil end
-        local mod, file = string.match(entry, '(..).*%s[->%s]?(.+)')
-        return {
-          value = file,
-          status = mod,
-          ordinal = entry,
-          display = entry,
-        }
-      end
+      results = output,
+      entry_maker = make_entry.gen_from_git_status(opts)
     },
     previewer = previewers.git_file_diff.new(opts),
     sorter = conf.file_sorter(opts),

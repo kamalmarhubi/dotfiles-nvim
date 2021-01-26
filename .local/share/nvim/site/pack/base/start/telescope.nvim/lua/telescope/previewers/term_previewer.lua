@@ -15,12 +15,12 @@ local previewers = {}
 -- TODO: Should play with these some more, ty @clason
 local bat_options = {"--style=plain", "--color=always", "--paging=always"}
 local has_less = (vim.fn.executable('less') == 1) and conf.use_less
-local termopen_env = vim.tbl_extend("force", { ['GIT_PAGER'] = (has_less and 'less' or '') }, conf.set_env)
 
 -- TODO(conni2461): Workaround for neovim/neovim#11751. Add only quotes when using else branch.
 local valuate_shell = function()
   local shell = vim.o.shell
-  if string.find(shell, 'powershell.exe') or string.find(shell, 'cmd.exe') then
+  if string.find(shell, 'powershell.exe') or string.find(shell, 'cmd.exe') or
+     string.find(shell, 'powershell') or string.find(shell, 'pwsh') then
     return ''
   else
     return "'"
@@ -33,9 +33,14 @@ local get_file_stat = function(filename)
   return vim.loop.fs_stat(vim.fn.expand(filename)) or {}
 end
 
+local function list_dir(dirname)
+    local qdir = add_quotes .. vim.fn.expand(dirname) .. add_quotes
+    return vim.fn.has('win32') == 1 and {'cmd.exe', '/c', 'dir', qdir} or { 'ls', '-la', qdir}
+end
+
 local bat_maker = function(filename, lnum, start, finish)
   if get_file_stat(filename).type == 'directory' then
-    return { 'ls', '-la', vim.fn.expand(filename) }
+    return list_dir(filename)
   end
 
   local command = {"bat"}
@@ -68,12 +73,12 @@ end
 
 local cat_maker = function(filename, _, start, _)
   if get_file_stat(filename).type == 'directory' then
-    return { 'ls', '-la', add_quotes .. vim.fn.expand(filename) .. add_quotes }
+    return list_dir(filename)
   end
 
   if 1 == vim.fn.executable('file') then
-    local output = utils.get_os_command_output('file --mime-type -b ' .. filename)
-    local mime_type = vim.split(output, '/')[1]
+    local output = utils.get_os_command_output{ 'file', '--mime-type', '-b', filename }
+    local mime_type = vim.split(output[1], '/')[1]
     if mime_type ~= "text" then
       return { "echo", "Binary file found. These files cannot be displayed!" }
     end
@@ -177,19 +182,20 @@ previewers.new_termopen_previewer = function(opts)
 
     local term_opts = {
       cwd = opts.cwd or vim.fn.getcwd(),
-      env = termopen_env
+      env = conf.set_env
     }
 
     -- TODO(conni2461): Workaround for neovim/neovim#11751.
     local get_cmd = function(st)
       local shell = vim.o.shell
-      if string.find(shell, 'powershell.exe') or string.find(shell, 'cmd.exe') then
+      if string.find(shell, 'powershell.exe') or string.find(shell, 'cmd.exe') or
+         string.find(shell, 'powershell') or string.find(shell, 'pwsh') then
         return opts.get_command(entry, st)
       else
         local env = {}
         local cmd = opts.get_command(entry, st)
         if not cmd then return end
-        for k, v in pairs(termopen_env) do
+        for k, v in pairs(conf.set_env) do
           table.insert(env, k .. '=' .. v)
         end
         return table.concat(env, ' ') .. ' ' .. table.concat(cmd, ' ')
@@ -252,14 +258,19 @@ previewers.vimgrep = defaulter(function(opts)
       local win_id = status.preview_win
       local height = vim.api.nvim_win_get_height(win_id)
 
-      local filename = entry.filename
+      local p = from_entry.path(entry, true)
+      if p == nil or p == '' then return end
+      if entry.bufnr and (p == '[No Name]' or vim.api.nvim_buf_get_option(entry.bufnr, 'buftype') ~= '') then
+        return
+      end
+
       local lnum = entry.lnum or 0
 
       local context = math.floor(height / 2)
       local start = math.max(0, lnum - context)
       local finish = lnum + context
 
-      return maker(filename, lnum, start, finish)
+      return maker(p, lnum, start, finish)
     end,
   }
 end, {})
@@ -274,7 +285,8 @@ previewers.qflist = defaulter(function(opts)
       local win_id = status.preview_win
       local height = vim.api.nvim_win_get_height(win_id)
 
-      local filename = entry.filename
+      local p = from_entry.path(entry, true)
+      if p == nil or p == '' then return end
       local lnum = entry.lnum
 
       local start, finish
@@ -287,7 +299,7 @@ previewers.qflist = defaulter(function(opts)
         finish = lnum + context
       end
 
-      return maker(filename, lnum, start, finish)
+      return maker(p, lnum, start, finish)
     end
   }
 end, {})

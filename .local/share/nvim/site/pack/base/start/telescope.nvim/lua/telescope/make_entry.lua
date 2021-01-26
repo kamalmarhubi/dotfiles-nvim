@@ -179,79 +179,94 @@ do
     return {filename, lnum, col, text}
   end
 
-  local execute_keys = {
-    path = function(t)
-      return t.cwd .. path.separator .. t.filename, false
-    end,
-
-    filename = function(t)
-      return parse(t)[1], true
-    end,
-
-    lnum = function(t)
-      return parse(t)[2], true
-    end,
-
-    col = function(t)
-      return parse(t)[3], true
-    end,
-
-    text = function(t)
-      return parse(t)[4], true
-    end,
-  }
-
+  --- Special options:
+  ---  - shorten_path: make the path appear short
+  ---  - disable_coordinates: Don't show the line & row numbers
+  ---  - only_sort_text: Only sort via the text. Ignore filename and other items
   function make_entry.gen_from_vimgrep(opts)
+    local mt_vimgrep_entry
+
     opts = opts or {}
 
+    local disable_devicons = opts.disable_devicons
     local shorten_path = opts.shorten_path
     local disable_coordinates = opts.disable_coordinates
-    local disable_devicons = opts.disable_devicons
+    local only_sort_text = opts.only_sort_text
+
+    local execute_keys = {
+      path = function(t)
+        return t.cwd .. path.separator .. t.filename, false
+      end,
+
+      filename = function(t)
+        return parse(t)[1], true
+      end,
+
+      lnum = function(t)
+        return parse(t)[2], true
+      end,
+
+      col = function(t)
+        return parse(t)[3], true
+      end,
+
+      text = function(t)
+        return parse(t)[4], true
+      end,
+    }
+
+    -- For text search only, the ordinal value is actually the text.
+    if only_sort_text then
+      execute_keys.ordinal = function(t)
+        return t.text
+      end
+    end
 
     local display_string = "%s:%s%s"
 
-    local mt_vimgrep_entry = {}
+    mt_vimgrep_entry = {
+      cwd = vim.fn.expand(opts.cwd or vim.fn.getcwd()),
 
-    mt_vimgrep_entry.cwd = vim.fn.expand(opts.cwd or vim.fn.getcwd())
-    mt_vimgrep_entry.display = function(entry)
-      local display_filename
-      if shorten_path then
-        display_filename = utils.path_shorten(entry.filename)
-      else
-        display_filename = entry.filename
-      end
+      display = function(entry)
+        local display_filename
+        if shorten_path then
+          display_filename = utils.path_shorten(entry.filename)
+        else
+          display_filename = entry.filename
+        end
 
-      local coordinates = ""
-      if not disable_coordinates then
-        coordinates = string.format("%s:%s:", entry.lnum, entry.col)
-      end
+        local coordinates = ""
+        if not disable_coordinates then
+          coordinates = string.format("%s:%s:", entry.lnum, entry.col)
+        end
 
-      local display, hl_group = transform_devicons(
-        entry.filename,
-        string.format(display_string, display_filename,  coordinates, entry.text),
-        disable_devicons
-      )
+        local display, hl_group = transform_devicons(
+          entry.filename,
+          string.format(display_string, display_filename,  coordinates, entry.text),
+          disable_devicons
+        )
 
-      if hl_group then
-        return display, { { {1, 3}, hl_group } }
-      else
-        return display
-      end
-    end
+        if hl_group then
+          return display, { { {1, 3}, hl_group } }
+        else
+          return display
+        end
+      end,
 
-    mt_vimgrep_entry.__index = function(t, k)
-      local raw = rawget(mt_vimgrep_entry, k)
-      if raw then return raw end
+      __index = function(t, k)
+        local raw = rawget(mt_vimgrep_entry, k)
+        if raw then return raw end
 
-      local executor = rawget(execute_keys, k)
-      if executor then
-        local val, save = executor(t)
-        if save then rawset(t, k, val) end
-        return val
-      end
+        local executor = rawget(execute_keys, k)
+        if executor then
+          local val, save = executor(t)
+          if save then rawset(t, k, val) end
+          return val
+        end
 
-      return rawget(t, rawget(lookup_keys, k))
-    end
+        return rawget(t, rawget(lookup_keys, k))
+      end,
+    }
 
     return function(line)
       return setmetatable({line}, mt_vimgrep_entry)
@@ -532,7 +547,7 @@ function make_entry.gen_from_treesitter(opts)
   local make_display = function(entry)
     local msg = vim.api.nvim_buf_get_lines(
       bufnr,
-      entry.lnum - 1,
+      entry.lnum,
       entry.lnum,
       false
       )[1] or ''
@@ -721,7 +736,7 @@ function make_entry.gen_from_vimoptions()
       end
 
       local str_funcname = o.short_desc()
-      option.description = assert(loadstring("return " .. str_funcname))()
+      option.description = assert(loadstring(str_funcname))()
       -- if #option.description > opts.desc_col_length then
       --   opts.desc_col_length = #option.description
       -- end
@@ -750,10 +765,11 @@ function make_entry.gen_from_vimoptions()
   end
 
   local displayer = entry_display.create {
-    separator = "│",
+    separator = "",
+    hl_chars = { ['['] = 'TelescopeBorder', [']'] = 'TelescopeBorder' },
     items = {
       { width = 25 },
-      { width = 50 },
+      { width = 12 },
       { remaining = true },
     },
   }
@@ -761,11 +777,9 @@ function make_entry.gen_from_vimoptions()
   local make_display = function(entry)
 
     return displayer {
-      entry.name,
-      string.format(
-        "[%s] %s",
-        entry.value_type,
-        utils.display_termcodes(tostring(entry.current_value))),
+      {entry.name, "Keyword"},
+      {"["..entry.value_type.."]", "Type"},
+      utils.display_termcodes(tostring(entry.current_value)),
       entry.description,
     }
   end
@@ -899,5 +913,44 @@ function make_entry.gen_from_autocommands(_)
     }
   end
 end
+
+function make_entry.gen_from_git_status(_)
+  local displayer = entry_display.create {
+  separator = " ",
+  items = {
+      { width = 1},
+      { width = 1},
+      { remaining = true },
+    }
+  }
+
+  local make_display = function(entry)
+    local modified = "TelescopeResultsDiffChange"
+    local staged = "TelescopeResultsDiffAdd"
+
+    if entry.status == "??" then
+      modified = "TelescopeResultsDiffDelete"
+      staged = "TelescopeResultsDiffDelete"
+    end
+
+    return displayer {
+      { string.sub(entry.status, 1, 1), staged},
+      { string.sub(entry.status, -1), modified},
+      entry.value,
+    }
+  end
+
+  return function (entry)
+    if entry == '' then return nil end
+    local mod, file = string.match(entry, '(..).*%s[->%s]?(.+)')
+      return {
+        value = file,
+        status = mod,
+        ordinal = entry,
+        display = make_display,
+      }
+  end
+end
+
 
 return make_entry

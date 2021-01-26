@@ -38,9 +38,23 @@ function actions.add_selection(prompt_bufnr)
   current_picker:add_selection(current_picker:get_selection_row())
 end
 
+function actions.remove_selection(prompt_bufnr)
+  local current_picker = actions.get_current_picker(prompt_bufnr)
+  current_picker:remove_selection(current_picker:get_selection_row())
+end
+
+function actions.toggle_selection(prompt_bufnr)
+  local current_picker = actions.get_current_picker(prompt_bufnr)
+  current_picker:toggle_selection(current_picker:get_selection_row())
+end
+
 --- Get the current entry
 function actions.get_selected_entry()
   return state.get_global_key('selected_entry')
+end
+
+function actions.get_current_line()
+  return state.get_global_key('current_line')
 end
 
 function actions.preview_scrolling_up(prompt_bufnr)
@@ -52,7 +66,7 @@ function actions.preview_scrolling_down(prompt_bufnr)
 end
 
 -- TODO: It seems sometimes we get bad styling.
-function actions._goto_file_selection(prompt_bufnr, command)
+function actions._select(prompt_bufnr, command)
   local entry = actions.get_selected_entry(prompt_bufnr)
 
   if not entry then
@@ -106,7 +120,7 @@ function actions._goto_file_selection(prompt_bufnr, command)
         vim.cmd(string.format(":tab sb %d", entry_bufnr))
       end
     else
-      filename = path.normalize(filename, vim.fn.getcwd())
+      filename = path.normalize(vim.fn.fnameescape(filename), vim.fn.getcwd())
 
       local bufnr = vim.api.nvim_get_current_buf()
       if filename ~= vim.api.nvim_buf_get_name(bufnr) then
@@ -130,21 +144,28 @@ function actions.center(_)
   vim.cmd(':normal! zz')
 end
 
-function actions.goto_file_selection_edit(prompt_bufnr)
-  actions._goto_file_selection(prompt_bufnr, "edit")
+function actions.select(prompt_bufnr)
+  actions._select(prompt_bufnr, "edit")
 end
 
-function actions.goto_file_selection_split(prompt_bufnr)
-  actions._goto_file_selection(prompt_bufnr, "new")
+function actions.hselect(prompt_bufnr)
+  actions._select(prompt_bufnr, "new")
 end
 
-function actions.goto_file_selection_vsplit(prompt_bufnr)
-  actions._goto_file_selection(prompt_bufnr, "vnew")
+function actions.vselect(prompt_bufnr)
+  actions._select(prompt_bufnr, "vnew")
 end
 
-function actions.goto_file_selection_tabedit(prompt_bufnr)
-  actions._goto_file_selection(prompt_bufnr, "tabedit")
+function actions.tabselect(prompt_bufnr)
+  actions._select(prompt_bufnr, "tabedit")
 end
+
+-- aliases
+actions._goto_file_selection = actions._select
+actions.goto_file_selection_edit = actions.select
+actions.goto_file_selection_split = actions.hselect
+actions.goto_file_selection_vsplit = actions.vselect
+actions.goto_file_selection_tabedit = actions.tabselect
 
 function actions.close_pum(_)
   if 0 ~= vim.fn.pumvisible() then
@@ -180,7 +201,7 @@ actions.set_command_line = function(prompt_bufnr)
   local entry = actions.get_selected_entry(prompt_bufnr)
 
   actions.close(prompt_bufnr)
-
+  vim.fn.histadd("cmd", entry.value)
   vim.cmd(entry.value)
 end
 
@@ -267,6 +288,45 @@ actions.git_staging_toggle = function(prompt_bufnr)
   end
   do_close(prompt_bufnr, true)
   require('telescope.builtin').git_status()
+end
+
+local entry_to_qf = function(entry)
+  return {
+    bufnr = entry.bufnr,
+    filename = entry.filename,
+    lnum = entry.lnum,
+    col = entry.col,
+    text = entry.value,
+  }
+end
+
+actions.send_selected_to_qflist = function(prompt_bufnr)
+  local picker = actions.get_current_picker(prompt_bufnr)
+
+  local qf_entries = {}
+  for entry in pairs(picker.multi_select) do
+    table.insert(qf_entries, entry_to_qf(entry))
+  end
+
+  actions.close(prompt_bufnr)
+
+  vim.fn.setqflist(qf_entries, 'r')
+  vim.cmd [[copen]]
+end
+
+actions.send_to_qflist = function(prompt_bufnr)
+  local picker = actions.get_current_picker(prompt_bufnr)
+  local manager = picker.manager
+
+  local qf_entries = {}
+  for entry in manager:iter() do
+    table.insert(qf_entries, entry_to_qf(entry))
+  end
+
+  actions.close(prompt_bufnr)
+
+  vim.fn.setqflist(qf_entries, 'r')
+  vim.cmd [[copen]]
 end
 
 -- ==================================================

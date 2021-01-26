@@ -16,7 +16,7 @@ Community driven built-in [pickers](#pickers), [sorters](#sorters) and [previewe
 - [Files](#file-pickers)
 - [Git](#git-pickers)
 - [LSP](#lsp-pickers)
-- [Treesitter](#treesitter-pickers)
+- [Treesitter](#treesitter-picker)
 
 ![by @glepnir](https://user-images.githubusercontent.com/41671631/100819597-6f737900-3487-11eb-8621-37ec1ffabe4b.gif)
 
@@ -139,6 +139,7 @@ require('telescope').setup{
     },
     prompt_position = "bottom",
     prompt_prefix = ">",
+    initial_mode = "insert",
     selection_strategy = "reset",
     sorting_strategy = "descending",
     layout_strategy = "horizontal",
@@ -189,6 +190,7 @@ EOF
 |------------------------|-------------------------------------------------------|----------------------------|
 | `prompt_position`      | Where the prompt should be located.                   | top/bottom                 |
 | `prompt_prefix`        | What should the prompt prefix be.                     | string                     |
+| `initial_mode`         | The initial mode when a prompt is opened.             | insert/normal              |
 | `sorting_strategy`     | Where first selection should be located.              | descending/ascending       |
 | `layout_strategy`      | How the telescope is drawn.                           | [supported layouts](https://github.com/nvim-telescope/telescope.nvim/wiki/Layouts) |
 | `winblend`             | How transparent is the telescope window should be.    | NUM                        |
@@ -276,11 +278,11 @@ require('telescope').setup{
         -- So, to not map "<C-n>", just put
         ["<c-x>"] = false,
         -- Otherwise, just set the mapping to the function that you want it to be.
-        ["<C-i>"] = actions.goto_file_selection_split,
+        ["<C-i>"] = actions.hselect,
         -- Add up multiple actions
-        ["<CR>"] = actions.goto_file_selection_edit + actions.center,
+        ["<CR>"] = actions.select + actions.center,
         -- You can perform as many actions in a row as you like
-        ["<CR>"] = actions.goto_file_selection_edit + actions.center + my_cool_custom_action,
+        ["<CR>"] = actions.select + actions.center + my_cool_custom_action,
       },
       n = {
         ["<esc>"] = actions.close
@@ -300,8 +302,8 @@ local actions = require('telescope.actions')
 ------------------------------
 require('telescope.builtin').fd({ -- or new custom picker's attach_mappings field:
   attach_mappings = function(prompt_bufnr)
-    -- This will replace goto_file_selection_edit no mather on which key it is mapped by default
-    actions.goto_file_selection_edit:replace(function()
+    -- This will replace select no mather on which key it is mapped by default
+    actions.select:replace(function()
       local entry = actions.get_selected_entry()
       actions.close(prompt_bufnr)
       print(vim.inspect(entry))
@@ -309,17 +311,17 @@ require('telescope.builtin').fd({ -- or new custom picker's attach_mappings fiel
     end)
 
     -- You can also enhance an action with pre and post action which will run before of after an action
-    actions.goto_file_selection_split:enhance ({
+    actions.hselect:enhance ({
       pre = function()
-      -- Will run before actions.goto_file_selection_split
+      -- Will run before actions.hselect
       end,
       post = function()
-      -- Will run after actions.goto_file_selection_split
+      -- Will run after actions.hselect
       end,
     })
 
     -- Or replace for all commands: edit, new, vnew and tab
-    actions._goto_file_selection:replace(function(_, cmd)
+    actions._select:replace(function(_, cmd)
       print(cmd) -- Will print edit, new, vnew or tab depending on your keystroke
     end)
 
@@ -337,21 +339,21 @@ require('telescope.builtin').fd({ -- or new custom picker's attach_mappings fiel
 <!--     finder = finders.new_table(results), -->
 <!--     sorter = sorters.fuzzy_with_index_bias(), -->
 <!--     attach_mappings = function(prompt_bufnr) -->
-<!--       -- This will replace goto_file_selection_edit no mather on which key it is mapped by default -->
-<!--       actions.goto_file_selection_edit:replace(function() -->
+<!--       -- This will replace select no mather on which key it is mapped by default -->
+<!--       actions.select:replace(function() -->
 <!--         -- Code here -->
 <!--       end) -->
 <!--       -- You can also enhance an action with post and post action which will run before of after an action -->
-<!--       actions.goto_file_selection_split:enhance { -->
+<!--       actions.hselect:enhance { -->
 <!--         pre = function() -->
-<!--           -- Will run before actions.goto_file_selection_split -->
+<!--           -- Will run before actions.hselect -->
 <!--         end, -->
 <!--         post = function() -->
-<!--           -- Will run after actions.goto_file_selection_split -->
+<!--           -- Will run after actions.hselect -->
 <!--         end, -->
 <!--       } -->
 <!--       -- Or replace for all commands: edit, new, vnew and tab -->
-<!--       actions._goto_file_selection:replace(function(_, cmd) -->
+<!--       actions._select:replace(function(_, cmd) -->
 <!--         print(cmd) -- Will print edit, new, vnew or tab depending on your keystroke -->
 <!--       end) -->
 <!--       return true -->
@@ -398,6 +400,7 @@ Built-in functions. Ready to be bound to any key you like. :smile:
 | `builtin.vim_options`               | Lists vim options and on enter edit the options value.                                      |
 | `builtin.registers`                 | Lists vim registers and edit or paste selection.                                            |
 | `builtin.autocommands`              | Lists vim autocommands and go to their declaration.                                         |
+| `builtin.spell_suggest`             | Lists spelling suggestions for <cword>.
 | `builtin.keymaps`                   | Lists normal-mode mappings.                                                                 |
 | `builtin.filetypes`                 | Lists all filetypes.                                                                        |
 | `builtin.highlights`                | Lists all highlights.                                                                       |
@@ -508,6 +511,10 @@ To use a theme, simply append it to a built-in function:
 nnoremap <Leader>f :lua require'telescope.builtin'.find_files(require('telescope.themes').get_dropdown({}))<cr>
 " Change an option
 nnoremap <Leader>f :lua require'telescope.builtin'.find_files(require('telescope.themes').get_dropdown({ winblend = 10 }))<cr>
+```
+or use with command:
+```vim
+Telescope find_files theme=get_dropdown
 ```
 
 Themes should work with every `telescope.builtin` function.  If you wish to

@@ -4,14 +4,36 @@ local make_entry = require('telescope.make_entry')
 local pickers = require('telescope.pickers')
 local previewers = require('telescope.previewers')
 local utils = require('telescope.utils')
-
 local conf = require('telescope.config').values
 
 local flatten = vim.tbl_flatten
 
 local files = {}
 
+local escape_chars = function(string)
+  return string.gsub(string,  "[%(|%)|\\|%[|%]|%-|%{%}|%?|%+|%*]", {
+    ["\\"] = "\\\\", ["-"] = "\\-",
+    ["("] = "\\(", [")"] = "\\)",
+    ["["] = "\\[", ["]"] = "\\]",
+    ["{"] = "\\{", ["}"] = "\\}",
+    ["?"] = "\\?", ["+"] = "\\+",
+    ["*"] = "\\*",
+  })
+end
+
+-- Special keys:
+--  opts.search_dirs -- list of directory to search in
 files.live_grep = function(opts)
+  local vimgrep_arguments = opts.vimgrep_arguments or conf.vimgrep_arguments
+  local search_dirs = opts.search_dirs
+  opts.cwd = opts.cwd and vim.fn.expand(opts.cwd)
+
+  if search_dirs then
+    for i, path in ipairs(search_dirs) do
+      search_dirs[i] = vim.fn.expand(path)
+    end
+  end
+
   local live_grepper = finders.new_job(function(prompt)
       -- TODO: Probably could add some options for smart case and whatever else rg offers.
 
@@ -19,10 +41,13 @@ files.live_grep = function(opts)
         return nil
       end
 
-      return flatten { conf.vimgrep_arguments, prompt }
+      prompt = escape_chars(prompt)
+
+      return flatten { vimgrep_arguments, prompt, opts.search_dirs or '.' }
     end,
     opts.entry_maker or make_entry.gen_from_vimgrep(opts),
-    opts.max_results
+    opts.max_results,
+    opts.cwd
   )
 
   pickers.new(opts, {
@@ -35,17 +60,31 @@ end
 
 -- Special keys:
 --  opts.search -- the string to search.
+--  opts.search_dirs -- list of directory to search in
 files.grep_string = function(opts)
   -- TODO: This should probably check your visual selection as well, if you've got one
-  local search = opts.search or vim.fn.expand("<cword>")
 
+  local vimgrep_arguments = opts.vimgrep_arguments or conf.vimgrep_arguments
+  local search_dirs = opts.search_dirs
+  local search = escape_chars(opts.search or vim.fn.expand("<cword>"))
+  local word_match = opts.word_match
   opts.entry_maker = opts.entry_maker or make_entry.gen_from_vimgrep(opts)
-  opts.word_match = opts.word_match or nil
+
+  if search_dirs then
+    for i, path in ipairs(search_dirs) do
+      search_dirs[i] = vim.fn.expand(path)
+    end
+  end
 
   pickers.new(opts, {
     prompt_title = 'Find Word',
     finder = finders.new_oneshot_job(
-      flatten { conf.vimgrep_arguments, opts.word_match, search},
+      flatten {
+        vimgrep_arguments,
+        word_match,
+        search,
+        search_dirs or "."
+      },
       opts
     ),
     previewer = conf.grep_previewer(opts),
@@ -95,7 +134,10 @@ files.find_files = function(opts)
       end
     elseif 1 == vim.fn.executable("find") then
       find_command = { 'find', '.', '-type', 'f' }
-      if not hidden then vim.tbl_extend("error", find_command, {'-not', '-path', '*/.*'}) end
+      if not hidden then
+        table.insert(find_command, { '-not', '-path', "*/.*" })
+        find_command = flatten(find_command)
+      end
       if search_dirs then
         table.remove(find_command, 2)
         for _,v in pairs(search_dirs) do
@@ -209,7 +251,7 @@ files.current_buffer_fuzzy_find = function(opts)
     },
     sorter = conf.generic_sorter(opts),
     attach_mappings = function()
-      actions._goto_file_selection:enhance {
+      actions._select:enhance {
         post = function()
           local selection = actions.get_selected_entry()
           vim.api.nvim_win_set_cursor(0, {selection.lnum, 0})
@@ -245,7 +287,7 @@ files.tags = function(opts)
     previewer = previewers.ctags.new(opts),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function()
-      actions._goto_file_selection:enhance {
+      actions._select:enhance {
         post = function()
           local selection = actions.get_selected_entry()
 
