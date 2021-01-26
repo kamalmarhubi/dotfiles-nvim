@@ -125,7 +125,7 @@ local function hasConfirmedCompletion()
   if completed_item.user_data == nil then return end
   if completed_item.user_data.lsp ~= nil then
     applyAddtionalTextEdits(completed_item)
-    if vim.g.completion_enable_snippet == "snippets.nvim" then
+    if opt.get_option('enable_snippet') == "snippets.nvim" then
       require 'snippets'.expand_at_cursor(completed_item.user_data.actual_item, completed_item.word)
     end
   end
@@ -137,7 +137,12 @@ local function hasConfirmedCompletion()
   elseif completed_item.user_data.snippet_source == 'Neosnippet' then
     api.nvim_input("<c-r>".."=neosnippet#expand('"..completed_item.word.."')".."<CR>")
   elseif completed_item.user_data.snippet_source == 'vim-vsnip' then
-    api.nvim_call_function('vsnip#expand', {})
+    api.nvim_call_function('vsnip#anonymous', {
+      table.concat(completed_item.user_data.snippet_body, "\n"),
+      {
+        prefix = completed_item.word
+      }
+    })
   elseif completed_item.user_data.snippet_source == 'snippets.nvim' then
     require'snippets'.expand_at_cursor()
   end

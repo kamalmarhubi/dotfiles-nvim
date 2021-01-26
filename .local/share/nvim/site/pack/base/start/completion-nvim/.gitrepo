@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/nvim-lua/completion-nvim.git
 	branch = master
-	commit = 3abd4955558769be384690760b98d817ed4daabc
-	parent = 11953d422f59219441cb03057bca6cf27381f0dd
+	commit = fc9b2fd2d47bea6a8954de1b1b19f2330545b354
+	parent = 23e5a4a67a82d78a5d3dc8d12b4aad8071425818
 	method = rebase
 	cmdver = 0.4.0

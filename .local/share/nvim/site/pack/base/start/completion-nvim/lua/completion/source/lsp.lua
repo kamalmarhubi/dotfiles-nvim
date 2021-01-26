@@ -13,6 +13,12 @@ M.getCompletionItems = function(_, _)
   return M.items
 end
 
+local function sort_completion_items(items)
+  table.sort(items, function(a, b)
+    return (a.sortText or a.label) < (b.sortText or b.label)
+  end)
+end
+
 local function get_completion_word(item, prefix, suffix)
   if item.textEdit ~= nil and item.textEdit ~= vim.NIL
     and item.textEdit.newText ~= nil and (item.insertTextFormat ~= 2 or vim.fn.exists('g:loaded_vsnip_integ')) then
@@ -25,14 +31,14 @@ local function get_completion_word(item, prefix, suffix)
           newText = item.textEdit.newText
       end
     if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText"
-		or vim.g.completion_enable_snippet == "snippets.nvim" then
+		or opt.get_option('enable_snippet') == "snippets.nvim" then
       return newText
     else
       return vim.lsp.util.parse_snippet(newText)
     end
   elseif item.insertText ~= nil and item.insertText ~= vim.NIL then
     if protocol.InsertTextFormat[item.insertTextFormat] == "PlainText"
-		or vim.g.completion_enable_snippet == "snippets.nvim" then
+		or opt.get_option('enable_snippet') == "snippets.nvim" then
       return item.insertText
     else
       return vim.lsp.util.parse_snippet(item.insertText)
@@ -56,7 +62,7 @@ local function get_context_aware_snippets(item, completion_item, line_to_cursor)
     end
   end
   item.user_data = {}
-  local matches
+  local matches, word
   word, matches = item.word:gsub("%(.*%)$", "")
   if matches == 0 then
     word, matches = item.word:gsub("<.*>$", "")
@@ -74,7 +80,7 @@ local function text_document_completion_list_to_complete_items(result, params)
 
   local customize_label = opt.get_option('customize_lsp_label')
   -- items = remove_unmatch_completion_items(items, prefix)
-  -- sort_completion_items(items)
+  sort_completion_items(items)
 
   local matches = {}
 
@@ -93,19 +99,21 @@ local function text_document_completion_list_to_complete_items(result, params)
 
     item.word = get_completion_word(completion_item, params.prefix, params.suffix)
     item.word = item.word:gsub('\n', ' ')
+    item.word = vim.trim(item.word)
+    item.dup = opt.get_option("items_duplicate")['lsp']
     item.user_data = {
       lsp = {
         completion_item = completion_item,
       }
     }
 	if protocol.InsertTextFormat[completion_item.insertTextFormat] == 'Snippet'
-		and vim.g.completion_enable_snippet == "snippets.nvim" then
+		and opt.get_option('enable_snippet') == "snippets.nvim" then
 	  item.user_data.actual_item = item.word
-	  item.word = completion_item.label
+	  item.word = vim.trim(completion_item.label)
 	end
     local kind = protocol.CompletionItemKind[completion_item.kind]
     item.kind = customize_label[kind] or kind
-    item.abbr = completion_item.label
+    item.abbr = vim.trim(completion_item.label)
     if params.suffix ~= nil and #params.suffix ~= 0 then
       local index = item.word:find(params.suffix)
       if index ~= nil then
