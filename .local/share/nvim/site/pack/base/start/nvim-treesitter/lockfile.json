@@ -6,10 +6,10 @@
     "revision": "99151b1e9293c9e025498fee7e6691e1a52e1d03"
   },
   "c_sharp": {
-    "revision": "b8bff2a389ecc098dbb7e8abee492816a5eb42db"
+    "revision": "aae8ab2b681082ce7a35d8d5fdf75ffcf7f994e5"
   },
   "clojure": {
-    "revision": "f8006afc91296b0cdb09bfa04e08a6b3347e5962"
+    "revision": "f09652f095be878df8a87a57dcbfa07094316253"
   },
   "cpp": {
     "revision": "a35a275df92e7583df38f2de2562361f2b69987e"
@@ -21,7 +21,7 @@
     "revision": "9432021ba6e96124ff1b6bd91f79c0a2e3c87cf4"
   },
   "elm": {
-    "revision": "06a8ff7c13d625bcddeb642a1ca59a3ded6b4286"
+    "revision": "b447b80609286448dcca2c2b59502a13160ede42"
   },
   "erlang": {
     "revision": "946cef2a530bc56dbfef225d16c43c179e22f4dd"
@@ -81,43 +81,46 @@
     "revision": "b0c0367d4b7058921fdc4ba11e257441a64ab809"
   },
   "python": {
-    "revision": "65b486b42fe0188e4be344092151042bf1bc6d9a"
+    "revision": "3196e288650992bca2399dda15ac703c342a22bb"
   },
   "ql": {
     "revision": "a0d688d62dcb9cbc7c53f0d98343c458b3776b3d"
   },
   "query": {
-    "revision": "0ec086c6fcd3528a134eb6172c3a96cf669a355f"
+    "revision": "020affead9faaa967103616a73ff1ace9571a573"
   },
   "regex": {
     "revision": "be2e415b5716615530234d179dc27c32b7a1d86b"
   },
   "rst": {
-    "revision": "a2ef2b3fae0c5b07f7c386c6397d4812275ea4e5"
+    "revision": "e142b03e906b0c111a3734277d40cf2334c20387"
   },
   "ruby": {
-    "revision": "bb572f60e9538bd11fbde95a54f97522073f1e06"
+    "revision": "8fd340fe8b47b53e7dada53c3913661949c34f6b"
   },
   "rust": {
-    "revision": "8746bd4b584b8063ee8e445bf31015e887417d33"
+    "revision": "2beedf23bedbd7b02b416518693e8eed3944d4a0"
   },
   "scala": {
     "revision": "211bb726bb5857f872247b600c7c1808e641a8d4"
   },
   "sparql": {
-    "revision": "d477183c6c589bcb1f0b5769816640f2a7a7db91"
+    "revision": "8862fc9942fc0ad60c8a8cb004138bfd69fc5c95"
   },
   "swift": {
     "revision": "a22fa5e19bae50098e2252ea96cba3aba43f4c58"
   },
   "teal": {
-    "revision": "b4f6937130e886350c4c4381dfb4fafbba4f8989"
+    "revision": "cec82d45e630005346d8e9df2414afedd212362f"
   },
   "toml": {
     "revision": "084da152d85cb8c4bbbe0ab5f3f1f9e5bfb77d3c"
   },
   "tsx": {
     "revision": "73afadbd117a8e8551758af9c3a522ef46452119"
+  },
+  "turtle": {
+    "revision": "d51424b75ef670643c6e11a57d0748c411447e18"
   },
   "typescript": {
     "revision": "73afadbd117a8e8551758af9c3a522ef46452119"

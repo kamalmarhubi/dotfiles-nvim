@@ -151,7 +151,7 @@ We are looking for maintainers to add more parsers and to write query files for 
 - [x] [javascript](https://github.com/tree-sitter/tree-sitter-javascript) (maintained by @steelsojka)
 - [x] [jsdoc](https://github.com/tree-sitter/tree-sitter-jsdoc) (maintained by @steelsojka)
 - [x] [json](https://github.com/tree-sitter/tree-sitter-json) (maintained by @steelsojka)
-- [ ] [julia](https://github.com/tree-sitter/tree-sitter-julia)
+- [x] [julia](https://github.com/tree-sitter/tree-sitter-julia) (maintained by @mroavi, @theHamsta)
 - [x] [kotlin](https://github.com/QthCN/tree-sitter-kotlin) (maintained by @tormodatt)
 - [x] [lua](https://github.com/nvim-treesitter/tree-sitter-lua) (maintained by @vigoux)
 - [x] [nix](https://github.com/cstrahan/tree-sitter-nix) (maintained by @leo60228)
@@ -172,6 +172,7 @@ We are looking for maintainers to add more parsers and to write query files for 
 - [x] [teal](https://github.com/euclidianAce/tree-sitter-teal) (maintained by @euclidianAce)
 - [x] [toml](https://github.com/ikatyang/tree-sitter-toml) (maintained by @tk-shirasaka)
 - [ ] [tsx](https://github.com/tree-sitter/tree-sitter-typescript)
+- [x] [turtle](https://github.com/BonaBeavis/tree-sitter-turtle) (maintained by @bonabeavis)
 - [x] [typescript](https://github.com/tree-sitter/tree-sitter-typescript) (maintained by @steelsojka)
 - [x] [verilog](https://github.com/tree-sitter/tree-sitter-verilog) (maintained by @zegervdv)
 - [ ] [vue](https://github.com/ikatyang/tree-sitter-vue)
@@ -406,3 +407,8 @@ This will save, restore and enable highlighting for the current buffer.
 
 This might happen, and is known to happen, with `vim-clap`.
 To avoid these kind of errors, please use `setlocal` instead of `set` for the respective filetypes.
+
+#### I run into errors like `module 'nvim-treesitter.configs' not found` at startup
+
+This is because of `rtp` management in `nvim`, adding `packadd
+nvim-treesitter` should fix the issue.

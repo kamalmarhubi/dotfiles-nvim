@@ -138,10 +138,15 @@
  (bare_symbol)
  (heredoc_beginning)
  (heredoc_end)
- (symbol)
  ] @constant
 
-(pair key: (symbol) ":" @constant)
+[
+ (simple_symbol)
+ (delimited_symbol)
+ (hash_key_symbol)
+ ] @property
+
+(pair key: (hash_key_symbol) ":" @constant)
 (regex) @string.regex
 (escape_sequence) @string.escape
 (integer) @number
@@ -152,10 +157,6 @@
  (true)
  (false)
  ] @boolean
-
-(interpolation
-  "#{" @punctuation.special
-  "}" @punctuation.special) @embedded
 
 (comment) @comment
 

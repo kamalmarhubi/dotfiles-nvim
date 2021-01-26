@@ -20,7 +20,7 @@
 (call_expression
   function: (identifier) @function)
 (call_expression
-  function: (scoped_identifier 
+  function: (scoped_identifier
               (identifier) @function .))
 (call_expression
   function: (field_expression
@@ -86,6 +86,10 @@
   macro: (scoped_identifier
            (identifier) @function.macro .))
 
+(metavariable) @function.macro
+
+"$" @function.macro
+
 ; Function definitions
 
 (function_item (identifier) @function)
@@ -97,11 +101,13 @@
  ] @comment
 
 [
-"("
-")"
-"["
-"]"
- ] @punctuation.bracket
+ "("
+ ")"
+ "["
+ "]"
+ "{"
+ "}"
+] @punctuation.bracket
 
 (type_arguments
   "<" @punctuation.bracket
@@ -134,7 +140,6 @@
 "dyn"
 "enum"
 "extern"
-"fn"
 "impl"
 "let"
 "macro_rules!"
@@ -158,6 +163,8 @@
 (attribute_item)
 (inner_attribute_item)
  ] @keyword
+
+"fn" @keyword.function
 
 (use_list (self) @keyword)
 (scoped_use_list (self) @keyword)

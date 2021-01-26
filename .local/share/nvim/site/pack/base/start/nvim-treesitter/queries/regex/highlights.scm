@@ -15,8 +15,13 @@
 
 (group_name) @property
 
+;; These are escaped special characters that lost their special meaning
+;; -> no special highlighting
+(identity_escape) @string.regex
+
+(class_character) @constant
+
 [
- (identity_escape)
  (control_letter_escape)
  (character_class_escape)
  (control_escape)
@@ -26,4 +31,4 @@
  (non_boundary_assertion)
 ] @string.escape
 
-[ "*" "+" "|" "=" "<=" "!" "<!" ] @operator
+[ "*" "+" "?" "|" "=" "<=" "!" "<!" ] @operator

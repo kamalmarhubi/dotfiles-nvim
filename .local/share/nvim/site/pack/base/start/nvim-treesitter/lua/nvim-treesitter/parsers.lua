@@ -157,7 +157,8 @@ list.julia = {
   install_info = {
     url = "https://github.com/tree-sitter/tree-sitter-julia",
     files = { "src/parser.c", "src/scanner.c" },
-  }
+  },
+  maintainers = {"@mroavi", "@theHamsta"},
 }
 
 list.json = {
@@ -396,6 +397,15 @@ list.gdscript = {
   },
   readme_name = "Godot (gdscript)",
   maintainers = {"not @tjdevries"},
+}
+
+list.turtle = {
+  install_info = {
+    url = "https://github.com/BonaBeavis/tree-sitter-turtle",
+    files = { "src/parser.c" },
+    branch = "main",
+  },
+  maintainers = { "@bonabeavis" },
 }
 
 local M = {
