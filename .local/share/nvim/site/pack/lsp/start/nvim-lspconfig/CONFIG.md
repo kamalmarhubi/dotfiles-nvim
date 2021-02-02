@@ -25,6 +25,7 @@ that config.
 - [gdscript](#gdscript)
 - [ghcide](#ghcide)
 - [gopls](#gopls)
+- [graphql](#graphql)
 - [groovyls](#groovyls)
 - [hie](#hie)
 - [hls](#hls)
@@ -57,12 +58,14 @@ that config.
 - [sorbet](#sorbet)
 - [sourcekit](#sourcekit)
 - [sqlls](#sqlls)
+- [sqls](#sqls)
 - [sumneko_lua](#sumneko_lua)
 - [svelte](#svelte)
 - [terraformls](#terraformls)
 - [texlab](#texlab)
 - [tsserver](#tsserver)
 - [vimls](#vimls)
+- [vls](#vls)
 - [vuels](#vuels)
 - [yamlls](#yamlls)
 - [zls](#zls)
@@ -145,6 +148,9 @@ require'lspconfig'.bashls.setup{}
   
   Default Values:
     cmd = { "bash-language-server", "start" }
+    cmd_env = {
+      GLOB_PATTERN = "*@(.sh|.inc|.bash|.command)"
+    }
     filetypes = { "sh" }
     root_dir = vim's starting directory
 ```
@@ -190,7 +196,7 @@ require'lspconfig'.ccls.setup{}
 
 ## clangd
 
-https://clang.llvm.org/extra/clangd/Installation.html
+https://clangd.llvm.org/installation.html
 
 **NOTE:** Clang >= 9 is recommended! See [this issue for more](https://github.com/neovim/nvim-lsp/issues/23).
 
@@ -318,6 +324,14 @@ This server accepts configuration via the `settings` key.
   Default: `1`
   
   Number of threads for running CodeQL tests\.
+
+- **`codeQL.telemetry.enableTelemetry`**: `boolean`
+
+  Specifies whether to send CodeQL usage telemetry\. This setting AND the global \`\#telemetry\.enableTelemetry\#\` setting must be checked for telemetry to be sent to GitHub\.
+
+- **`codeQL.telemetry.logTelemetry`**: `boolean`
+
+  Specifies whether or not to write telemetry events to the extension log\.
 
 </details>
 
@@ -857,6 +871,12 @@ This server accepts configuration via the `settings` key.
   
   An array of paths that either directly point to a Dart SDK or the parent directory of multiple Dart SDKs\. When set\, the version number in the status bar can be used to quickly switch between SDKs\.
 
+- **`dart.shareDevToolsWithFlutter`**: `boolean`
+
+  Default: `true`
+  
+  Whether to eagerly run DevTools for Flutter workspaces and share the spawned server with \`flutter run\`\.
+
 - **`dart.showDartDeveloperLogs`**: `boolean`
 
   Default: `true`
@@ -880,6 +900,12 @@ This server accepts configuration via the `settings` key.
   Default: `true`
   
   Whether to show quick fixes for ignoring hints and lints\.
+
+- **`dart.showInspectorNotificationsForWidgetErrors`**: `boolean`
+
+  Default: `true`
+  
+  null
 
 - **`dart.showMainCodeLens`**: `boolean`
 
@@ -1491,6 +1517,28 @@ require'lspconfig'.gopls.setup{}
     root_dir = root_pattern("go.mod", ".git")
 ```
 
+## graphql
+
+https://github.com/graphql/graphiql/tree/main/packages/graphql-language-service-cli
+
+`graphql-lsp` can be installed via `npm`:
+
+```sh
+npm install -g graphql-language-service-cli
+```
+
+
+```lua
+require'lspconfig'.graphql.setup{}
+
+  Commands:
+  
+  Default Values:
+    cmd = { "graphql-lsp", "server", "-m", "stream" }
+    filetypes = { "graphql" }
+    root_dir = root_pattern('.git', '.graphqlrc')
+```
+
 ## groovyls
 
 https://github.com/prominic/groovy-language-server.git
@@ -1749,7 +1797,8 @@ require'lspconfig'.jdtls.setup{}
     }
     filetypes = { "java" }
     handlers = {
-      ["textDocument/codeAction"] = <function 1>
+      ["language/status"] = <function 1>,
+      ["textDocument/codeAction"] = <function 2>
     }
     init_options = {
       jvm_args = {},
@@ -3738,6 +3787,14 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`rust-analyzer.files.excludeDirs`**: `array`
+
+  Default: `{}`
+  
+  Array items: `{type = "string"}`
+  
+  null
+
 - **`rust-analyzer.files.watcher`**: `string`
 
   Default: `"client"`
@@ -4210,6 +4267,32 @@ require'lspconfig'.sqlls.setup{}
     settings = {}
 ```
 
+## sqls
+
+https://github.com/lighttiger2505/sqls
+
+```lua
+require'lspconfig'.sqls.setup{
+  cmd = {"path/to/command", "-config" "path/to/config.yml"};
+  ...
+}
+```
+Sqls can be installed via `go get github.com/lighttiger2505/sqls`. Instructions for compiling Sqls from the source can be found at [lighttiger2505/sqls](https://github.com/lighttiger2505/sqls).
+
+    
+
+```lua
+require'lspconfig'.sqls.setup{}
+
+  Commands:
+  
+  Default Values:
+    cmd = { "sqls" }
+    filetypes = { "sql", "mysql" }
+    root_dir = <function 1>
+    settings = {}
+```
+
 ## sumneko_lua
 
 https://github.com/sumneko/lua-language-server
@@ -4441,6 +4524,18 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`Lua.window.progress`**: `boolean`
+
+  Default: `true`
+  
+  null
+
+- **`Lua.window.statusBar`**: `boolean`
+
+  Default: `true`
+  
+  null
+
 - **`Lua.workspace.ignoreDir`**: `array`
 
   Default: `{ ".vscode" }`
@@ -4661,6 +4756,37 @@ require'lspconfig'.vimls.setup{}
       vimruntime = ""
     }
     root_dir = <function 1>
+```
+
+## vls
+
+https://github.com/vlang/vls
+
+V language server.
+
+`v-language-server` can be installed by following the instructions [here](https://github.com/vlang/vls#installation).
+
+**By default, v-language-server doesn't have a `cmd` set.** This is because nvim-lspconfig does not make assumptions about your path. You must add the following to your init.vim or init.lua to set `cmd` to the absolute path ($HOME and ~ are not expanded) of your unzipped and compiled v-language-server.
+
+```lua
+-- set the path to the vls installation;
+local vls_root_path = vim.fn.stdpath('cache')..'/lspconfig/vls'
+local vls_binary = vls_root_path.."/cmd/vls/vls"
+
+require'lspconfig'.vls.setup {
+  cmd = {vls_binary},
+}
+```
+
+
+```lua
+require'lspconfig'.vls.setup{}
+
+  Commands:
+  
+  Default Values:
+    filetypes = { "vlang" }
+    root_dir = root_pattern("v.mod", ".git")
 ```
 
 ## vuels
