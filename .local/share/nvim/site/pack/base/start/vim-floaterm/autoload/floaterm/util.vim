@@ -33,12 +33,21 @@ function! floaterm#util#show_msg(message, ...) abort
   endif
 endfunction
 
-function! floaterm#util#edit(_bufnr, filename) abort
+" >>> floaterm test.txt
+function! floaterm#util#edit_by_floaterm(_bufnr, filename) abort
   call floaterm#hide(1, 0, '')
   silent execute g:floaterm_open_command . ' ' . a:filename
 endfunction
 
+" >>> $EDITOR test.txt
+function! floaterm#util#edit_by_editor(bufnr, filename) abort
+  call floaterm#edita#vim#editor#open(a:filename, a:bufnr)
+endfunction
+
 function! floaterm#util#startinsert() abort
+  if &ft != 'floaterm'
+    return
+  endif
   if !g:floaterm_autoinsert 
     call feedkeys("\<C-\>\<C-n>", 'n')
   elseif mode() != 'i'

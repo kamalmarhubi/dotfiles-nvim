@@ -48,12 +48,6 @@ hi def link Floaterm       Normal
 hi def link FloatermNC     NormalNC
 hi def link FloatermBorder NormalFloat
 
-augroup floaterm_enter_insertmode
-  autocmd!
-  autocmd User FloatermOpen call floaterm#util#startinsert()
-  autocmd BufEnter * if &ft == 'floaterm' | call floaterm#util#startinsert() | endif
-augroup END
-
 let g:floaterm_keymap_new    = get(g:, 'floaterm_keymap_new', '')
 let g:floaterm_keymap_prev   = get(g:, 'floaterm_keymap_prev', '')
 let g:floaterm_keymap_next   = get(g:, 'floaterm_keymap_next', '')
@@ -79,3 +73,9 @@ call s:bind_keymap(g:floaterm_keymap_hide,   'FloatermHide')
 call s:bind_keymap(g:floaterm_keymap_show,   'FloatermShow')
 call s:bind_keymap(g:floaterm_keymap_kill,   'FloatermKill')
 call s:bind_keymap(g:floaterm_keymap_toggle, 'FloatermToggle')
+
+"-----------------------------------------------------------------------------
+" options broken by breaking changes
+if g:floaterm_gitcommit == 'floaterm'
+  let g:floaterm_gitcommit = 'vsplit'
+endif

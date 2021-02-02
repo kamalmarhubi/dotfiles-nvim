@@ -5,20 +5,31 @@
 " GitHub: https://github.com/voldikss
 " ============================================================================
 
+let s:timer_map = {}
 let s:channel_map = {}
 let s:is_win = has('win32') || has('win64')
 
 function! s:on_floaterm_create(bufnr) abort
   call setbufvar(a:bufnr, '&buflisted', 0)
   call setbufvar(a:bufnr, '&filetype', 'floaterm')
-  if has('nvim')
-    " TODO: need to be reworked
+  augroup floaterm_enter_insertmode
+    autocmd! * <buffer>
+    autocmd! User FloatermOpen
+    autocmd User FloatermOpen call floaterm#util#startinsert()
+    autocmd BufEnter <buffer> call floaterm#util#startinsert()
     execute printf(
           \ 'autocmd BufHidden,BufWipeout <buffer=%s> call floaterm#window#hide(%s)',
           \ a:bufnr,
           \ a:bufnr
           \ )
-  endif
+    if floaterm#buffer#get_config(a:bufnr, 'disposable')
+      execute printf(
+            \ 'autocmd BufHidden <buffer=%s> call floaterm#terminal#kill(%s)',
+            \ a:bufnr,
+            \ a:bufnr
+            \ )
+    endif
+  augroup END
 endfunction
 
 function! s:on_floaterm_close(bufnr, callback, job, data, ...) abort
@@ -59,7 +70,6 @@ function! floaterm#terminal#open(bufnr, cmd, jobopts, config) abort
     call floaterm#window#hide(bufnr('%'))
   endif
 
-  " just open if floaterm exists
   if !bufexists(a:bufnr)
     " change cwd
     let savedcwd = getcwd()
@@ -77,7 +87,6 @@ function! floaterm#terminal#open(bufnr, cmd, jobopts, config) abort
     " hide floaterm immediately if silent
     if floaterm#buffer#get_config(bufnr, 'silent', 0)
       call floaterm#window#hide(bufnr)
-      stopinsert
     endif
 
     " restore cwd
@@ -120,7 +129,7 @@ function! s:spawn_terminal(cmd, jobopts, config) abort
       unlet a:jobopts.on_exit
     endif
     if has('patch-8.1.2080')
-      let a:jobopts.term_api = 'floaterm#util#edit'
+      let a:jobopts.term_api = 'floaterm#util#edit_by_'
     endif
     let a:jobopts.hidden = 1
     try
@@ -184,12 +193,24 @@ function! floaterm#terminal#kill(bufnr) abort
       call job_stop(job, 'kill')
     endif
   endif
+  call s:ensure_terminal_kill(a:bufnr)
+  let s:timer_map[a:bufnr] = timer_start(
+        \ 5,
+        \ { -> s:ensure_terminal_kill(a:bufnr) },
+        \ {'repeat': 3}
+        \ )
+endfunction
+
+function! s:ensure_terminal_kill(bufnr) abort
   try
     if bufexists(a:bufnr)
       execute a:bufnr . 'bwipeout!'
+    else
+      call timer_stop(s:timer_map[a:bufnr])
+      call remove(s:timer_map, a:bufnr)
     endif
   catch
-    call popup_close(win_getid())
+    silent! call popup_close(win_getid())
   endtry
 endfunction
 

@@ -68,6 +68,10 @@ If you've opened multiple floaterm instances, they will be attached to a
 double-circular-linkedlist. Then you can use `:FloatermNext` or
 `: FloatermPrev` to switch between them.
 
+**❗️Note**: Long-running jobs (e.g. `yarn watch`) inside the builtin terminal
+would probably slowdown your operation. It's recommended to put them into the
+external terminals.
+
 ### Commands
 
 #### `:FloatermNew[!] [options] [cmd]` Open a floaterm window.
@@ -84,6 +88,8 @@ double-circular-linkedlist. Then you can use `:FloatermNext` or
   - `name` name of the floaterm
   - `silent` If `--silent` is given, spawn a floaterm but not open the window,
     you may toggle it afterwards
+  - `disposable` If `--disposable` is given, the floaterm will be destroyed
+    once it is hidden.
   - `height` see `g:floaterm_height`
   - `width` see `g:floaterm_width`
   - `title` see `g:floaterm_title`
@@ -251,11 +257,12 @@ Available: `'edit'`, `'split'`, `'vsplit'`, `'tabe'`, `'drop'`. Default: `'edit'
 
 #### **`g:floaterm_gitcommit`**
 
-Type `String`. Opening strategy for `COMMIT_EDITMSG` window by running `git commit` in the floaterm window. Only works in neovim.
+Type `String`. Opening strategy for gitcommit window when running `git commit`
+in floaterm.
 
-Available: `'floaterm'`(open `gitcommit` in the floaterm window), `'split'`(recommended), `'vsplit'`, `'tabe'`.
+Available: `'split'`(recommended), `'vsplit'`, `'tabe'`, etc.
 
-Default: `''`, which means this is disabled by default(use your own `$GIT_EDITOR`).
+Default: `'vsplit'`. Set to `''` to disable this feature (use your own `$GIT_EDITOR`).
 
 #### **`g:floaterm_autoclose`**
 
@@ -364,7 +371,10 @@ hi Floaterm guibg=black
 hi FloatermBorder guibg=orange guifg=cyan
 ```
 
-![](https://user-images.githubusercontent.com/20282795/91368959-fee00f00-e83c-11ea-9002-cab992d30794.png)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/20282795/91368959-fee00f00-e83c-11ea-9002-cab992d30794.png"/>
+</details>
 
 Besides, there is a neovim only highlight group which can be used to configure
 no-current-focused window(`:help NormalNC`).
@@ -376,12 +386,15 @@ no-current-focused window(`:help NormalNC`).
 hi FloatermNC guibg=gray
 ```
 
-![](https://user-images.githubusercontent.com/20282795/91380259-28a62f80-e857-11ea-833f-11160d15647a.gif)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/20282795/91380259-28a62f80-e857-11ea-833f-11160d15647a.gif"/>
+</details>
 
 ### Autocmd
 
 ```vim
-autocmd User FloatermOpen        " triggered after opening a floaterm
+autocmd User FloatermOpen        " triggered after opening a new/existed floaterm
 ```
 
 ## Advanced Topics
@@ -410,17 +423,21 @@ pip install neovim-remote
 
 P.S. [#208](https://github.com/voldikss/vim-floaterm/issues/208#issuecomment-747829311) describes how to use `gf` in the floating terminal window.
 
-![](https://user-images.githubusercontent.com/20282795/91380257-27750280-e857-11ea-8d49-d760c009fee0.gif)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/20282795/91380257-27750280-e857-11ea-8d49-d760c009fee0.gif"/>
+</details>
 
 #### git
 
 See `g:floaterm_gitcommit` option.
 
-Execute `git commit` in the terminal window without starting a nested nvim.
+Execute `git commit` in the terminal window without starting a nested vim/nvim.
 
-**❗️Note**: neovim only feature. Moreover, it also requires [neovim-remote](https://github.com/mhinz/neovim-remote), please install it using `pip3 install neovim-remote`.
-
-![](https://user-images.githubusercontent.com/20282795/91380268-2cd24d00-e857-11ea-8dbd-d39a0bbb105e.gif)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/20282795/91380268-2cd24d00-e857-11ea-8dbd-d39a0bbb105e.gif"/>
+</details>
 
 #### fzf
 
@@ -433,7 +450,10 @@ Try `:FloatermNew fzf` or even wrap this to a new command like this:
 command! FZF FloatermNew fzf
 ```
 
-![](https://user-images.githubusercontent.com/20282795/91380264-2b088980-e857-11ea-80ff-062b3d3bbf12.gif)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/20282795/91380264-2b088980-e857-11ea-80ff-062b3d3bbf12.gif"/>
+</details>
 
 #### fff
 
@@ -445,7 +465,10 @@ Try `:FloatermNew fff` or define a new command:
 command! FFF FloatermNew fff
 ```
 
-![](https://user-images.githubusercontent.com/1472981/75105718-9f315d00-567b-11ea-82d1-6f9a6365391f.gif)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/1472981/75105718-9f315d00-567b-11ea-82d1-6f9a6365391f.gif"/>
+</details>
 
 #### nnn
 
@@ -457,7 +480,10 @@ Try `:FloatermNew nnn` or define a new command:
 command! NNN FloatermNew nnn
 ```
 
-![](https://user-images.githubusercontent.com/20282795/91380278-322f9780-e857-11ea-8b1c-d40fc91bb07d.gif)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/20282795/91380278-322f9780-e857-11ea-8b1c-d40fc91bb07d.gif"/>
+</details>
 
 #### lf
 
@@ -469,7 +495,10 @@ Try `:FloatermNew lf` or define a new command:
 command! LF FloatermNew lf
 ```
 
-![](https://user-images.githubusercontent.com/20282795/91380274-3065d400-e857-11ea-86df-981adddc04c6.gif)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/20282795/91380274-3065d400-e857-11ea-86df-981adddc04c6.gif"/>
+</details>
 
 #### ranger
 
@@ -481,7 +510,10 @@ Try `:FloatermNew ranger` or define a new command:
 command! Ranger FloatermNew ranger
 ```
 
-![](https://user-images.githubusercontent.com/20282795/91380284-3360c480-e857-11ea-9966-34856592d487.gif)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/20282795/91380284-3360c480-e857-11ea-9966-34856592d487.gif"/>
+</details>
 
 #### vifm
 
@@ -493,7 +525,10 @@ Try `:FloatermNew vifm` or define a new command:
 command! Vifm FloatermNew vifm
 ```
 
-![](https://user-images.githubusercontent.com/43941510/77137476-3c888100-6ac2-11ea-90f2-2345c881aa8f.gif)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/43941510/77137476-3c888100-6ac2-11ea-90f2-2345c881aa8f.gif"/>
+</details>
 
 #### lazygit
 
@@ -501,7 +536,10 @@ Furthermore, you can also use other command-line programs, such as lazygit, htop
 
 Use `lazygit` for instance:
 
-![](https://user-images.githubusercontent.com/20282795/74755376-0f239a00-52ae-11ea-9261-44d94abe5924.png)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/20282795/74755376-0f239a00-52ae-11ea-9261-44d94abe5924.png"/>
+</details>
 
 #### python
 
@@ -509,7 +547,10 @@ Use `:FloatermNew python` to open a python shell. After that you can use `: Floa
 
 This can also work for other languages which have interactive shells, such as lua, node, etc.
 
-![](https://user-images.githubusercontent.com/20282795/91380286-352a8800-e857-11ea-800c-ac54efa7dd72.gif)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/20282795/91380286-352a8800-e857-11ea-800c-ac54efa7dd72.gif"/>
+</details>
 
 ### Use with other plugins
 
@@ -519,7 +560,10 @@ Use vim-clap to switch/preview floating terminal buffers.
 
 Try `:Clap floaterm`
 
-![](https://user-images.githubusercontent.com/20282795/91380243-217f2180-e857-11ea-9f64-46e8676adc11.gif)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/20282795/91380243-217f2180-e857-11ea-9f64-46e8676adc11.gif"/>
+</details>
 
 #### [denite.nvim](https://github.com/Shougo/denite.nvim)
 
@@ -527,7 +571,10 @@ Use denite to switch/preview/open floating terminal buffers.
 
 Try `:Denite floaterm`
 
-![](https://user-images.githubusercontent.com/1239245/73604753-17ef4d00-45d9-11ea-967f-ef75927e2beb.gif)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/1239245/73604753-17ef4d00-45d9-11ea-967f-ef75927e2beb.gif"/>
+</details>
 
 #### [coc.nvim](https://github.com/neoclide/coc.nvim)
 
@@ -535,7 +582,10 @@ Use CocList to switch/preview/open floating terminal buffers.
 
 Install [coc-floaterm](https://github.com/voldikss/coc-floaterm) and try `:CocList floaterm`
 
-![](https://user-images.githubusercontent.com/20282795/91380254-25ab3f00-e857-11ea-9733-d0ae5a954848.gif)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/20282795/91380254-25ab3f00-e857-11ea-9733-d0ae5a954848.gif"/>
+</details>
 
 #### [fzf](https://github.com/junegunn/fzf)
 
@@ -547,53 +597,14 @@ Install [LeaderF-floaterm](https://github.com/voldikss/LeaderF-floaterm) and try
 
 #### [asynctasks.vim](https://github.com/skywind3000/asynctasks.vim) | [asyncrun.vim](https://github.com/skywind3000/asyncrun.vim)
 
-This plugin can be a runner for asynctasks.vim or asyncrun.vim.
-To use it, try the following code in your `vimrc`.
+This plugin can be a runner for asynctasks.vim or asyncrun.vim. See
+[asyncrun.extra](https://github.com/skywind3000/asyncrun.extra) for the
+installation and usage.
 
-```vim
-function! s:run_in_floaterm(opts)
-  execute 'FloatermNew --position=bottomright' .
-                   \ ' --wintype=float' .
-                   \ ' --height=0.4' .
-                   \ ' --width=0.4' .
-                   \ ' --title=floaterm_runner' .
-                   \ ' --autoclose=0' .
-                   \ ' --silent=' . get(a:opts, 'silent', 0)
-                   \ ' --cwd=' . a:opts.cwd
-                   \ ' ' . a:opts.cmd
-  " Do not focus on floaterm window, and close it once cursor moves
-  " If you want to jump to the floaterm window, use <C-w>p
-  " You can choose whether to use the following code or not
-  stopinsert | noa wincmd p
-  augroup close-floaterm-runner
-    autocmd!
-    autocmd CursorMoved,InsertEnter * ++nested
-          \ call timer_start(100, { -> s:close_floaterm_runner() })
-  augroup END
-endfunction
-function! s:close_floaterm_runner() abort
-  if &ft == 'floaterm' | return | endif
-  for b in tabpagebuflist()
-    if getbufvar(b, '&ft') == 'floaterm' &&
-          \ getbufvar(b, 'floaterm_jobexists') == v:false
-      execute b 'bwipeout!'
-      break
-    endif
-  endfor
-  autocmd! close-floaterm-runner
-endfunction
-let g:asyncrun_runner = get(g:, 'asyncrun_runner', {})
-let g:asyncrun_runner.floaterm = function('s:run_in_floaterm')
-let g:asynctasks_term_pos = 'floaterm'
-```
-
-Then your task will be run in the floaterm instance. See asynctasks.vim
-[Wiki](https://github.com/skywind3000/asynctasks.vim/wiki/Customize-Runner) for more information.
-
-You can also modify the code in `s: run_in_floaterm` by yourself to meet your
-tastes, which is the reason why this code is not made builtin.
-
-![](https://user-images.githubusercontent.com/20282795/104123344-b3f70c00-5385-11eb-9f61-0a5703ba78f5.gif)
+<details>
+<summary>Demo</summary>
+<img src="https://user-images.githubusercontent.com/20282795/104123344-b3f70c00-5385-11eb-9f61-0a5703ba78f5.gif"/>
+</details>
 
 ### How to define more wrappers
 
@@ -685,6 +696,9 @@ https://github.com/voldikss/vim-floaterm/issues?q=label%3A%22breaking+change%22
   from [vim-terminal-help](https://github.com/skywind3000/vim-terminal-help/blob/master/tools/utils/drop)
 
 - Some features require [neovim-remote](https://github.com/mhinz/neovim-remote)
+
+- [edita.vim](https://github.com/lambdalisue/edita.vim) for pseudo `$EDITOR` in
+  floaterm
 
 ## License
 
