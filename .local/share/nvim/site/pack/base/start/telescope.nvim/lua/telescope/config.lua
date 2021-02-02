@@ -67,7 +67,7 @@ function config.set_defaults(defaults)
   set("use_less", true)
   set("color_devicons", true)
 
-  set("set_env", {})
+  set("set_env", nil)
 
   -- TODO: Add motions to keybindings
 
@@ -83,7 +83,7 @@ function config.set_defaults(defaults)
   -- Otherwise, just set the mapping to the function that you want it to be.
   --
   --            ...,
-  --            ["<C-i>"] = actions.hselect
+  --            ["<C-i>"] = actions.goto_file_selection_split
   --            ...,
   --
   set("mappings", {})

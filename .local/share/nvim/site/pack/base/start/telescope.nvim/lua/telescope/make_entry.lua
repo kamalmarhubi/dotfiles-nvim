@@ -463,7 +463,8 @@ function make_entry.gen_from_buffer(opts)
 
   local icon_width = 0
   if not disable_devicons then
-    icon_width = vim.fn.strdisplaywidth(get_devicons('fname', disable_devicons))
+    local icon, _ = get_devicons('fname', disable_devicons)
+    icon_width = utils.strdisplaywidth(icon)
   end
 
   local displayer = entry_display.create {
@@ -612,9 +613,14 @@ function make_entry.gen_from_packages(opts)
   end
 end
 
-function make_entry.gen_from_apropos()
+function make_entry.gen_from_apropos(opts)
+  local sections = {}
+  for _, section in ipairs(opts.sections) do
+    sections[section] = true
+  end
+
   local displayer = entry_display.create {
-    separator = "",
+    separator = ' ',
     items = {
       { width = 30 },
       { remaining = true },
@@ -623,20 +629,21 @@ function make_entry.gen_from_apropos()
 
   local make_display = function(entry)
     return displayer {
-      entry.value,
+      { entry.keyword, 'TelescopeResultsFunction' },
       entry.description
     }
   end
 
   return function(line)
-    local cmd, _, desc = line:match("^(.*)%s+%((.*)%)%s+%-%s(.*)$")
-
-    return {
+    local keyword, cmd, section, desc = line:match'^((.-)%s*%(([^)]+)%).-)%s+%-%s+(.*)$'
+    return keyword and sections[section] and {
       value = cmd,
       description = desc,
       ordinal = cmd,
       display = make_display,
-    }
+      section = section,
+      keyword = keyword,
+    } or nil
   end
 end
 

@@ -47,7 +47,7 @@ internal.builtin = function(opts)
     previewer = previewers.builtin.new(opts),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(_)
-      actions.select:replace(actions.run_builtin)
+      actions.goto_file_selection_edit:replace(actions.run_builtin)
       return true
     end
   }):find()
@@ -82,7 +82,7 @@ internal.planets = function(opts)
     previewer = previewers.cat.new(opts),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions.select:replace(function()
+      actions.goto_file_selection_edit:replace(function()
         local selection = actions.get_selected_entry()
         actions.close(prompt_bufnr)
 
@@ -137,7 +137,7 @@ internal.symbols = function(opts)
     },
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(_)
-      actions.select:replace(actions.insert_symbol)
+      actions.goto_file_selection_edit:replace(actions.insert_symbol)
       return true
     end
   }):find()
@@ -168,7 +168,7 @@ internal.commands = function(opts)
     },
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions.select:replace(function()
+      actions.goto_file_selection_edit:replace(function()
         local selection = actions.get_selected_entry()
         actions.close(prompt_bufnr)
         local val = selection.value
@@ -285,7 +285,7 @@ internal.vim_options = function(opts)
     -- previewer = previewers.help.new(opts),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function()
-      actions.select:replace(function()
+      actions.goto_file_selection_edit:replace(function()
         local selection = actions.get_selected_entry()
         local esc = ""
 
@@ -411,7 +411,7 @@ internal.help_tags = function(opts)
     previewer = previewers.help.new(opts),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions._select:replace(function(_, cmd)
+      actions._goto_file_selection:replace(function(_, cmd)
         local selection = actions.get_selected_entry()
         actions.close(prompt_bufnr)
         if cmd == 'edit' or cmd == 'new' then
@@ -429,27 +429,31 @@ internal.help_tags = function(opts)
 end
 
 internal.man_pages = function(opts)
-  local pages = utils.get_os_command_output(opts.man_cmd or { 'apropos', '--sections=1', '' })
+  opts.sections = utils.get_default(opts.sections, {'1'})
+  assert(vim.tbl_islist(opts.sections), 'sections should be a list')
+  opts.man_cmd = utils.get_lazy_default(opts.man_cmd, function()
+    local is_darwin = vim.loop.os_uname().sysname == 'Darwin'
+    return is_darwin and {'apropos', ' '} or {'apropos', ''}
+  end)
+  opts.entry_maker = opts.entry_maker or make_entry.gen_from_apropos(opts)
 
   pickers.new(opts, {
     prompt_title = 'Man',
-    finder    = finders.new_table {
-      results = pages,
-      entry_maker = opts.entry_maker or make_entry.gen_from_apropos(opts),
-    },
+    finder    = finders.new_oneshot_job(opts.man_cmd, opts),
     previewer = previewers.man.new(opts),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions._select:replace(function(_, cmd)
+      actions._goto_file_selection:replace(function(_, cmd)
         local selection = actions.get_selected_entry()
+        local args = selection.section .. ' ' .. selection.value
 
         actions.close(prompt_bufnr)
         if cmd == 'edit' or cmd == 'new' then
-          vim.cmd('Man ' .. selection.value)
+          vim.cmd('Man ' .. args)
         elseif cmd == 'vnew' then
-          vim.cmd('vert bo Man ' .. selection.value)
+          vim.cmd('vert bo Man ' .. args)
         elseif cmd == 'tabedit' then
-          vim.cmd('tab Man ' .. selection.value)
+          vim.cmd('tab Man ' .. args)
         end
       end)
 
@@ -483,7 +487,7 @@ internal.reloader = function(opts)
     sorter = conf.generic_sorter(opts),
 
     attach_mappings = function(prompt_bufnr)
-      actions.select:replace(function()
+      actions.goto_file_selection_edit:replace(function()
         local selection = actions.get_selected_entry()
 
         actions.close(prompt_bufnr)
@@ -562,7 +566,7 @@ internal.colorscheme = function(opts)
     -- TODO: better preview?
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions.select:replace(function()
+      actions.goto_file_selection_edit:replace(function()
         local selection = actions.get_selected_entry()
 
         actions.close(prompt_bufnr)
@@ -614,7 +618,7 @@ internal.registers = function(opts)
     -- use levenshtein as n-gram doesn't support <2 char matches
     sorter = sorters.get_levenshtein_sorter(),
     attach_mappings = function(_, map)
-      actions.select:replace(actions.paste_register)
+      actions.goto_file_selection_edit:replace(actions.paste_register)
       map('i', '<C-e>', actions.edit_register)
 
       return true
@@ -653,7 +657,7 @@ internal.keymaps = function(opts)
     },
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions.select:replace(function()
+      actions.goto_file_selection_edit:replace(function()
         local selection = actions.get_selected_entry()
         vim.api.nvim_feedkeys(
           vim.api.nvim_replace_termcodes(selection.value.lhs, true, false, true),
@@ -675,7 +679,7 @@ internal.filetypes = function(opts)
     },
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions.select:replace(function()
+      actions.goto_file_selection_edit:replace(function()
         local selection = actions.get_selected_entry()
         actions.close(prompt_bufnr)
         vim.cmd('setfiletype ' .. selection[1])
@@ -696,7 +700,7 @@ internal.highlights = function(opts)
     },
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions.select:replace(function()
+      actions.goto_file_selection_edit:replace(function()
         local selection = actions.get_selected_entry()
         actions.close(prompt_bufnr)
         vim.cmd('hi ' .. selection.value)
@@ -787,7 +791,7 @@ internal.autocommands = function(opts)
     previewer = previewers.autocommands.new(opts),
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions._select:replace(function(_, vim_cmd)
+      actions._goto_file_selection:replace(function(_, vim_cmd)
         local selection = actions.get_selected_entry()
         actions.close(prompt_bufnr)
         vim.cmd(vim_cmd .. ' ' .. selection.value)
@@ -811,7 +815,7 @@ internal.spell_suggest = function(opts)
     },
     sorter = conf.generic_sorter(opts),
     attach_mappings = function(prompt_bufnr)
-      actions.select:replace(function()
+      actions.goto_file_selection_edit:replace(function()
         local selection = actions.get_selected_entry()
         actions.close(prompt_bufnr)
         vim.cmd('normal! ciw' .. selection[1])

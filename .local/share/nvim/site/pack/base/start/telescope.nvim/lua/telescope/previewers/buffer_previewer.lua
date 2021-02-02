@@ -31,7 +31,8 @@ previewers.file_maker = function(filepath, bufnr, opts)
     else
       path.read_file_async(filepath, vim.schedule_wrap(function(data)
         if not vim.api.nvim_buf_is_valid(bufnr) then return end
-        vim.api.nvim_buf_set_lines(bufnr, 0, -1, false, vim.split(data, '[\r]?\n'))
+        local ok = pcall(vim.api.nvim_buf_set_lines, bufnr, 0, -1, false, vim.split(data, '[\r]?\n'))
+        if not ok then return end
 
         if opts.callback then opts.callback(bufnr) end
         putils.highlighter(bufnr, ft)
@@ -371,7 +372,10 @@ previewers.help = defaulter(function(_)
   }
 end, {})
 
-previewers.man = defaulter(function(_)
+previewers.man = defaulter(function(opts)
+  local pager = utils.get_lazy_default(opts.PAGER, function()
+    return vim.fn.executable('col') == 1 and 'col -bx' or ''
+  end)
   return previewers.new_buffer_previewer {
     get_buffer_by_name = function(_, entry)
       return entry.value
@@ -379,8 +383,8 @@ previewers.man = defaulter(function(_)
 
     define_preview = function(self, entry, status)
       local win_width = vim.api.nvim_win_get_width(self.state.winid)
-      putils.job_maker({'man', '-P', 'cat', entry.value}, self.state.bufnr, {
-        env = { ["MANWIDTH"] = win_width },
+      putils.job_maker({'man', entry.section, entry.value}, self.state.bufnr, {
+        env = { ["PAGER"] = pager, ["MANWIDTH"] = win_width },
         value = entry.value,
         bufname = self.state.bufname
       })
@@ -403,7 +407,9 @@ previewers.git_branch_log = defaulter(function(_)
       local _, cstart = line:find('- %(')
       if cstart then
         local cend = string.find(line, '%) ')
-        vim.api.nvim_buf_add_highlight(bufnr, ns_previewer, "TelescopeResultsConstant", i - 1, cstart - 1, cend)
+        if cend then
+          vim.api.nvim_buf_add_highlight(bufnr, ns_previewer, "TelescopeResultsConstant", i - 1, cstart - 1, cend)
+        end
       end
       local dstart, _ = line:find(' %(%d')
       if dstart then
