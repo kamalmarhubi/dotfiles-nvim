@@ -35,6 +35,13 @@ function! s:popup__get_winnr() dict abort
 endfunction
 let s:popup.get_winnr = funcref('s:popup__get_winnr')
 
+function! s:popup__set_buf_var(name, value) dict abort
+    if has_key(self, 'bufnr')
+        call setbufvar(self.bufnr, a:name, a:value)
+    endif
+endfunction
+let s:popup.set_buf_var = funcref('s:popup__set_buf_var')
+
 function! s:popup__scroll(map) dict abort
     let winnr = self.get_winnr()
     if winnr == 0
@@ -162,10 +169,11 @@ function! s:popup__open() dict abort
     " Setup content
     enew!
     let popup_bufnr = bufnr('%')
+    " Note: Set conceallevel for hiding word diff markers
     setlocal
     \ buftype=nofile bufhidden=wipe nomodified nobuflisted noswapfile nonumber
     \ nocursorline wrap nonumber norelativenumber signcolumn=no nofoldenable
-    \ nospell nolist nomodeline
+    \ nospell nolist nomodeline conceallevel=2
     call setline(1, self.contents)
     setlocal nomodified nomodifiable
 

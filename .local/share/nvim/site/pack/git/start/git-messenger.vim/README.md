@@ -31,18 +31,21 @@ especially in message of the last commit which modifies the line.
 
 ## Screenshot
 
-- Show popup window with Neovim v0.4.0-dev:
+#### Show popup window with Neovim v0.4.0-dev
 
 <img alt="main screenshot" src="https://github.com/rhysd/ss/blob/master/git-messenger.vim/demo.gif?raw=true" width=763 height=556 />
 
-- Exploring older commits:
+#### Exploring older commits
 
 <img alt="history screenshot" src="https://github.com/rhysd/ss/blob/master/git-messenger.vim/history.gif?raw=true" width=510 height=252 />
 
-- Exploring diff of the commit (you may be also interested in `g:git_messenger_include_diff`):
+#### Exploring diff of the commit (you may be also interested in `g:git_messenger_include_diff`)
 
 <img alt="diff screenshot" src="https://github.com/rhysd/ss/blob/master/git-messenger.vim/diff.gif?raw=true" width=742 height=492 />
 
+#### Switching unified diffs and word diffs
+
+<img alt="word diff screenshot" src="https://github.com/rhysd/ss/blob/master/git-messenger.vim/worddiff.gif?raw=true" width=661 height=492 />
 
 
 ## Installation
@@ -129,12 +132,14 @@ Following mappings are defined within popup window.
 
 | Mapping | Description                                                  |
 |---------|--------------------------------------------------------------|
-|   `q`   | Close the popup window                                       |
-|   `o`   | **o**lder. Back to older commit at the line                  |
-|   `O`   | Opposite to `o`. Forward to newer commit at the line         |
-|   `d`   | Toggle diff hunks only related to current file in the commit |
-|   `D`   | Toggle all diff hunks in the commit                          |
-|   `?`   | Show mappings help                                           |
+| `q`     | Close the popup window                                       |
+| `o`     | **o**lder. Back to older commit at the line                  |
+| `O`     | Opposite to `o`. Forward to newer commit at the line         |
+| `d`     | Toggle unified diff hunks only in current file of the commit |
+| `D`     | Toggle all unified diff hunks of the commit                  |
+| `r`     | Toggle word diff hunks only in current file of the commit    |
+| `R`     | Toggle all word diff hunks of current commit                 |
+| `?`     | Show mappings help                                           |
 
 ### Mappings
 
@@ -178,8 +183,8 @@ When this value is not set to `"none"`, a popup window includes diff hunks of th
 up. `"current"` includes diff hunks of only current file in the commit. `"all"` includes all diff
 hunks in the commit.
 
-Please note that typing `d` and `D` in popup window toggle showing diff hunks even if this value is
-set to `"none"`.
+Please note that typing `d`/`D` or `r`/`R` in popup window toggle showing diff
+hunks even if this value is set to `"none"`.
 
 #### `g:git_messenger_git_command` (Default: `"git"`)
 
@@ -231,6 +236,11 @@ the format.
 " Example: '2019 May 26 03:27:43'
 let g:git_messenger_date_format = "%Y %b %d %X"
 ```
+
+#### `g:git_messenger_conceal_word_diff_marker` (Default: `v:true`)
+
+When this value is set to `v:true`, markers for word diffs like `[-`, `-]`, `{+`, `+}` are concealed.
+Set `v:false` when you don't want to hide them.
 
 ### Popup Window Highlight
 

@@ -21,6 +21,14 @@ let s:blame.error = funcref('s:blame__error')
 
 function! s:blame__render() dict abort
     let self.popup.contents = self.state.contents
+    if self.state.prev_diff !=# self.state.diff
+        call self.popup.set_buf_var('__gitmessenger_diff', self.state.diff)
+        let prev_is_word = self.state.prev_diff =~# '\.word$'
+        let is_word = self.state.diff =~# '\.word$'
+        if self.state.diff !=# 'none' && prev_is_word != is_word
+            call self.popup.set_buf_var('&syntax', 'gitmessengerpopup')
+        endif
+    endif
     call self.popup.update()
 endfunction
 let s:blame.render = funcref('s:blame__render')
@@ -37,7 +45,7 @@ function! s:blame__back() dict abort
     endif
 
     " Reset current state
-    let self.state.diff = 'none'
+    call self.state.set_diff('none')
 
     let args = ['--no-pager', 'blame', self.prev_commit, '-L', self.line . ',+1', '--porcelain'] + split(g:git_messenger_extra_blame_args, ' ') + ['--', self.blame_file]
     call self.spawn_git(args, 's:blame__after_blame')
@@ -72,8 +80,10 @@ function! s:blame__open_popup() dict abort
         \       'q': [{-> execute('close', '')}, 'Close popup window'],
         \       'o': [funcref(self.back, [], self), 'Back to older commit'],
         \       'O': [funcref(self.forward, [], self), 'Forward to newer commit'],
-        \       'd': [funcref(self.reveal_diff, [v:false], self), "Toggle current file's diffs of current commit"],
-        \       'D': [funcref(self.reveal_diff, [v:true], self), 'Toggle all diffs of current commit'],
+        \       'd': [funcref(self.reveal_diff, [v:false, v:false], self), "Toggle current file's diffs of current commit"],
+        \       'D': [funcref(self.reveal_diff, [v:true, v:false], self), 'Toggle all diffs of current commit'],
+        \       'r': [funcref(self.reveal_diff, [v:false, v:true], self), "Toggle current file's word diffs of current commit"],
+        \       'R': [funcref(self.reveal_diff, [v:true, v:true], self), 'Toggle all word diffs of current commit'],
         \   },
         \ }
     if has_key(self.opts, 'did_close')
@@ -144,7 +154,7 @@ function! s:blame__after_diff(next_diff, git) dict abort
     endwhile
 
     call self.append_lines(a:git.stdout)
-    let self.state.diff = a:next_diff
+    call self.state.set_diff(a:next_diff)
 
     if popup_open
         call self.render()
@@ -158,11 +168,14 @@ function! s:blame__after_diff(next_diff, git) dict abort
     endif
 endfunction
 
-function! s:blame__reveal_diff(include_all) dict abort
+function! s:blame__reveal_diff(include_all, word_diff) dict abort
     if a:include_all
         let next_diff = 'all'
     else
         let next_diff = 'current'
+    endif
+    if a:word_diff
+        let next_diff .= '.word'
     endif
 
     if self.state.diff ==# next_diff
@@ -172,16 +185,19 @@ function! s:blame__reveal_diff(include_all) dict abort
 
     " Remove diff hunks from popup
     let saved = getpos('.')
-    keepjumps execute 1
-    let diff_start = search('^ diff --git ', 'ncW')
-    if diff_start > 1
-        let self.state.contents = self.state.contents[ : diff_start-2]
-    endif
-    keepjumps call setpos('.', saved)
+    try
+        keepjumps execute 1
+        let diff_start = search('^ diff --git ', 'ncW')
+        if diff_start > 1
+            let self.state.contents = self.state.contents[ : diff_start-2]
+        endif
+    finally
+        keepjumps call setpos('.', saved)
+    endtry
 
     if next_diff ==# 'none'
-        call self.render()
         let self.state.diff = next_diff
+        call self.render()
         return
     endif
 
@@ -197,6 +213,10 @@ function! s:blame__reveal_diff(include_all) dict abort
     else
         " When the line is not committed yet, show diff against HEAD (#26)
         let args = ['--no-pager', 'diff', '--no-color', 'HEAD']
+    endif
+
+    if a:word_diff
+        let args += ['--word-diff=plain']
     endif
 
     if !a:include_all
@@ -380,9 +400,9 @@ function! s:blame__after_blame(git) dict abort
     let args = ['--no-pager', 'log', '--no-color', '-n', '1', '--pretty=format:%b']
     if g:git_messenger_include_diff !=? 'none'
         if g:git_messenger_include_diff ==? 'current'
-            let self.state.diff = 'current'
+            call self.state.set_diff('current')
         else
-            let self.state.diff = 'all'
+            call self.state.set_diff('all')
         endif
         let args += ['-p', '-m']
     endif
