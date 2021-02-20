@@ -5,36 +5,21 @@
 " GitHub: https://github.com/voldikss
 " ============================================================================
 
-"-----------------------------------------------------------------------------
-" script level variables and environment variables
-"-----------------------------------------------------------------------------
-let $VIM_SERVERNAME = v:servername
-let $VIM_EXE = v:progpath
-
-let s:home = fnamemodify(resolve(expand('<sfile>:p')), ':h')
-let s:script = fnamemodify(s:home . '/../bin', ':p')
-let s:windows = has('win32') || has('win64')
-
-if stridx($PATH, s:script) < 0
-  if s:windows == 0
-    let $PATH .= ':' . s:script
-  else
-    let $PATH .= ';' . s:script
-  endif
-endif
-
-if !empty(g:floaterm_gitcommit)
-  call floaterm#edita#setup#enable()
-endif
-
 " ----------------------------------------------------------------------------
 " wrapper function for `floaterm#new()` and `floaterm#update()` since they
 " share the same argument: `config`
 " ----------------------------------------------------------------------------
-function! floaterm#run(action, bang, ...) abort
+function! floaterm#run(action, bang, rangeargs, ...) abort
   let [cmd, config] = floaterm#cmdline#parse(a:000)
   if a:action == 'new'
-    call floaterm#new(a:bang, cmd, {}, config)
+    let [visualmode, range, line1, line2] = a:rangeargs
+    if range > 0
+      let lines = floaterm#util#get_selected_text(visualmode, range, line1, line2)
+    endif
+    let bufnr = floaterm#new(a:bang, cmd, {}, config)
+    if range > 0 && !empty(lines)
+      call floaterm#terminal#send(bufnr, lines)
+    endif
   elseif a:action == 'update'
     call floaterm#update(config)
   endif
@@ -43,19 +28,34 @@ endfunction
 " create a floaterm. return bufnr of the terminal
 " argument `jobopts` is passed by user in the case using this function as API
 function! floaterm#new(bang, cmd, jobopts, config) abort
-  if a:cmd != ''
+  let env = floaterm#util#setenv()
+  let vim_version = floaterm#util#vim_version()
+  if vim_version[0] == 'nvim' && vim_version[1] <= '0.4.4'
+    for [name, value] in items(env)
+      call setenv(name, value)
+    endfor
+  else
+    call floaterm#util#deep_extend(a:jobopts, {'env': env})
+  endif
+  if !empty(a:cmd)
     let wrappers_path = globpath(&runtimepath, 'autoload/floaterm/wrapper/*vim', 0, 1)
     let wrappers = map(wrappers_path, "substitute(fnamemodify(v:val, ':t'), '\\..\\{-}$', '', '')")
     let maybe_wrapper = split(a:cmd, '\s')[0]
     if index(wrappers, maybe_wrapper) >= 0
-      let WrapFunc = function(printf('floaterm#wrapper#%s#', maybe_wrapper))
-      let [name, jobopts, send2shell] = WrapFunc(a:cmd)
-      if send2shell
-        let bufnr = floaterm#terminal#open(-1, g:floaterm_shell, {}, a:config)
-        call floaterm#terminal#send(bufnr, [name])
-      else
-        let bufnr = floaterm#terminal#open(-1, name, jobopts, a:config)
-      endif
+      try
+        let [shell, shellslash, shellcmdflag, shellxquote] = floaterm#util#use_sh_or_cmd()
+        let WrapFunc = function(printf('floaterm#wrapper#%s#', maybe_wrapper))
+        " NOTE: a:jobopts and a:config can be changed in WrapFunc
+        let [send2shell, newcmd] = WrapFunc(a:cmd, a:jobopts, a:config)
+        if send2shell
+          let bufnr = floaterm#terminal#open(-1, g:floaterm_shell, a:jobopts, a:config)
+          call floaterm#terminal#send(bufnr, [newcmd])
+        else
+          let bufnr = floaterm#terminal#open(-1, newcmd, a:jobopts, a:config)
+        endif
+      finally
+        let [&shell, &shellslash, &shellcmdflag, &shellxquote] = [shell, shellslash, shellcmdflag, shellxquote]
+      endtry
     elseif a:bang
       let bufnr = floaterm#terminal#open(-1, g:floaterm_shell, a:jobopts, a:config)
       call floaterm#terminal#send(bufnr, [a:cmd])
@@ -129,7 +129,7 @@ function! floaterm#update(config) abort
 
   let bufnr = bufnr('%')
   call floaterm#window#hide(bufnr)
-  call floaterm#buffer#set_config_dict(bufnr, a:config)
+  call floaterm#config#set_all(bufnr, a:config)
   call floaterm#terminal#open_existing(bufnr)
 endfunction
 

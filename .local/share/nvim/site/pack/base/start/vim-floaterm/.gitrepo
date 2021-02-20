@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/voldikss/vim-floaterm.git
 	branch = master
-	commit = 671f2aa87731ddeefe6573e4596c9f0d806e3b11
-	parent = 5610aee09e690a6a6d9bfb8576bc2ec8ef4e2508
+	commit = e4d5a5ba5d691c2656d3840e9e93802de1d96661
+	parent = c37565cbb90b9820a45953aaf49a10747c66dbcb
 	method = rebase
 	cmdver = 0.4.0

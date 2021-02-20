@@ -18,7 +18,7 @@ Use (neo)vim terminal in the floating/popup window.
   - [Use with other plugins](#use-with-other-plugins)
   - [How to define more wrappers](#how-to-define-more-wrappers)
   - [How to write sources for fuzzy finder plugins](#how-to-write-sources-for-fuzzy-finder-plugins)
-- [Wiki](#wiki)
+- [Contributing](#contributing)
 - [FAQ](#faq)
 - [Breaking changes](#breaking-changes)
 - [Related projects](#related-projects)
@@ -33,7 +33,7 @@ Use (neo)vim terminal in the floating/popup window.
 - Switch/preview floating terminal buffers using fuzzy-finder plugins such as
   [denite.nvim](https://github.com/Shougo/denite.nvim) or
   [coc.nvim](https://github.com/neoclide/coc.nvim), etc.
-- Use with other external command-line tools(ranger, lf, fzf, etc.)
+- Use with other external command-line tools(ranger, fzf, ripgrep etc.)
 - Autocompletion from within floaterms(require [coc.nvim](https://github.com/neoclide/coc.nvim)
   or [deoplete.nvim](https://github.com/Shougo/deoplete.nvim))
 - Use as a custom task runner for [asynctasks.vim](https://github.com/skywind3000/asynctasks.vim)
@@ -90,20 +90,24 @@ external terminals.
     you may toggle it afterwards
   - `disposable` If `--disposable` is given, the floaterm will be destroyed
     once it is hidden.
-  - `height` see `g:floaterm_height`
-  - `width` see `g:floaterm_width`
   - `title` see `g:floaterm_title`
+  - `width` see `g:floaterm_width`
+  - `height` see `g:floaterm_height`
+  - `opener` see `g:floaterm_opener`
   - `wintype` see `g:floaterm_wintype`
   - `position` see `g:floaterm_position`
   - `autoclose` see `g:floaterm_autoclose`
   - `borderchars` see `g:floaterm_borderchars`
-- Use `<TAB>` to get completion.
-- This command basically shares the consistent behaviors with the builtin `:terminal` :
+- This command basically shares the consistent behaviors with the builtin `:terminal`:
   - The special characters(`:help cmdline-special`) such as `%` and `<cfile>`
     will be auto-expanded, to get standalone characters, use `\` followed by
     the corresponding character(e.g., `\%`).
   - Note that `<bar>`(i.e., `|`) will be seen as an argument of the command,
     therefore it can not be followed by another Vim command.
+- If execute this command with a range, i.e., `'<,'>:FloatermNew ...`, the
+  selected lines will be sent to the created floaterm. For example, see
+  [python repl use case](#python) below.
+- Use `<TAB>` to get completion.
 
 For example, the command
 
@@ -111,7 +115,8 @@ For example, the command
 :FloatermNew --height=0.6 --width=0.4 --wintype=float --name=floaterm1 --position=topleft --autoclose=2 ranger --cmd="cd ~"
 ```
 
-will open a new floating/popup floaterm instance named `floaterm1` running `ranger --cmd="cd ~"` in the `topleft` corner of the main window.
+will open a new floating/popup floaterm instance named `floaterm1` running
+`ranger --cmd="cd ~"` in the `topleft` corner of the main window.
 
 The following command allows you to compile and run your C code in the floaterm window:
 
@@ -165,9 +170,11 @@ The following command allows you to compile and run your C code in the floaterm 
 - If `--name=floaterm_name` is given, send lines to the floaterm instance
   whose `name` is `floaterm_name`. Otherwise use the current floaterm.
 - If `cmd` is given, it will be sent to floaterm and selected lines will be ignored.
-- This command can also be used with a range, i.e., `'<,'>:FloatermSend [--name=floaterm_name]` to send selected lines to a floaterm.
+- This command can also be used with a range, i.e., `'<,'>:FloatermSend [--name=floaterm_name]`
+  to send selected lines to a floaterm.
   - If `cmd` is given, the selected lines will be ignored.
-  - If use this command with a `!`, i.e., `'<,'>:FloatermSend! [--name=floaterm_name]` the common white spaces in the beginning of lines
+  - If use this command with a `!`, i.e., `'<,'>:FloatermSend! [--name=floaterm_name]`
+    the common white spaces in the beginning of lines
     will be trimmed while the relative indent between lines will still be
     kept.
 - Use `<TAB>` to get completion.
@@ -249,20 +256,14 @@ Type `List` of `String`. Markers used to detect the project root directory for `
 
 Default: `['.project', '.git', '.hg', '.svn', '.root']`
 
-#### **`g:floaterm_open_command`**
+#### **`g:floaterm_opener`**
 
 Type `String`. Command used for opening a file in the outside nvim from within `:terminal`.
 
-Available: `'edit'`, `'split'`, `'vsplit'`, `'tabe'`, `'drop'`. Default: `'edit'`
+Available: `'edit'`, `'split'`, `'vsplit'`, `'tabe'`, `'drop'` or 
+[user-defined commands](https://github.com/voldikss/vim-floaterm/issues/259)
 
-#### **`g:floaterm_gitcommit`**
-
-Type `String`. Opening strategy for gitcommit window when running `git commit`
-in floaterm.
-
-Available: `'split'`(recommended), `'vsplit'`, `'tabe'`, etc.
-
-Default: `'vsplit'`. Set to `''` to disable this feature (use your own `$GIT_EDITOR`).
+Default: `'split'`
 
 #### **`g:floaterm_autoclose`**
 
@@ -410,18 +411,16 @@ Normally if you run `vim/nvim somefile.txt` within the builtin terminal, you
 would get another nvim/vim instance running in the subprocess.
 
 [Floaterm](https://github.com/voldikss/vim-floaterm/tree/master/bin), which is
-a builtin script in this plugin, allows you to open files from within `: terminal` without starting a nested nvim. To archive that, just literally
-replace `vim/nvim` with `floaterm`, i.e., `floaterm somefile.txt`
+a builtin script in this plugin, allows you to open files from within `: terminal`
+without starting a nested nvim. To archive that, just literally replace
+`vim/nvim` with `floaterm`, e.g. `floaterm somefile.txt`
 
-**❗️Note**: This should works both in neovim and vim, but if you are using
-neovim, make sure [neovim-remote](https://github.com/mhinz/neovim-remote) has been installed. You can install it via
-pip:
+P.S.
 
-```sh
-pip install neovim-remote
-```
-
-P.S. [#208](https://github.com/voldikss/vim-floaterm/issues/208#issuecomment-747829311) describes how to use `gf` in the floating terminal window.
+- [#208](https://github.com/voldikss/vim-floaterm/issues/208#issuecomment-747829311)
+  describes how to use `gf` in the floating terminal window.
+- `floaterm` is too long to type? set alias in your `bashrc`, e.g. `alias f=floaterm`
+- For configurable open action, refer to [g:floaterm_opener](#gfloaterm_opener)
 
 <details>
 <summary>Demo</summary>
@@ -430,9 +429,9 @@ P.S. [#208](https://github.com/voldikss/vim-floaterm/issues/208#issuecomment-747
 
 #### git
 
-See `g:floaterm_gitcommit` option.
-
 Execute `git commit` in the terminal window without starting a nested vim/nvim.
+
+Refer to [g:floaterm_opener](#gfloaterm_opener) for configurable open action
 
 <details>
 <summary>Demo</summary>
@@ -452,7 +451,25 @@ command! FZF FloatermNew fzf
 
 <details>
 <summary>Demo</summary>
-<img src="https://user-images.githubusercontent.com/20282795/91380264-2b088980-e857-11ea-80ff-062b3d3bbf12.gif"/>
+<img src="https://user-images.githubusercontent.com/20282795/107140144-10d0ec80-695b-11eb-8c2f-8bd42ae26e6d.gif"/>
+</details>
+
+#### ripgrep
+
+This plugin has implemented a [wrapper](./autoload/floaterm/wrapper/rg.vim)
+for `rg` command.
+
+Try `:FloatermNew rg` or create yourself a new command like this:
+
+```vim
+command! Rg FloatermNew --width=0.8 --height=0.8 rg
+```
+
+<details>
+<summary>Demo</summary>
+You can use <button>Alt-A</button> to select all files and <button>Alt-D</button> to deselect them.
+Use <button>Ctrl-/</button> to toggle preview.
+<img src="https://user-images.githubusercontent.com/20282795/107148083-4c37df00-698c-11eb-80fb-ccfd94fc4419.gif"/>
 </details>
 
 #### fff
@@ -487,7 +504,8 @@ command! NNN FloatermNew nnn
 
 #### lf
 
-There is also an [lf wrapper](./autoload/floaterm/wrapper/lf.vim)
+There is also an [lf wrapper](./autoload/floaterm/wrapper/lf.vim).
+It is recommened to use [lf.vim](https://github.com/ptzz/lf.vim) which is an lf wrapper with more features (Overriding netrw, Lfcd, etc.).
 
 Try `:FloatermNew lf` or define a new command:
 
@@ -543,7 +561,12 @@ Use `lazygit` for instance:
 
 #### python
 
-Use `:FloatermNew python` to open a python shell. After that you can use `: FloatermSend` to send lines to the Python interactive shell.
+Use `:FloatermNew python` to open a python shell. After that you can use
+`: FloatermSend` to send lines to the Python interactive shell.
+
+Or you can just select lines and execute `:'<,'>FloatermNew --wintype=split python`, then the
+selected lines will be sent and executed once a python repl floaterm window is
+opened.
 
 This can also work for other languages which have interactive shells, such as lua, node, etc.
 
@@ -617,23 +640,24 @@ There are two ways for a command to be spawned:
   [fzf wrapper](./autoload/floaterm/wrapper/fzf.vim)
 
   ```vim
-  function! floaterm#wrapper#fzf#() abort
-    return ['floaterm $(fzf)', {}, v:true]
+  function! floaterm#wrapper#fzf#(cmd, jobopts, config) abort
+    return [v:true, 'floaterm $(fzf)']
   endfunction
   ```
 
   The code above returns a list. `floaterm $(fzf)` is the command to be
   executed. `v:true` means the command will be executed after the `&shell`
-  startup. In this way, the second element of the list must be `{}`.
+  startup.
 
 - To be executed through `termopen()`/`term_start()` function, in that case, a
   callback option can be provided. See [fzf wrapper](./autoload/floaterm/wrapper/fzf.vim)
 
   ```vim
-  function! floaterm#wrapper#fzf#(cmd) abort
+  function! floaterm#wrapper#fzf#(cmd, jobopts, config) abort
     let s:fzf_tmpfile = tempname()
     let cmd = a:cmd . ' > ' . s:fzf_tmpfile
-    return [cmd, {'on_exit': funcref('s:fzf_callback')}, v:false]
+    let a:jobopts.on_exit = funcref('s:fzf_callback')
+    return [v:false, cmd]
   endfunction
 
   function! s:fzf_callback(...) abort
@@ -643,22 +667,44 @@ There are two ways for a command to be spawned:
         if has('nvim')
           call floaterm#window#hide(bufnr('%'))
         endif
+        let locations = []
         for filename in filenames
-          execute g:floaterm_open_command . ' ' . fnameescape(filename)
+          let dict = {'filename': fnamemodify(filename, ':p')}
+          call add(locations, dict)
         endfor
+        call floaterm#util#open(locations)
       endif
     endif
   endfunction
   ```
 
   In the example above, after executing `:FloatermNew fzf`, function
-  `floaterm#wrapper#fzf#` will return `['fzf > /tmp/atmpfilename', {'on_exit': funcref('s:fzf_callback')}, v:false]`.
+  `floaterm#wrapper#fzf#` will return
 
-  Here `v:false` means `cmd`(`fzf > /tmp/atmpfilename`) will be passed through
-  `termopen()`(neovim) or `term_start()`(vim). As a result, an fzf interactive
-  will be opened in a floaterm window. After choosing a file using `<CR>`, fzf
-  exits and the filepath will be written in `/tmp/atmpfilename`. Then the
-  function `s:fzf_callback()` will be invoked to open the file.
+  ```vim
+  [v:false, 'fzf > /tmp/atmpfilename'].
+  ```
+
+  Here `v:false` means `cmd`
+
+  ```vim
+  fzf > /tmp/atmpfilename
+  ```
+
+  will be passed through `termopen()`(neovim) or `term_start()`(vim). As the
+  result, an fzf interactive will be opened in a floaterm window.
+
+  When user picks a file using `ENTER`, fzf exits and the filepath will be
+  written in `/tmp/atmpfilename` and `s:fzf_callback()` will be invoked to
+  open the file. Note that the function `s: fzf_callback()` is registered by
+
+  ```vim
+  let a:jobopts.on_exit = funcref('s:fzf_callback')
+  ```
+
+  The variable `a:jobopts` in the above code will be eventually passed to
+  `termopen()`(neovim) or `term_start()`(vim). For more info, see
+  `:help jobstart-options`(neovim) or `:help job-options`(vim)
 
 ### How to write sources for fuzzy finder plugins
 
@@ -666,11 +712,12 @@ Function `floaterm#buflist#gather()` returns a list contains all the floaterm bu
 
 Function `floaterm#terminal#open_existing({bufnr})` opens the floaterm whose buffer number is `{bufnr}`.
 
-For reference, see [floaterm source for vim-clap](./autoload/clap/provider/floaterm.vim).
+For reference, see [floaterm source for LeaderF](https://github.com/voldikss/LeaderF-floaterm/blob/master/autoload/lf_floaterm.vim).
 
-## Wiki
+## Contributing
 
-https://github.com/voldikss/vim-floaterm/wiki
+- Improve the documentation
+- Help resolve issues labeled as [help wanted](https://github.com/voldikss/vim-floaterm/issues?q=is%3Aissue+label%3A%22help+wanted%22)
 
 ## FAQ
 
@@ -692,13 +739,9 @@ https://github.com/voldikss/vim-floaterm/issues?q=label%3A%22breaking+change%22
 
 - [Vim](https://github.com/vim/vim/) and [Neovim](https://github.com/neovim/neovim/) the editor God
 
-- [floaterm executable](https://github.com/voldikss/vim-floaterm/blob/master/bin/floaterm) is modified
-  from [vim-terminal-help](https://github.com/skywind3000/vim-terminal-help/blob/master/tools/utils/drop)
+- [vim-terminal-help](https://github.com/skywind3000/vim-terminal-help/blob/master/tools/utils/drop)
 
-- Some features require [neovim-remote](https://github.com/mhinz/neovim-remote)
-
-- [edita.vim](https://github.com/lambdalisue/edita.vim) for pseudo `$EDITOR` in
-  floaterm
+- [edita.vim](https://github.com/lambdalisue/edita.vim)
 
 ## License
 

@@ -33,22 +33,30 @@ function! floaterm#util#show_msg(message, ...) abort
   endif
 endfunction
 
-" >>> floaterm test.txt
-function! floaterm#util#edit_by_floaterm(_bufnr, filename) abort
-  call floaterm#hide(1, 0, '')
-  silent execute g:floaterm_open_command . ' ' . a:filename
-endfunction
-
-" >>> $EDITOR test.txt
-function! floaterm#util#edit_by_editor(bufnr, filename) abort
-  call floaterm#edita#vim#editor#open(a:filename, a:bufnr)
+" - locations: List of location, which is a Dictionary:
+"   - filename: String
+"   - lnum[optional]: Number, used to locate
+"   - text[optional]: String, search `/` content, used to locate
+" - a:0: String, opening action, default `g:floaterm_opener`
+function! floaterm#util#open(locations, ...) abort
+  let opener = get(a:000, 0, g:floaterm_opener)
+  execute opener a:locations[0].filename
+  for loc in a:locations[1:]
+    execute 'edit ' loc.filename
+    if has_key(loc, 'lnum')
+      execute loc.lnum
+    elseif has_key(loc, 'text')
+      execute '/' . loc.text
+    endif
+    normal! zz
+  endfor
 endfunction
 
 function! floaterm#util#startinsert() abort
   if &ft != 'floaterm'
     return
   endif
-  if !g:floaterm_autoinsert 
+  if !g:floaterm_autoinsert
     call feedkeys("\<C-\>\<C-n>", 'n')
   elseif mode() != 'i'
     if has('nvim')
@@ -101,4 +109,60 @@ function! floaterm#util#leftalign_lines(lines) abort
     call add(linelist, line)
   endfor
   return linelist
+endfunction
+
+function! floaterm#util#use_sh_or_cmd() abort
+  let [shell, shellslash, shellcmdflag, shellxquote] = [&shell, &shellslash, &shellcmdflag, &shellxquote]
+  if has('win32')
+    set shell=cmd.exe
+    set noshellslash
+    let &shellcmdflag = has('nvim') ? '/s /c' : '/c'
+    let &shellxquote = has('nvim') ? '"' : '('
+  else
+    set shell=sh
+  endif
+  return [shell, shellslash, shellcmdflag, shellxquote]
+endfunction
+
+function! floaterm#util#deep_extend(dict1, dict2) abort
+  for key in keys(a:dict2)
+    if has_key(a:dict1, key)
+      if type(a:dict1[key]) == v:t_dict
+        call floaterm#util#deep_extend(a:dict1[key], a:dict2[key])
+      else
+        let a:dict1[key] = a:dict2[key]
+      endif
+    else
+      let a:dict1[key] = a:dict2[key]
+    endif
+  endfor
+endfunction
+
+let s:home = fnamemodify(resolve(expand('<sfile>:p')), ':h:h')
+let s:binpath = fnamemodify(s:home . '/../bin', ':p')
+function! floaterm#util#setenv() abort
+  let env = {}
+  " bin/floaterm.cmd
+  if has('win32') && !has('nvim')
+    let env.VIM_SERVERNAME = v:servername
+    let env.VIM_EXE = v:progpath
+  endif
+  if has('win32') == 0
+    let env.PATH = $PATH . ':' . s:binpath
+  else
+    let env.PATH = $PATH . ';' . s:binpath
+  endif
+  let editor = floaterm#edita#setup#EDITOR()
+  let env.FLOATERM = editor
+  let env.GIT_EDITOR = editor
+  return env
+endfunction
+
+function! floaterm#util#vim_version() abort
+  if !has('nvim')
+    return ['vim', string(v:versionlong)]
+  endif
+  let c = execute('silent version')
+  let lines = split(matchstr(c,  'NVIM v\zs[^\n-]*'))
+  return ['nvim', lines[0]]
 endfunction
