@@ -175,7 +175,7 @@ local on_attach = function(client, bufnr)
   if client.resolved_capabilities.document_formatting then
     buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
   elseif client.resolved_capabilities.document_range_formatting then
-    buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
+    buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.range_formatting()<CR>", opts)
   end
 
   -- Set autocommands conditional on server_capabilities
@@ -185,7 +185,7 @@ local on_attach = function(client, bufnr)
       hi LspReferenceText cterm=bold ctermbg=red guibg=LightYellow
       hi LspReferenceWrite cterm=bold ctermbg=red guibg=LightYellow
       augroup lsp_document_highlight
-        autocmd!
+        autocmd! * <buffer>
         autocmd CursorHold <buffer> lua vim.lsp.buf.document_highlight()
         autocmd CursorMoved <buffer> lua vim.lsp.buf.clear_references()
       augroup END
@@ -205,11 +205,19 @@ EOF
 Please see the [wiki](https://github.com/neovim/nvim-lspconfig/wiki) for additional topics, including:
 
 * [Installing language servers automatically](https://github.com/neovim/nvim-lspconfig/wiki/Installing-language-servers-automatically)
-* [Snippets support](https://github.com/neovim/nvim-lspconfig/wiki/Language-specific-plugins)
+* [Snippets support](https://github.com/neovim/nvim-lspconfig/wiki/Snippets-support)
 * [Project local settings](https://github.com/neovim/nvim-lspconfig/wiki/Project-local-settings)
 * [Recommended plugins for enhanced language server features](https://github.com/neovim/nvim-lspconfig/wiki/Language-specific-plugins)
 
 and more.
+
+## Manually starting (or restarting) language servers
+
+If you would like to manually managing starting language servers, but still have new buffers within a root directory autoattach 
+to running servers, pass `autostart = false` to your `.setup{}` call for a language server and call 
+`:lua require('lspconfig').language_server_name.autostart()`.
+
+This function can also be used to restart a workspace after stopping a language server with `:lua vim.lsp.stop_client(client_id)`.
 
 ## setup() function
 
@@ -254,6 +262,10 @@ lspconfig.SERVER.setup{config}
     Set of filetypes to filter for consideration by {root_dir}.
     May be empty.
     Server may specify a default value.
+
+  {autostart}
+    Whether to automatically start a language server when a matching filetype is detected.
+    Defaults to true.
 
   {log_level}
     controls the level of logs to show from window/logMessage notifications. Defaults to

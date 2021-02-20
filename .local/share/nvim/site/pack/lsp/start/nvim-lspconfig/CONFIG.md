@@ -273,7 +273,7 @@ This server accepts configuration via the `settings` key.
 
   Default: `""`
   
-  Path to the CodeQL executable that should be used by the CodeQL extension\. The executable is named \`codeql\` on Linux\/Mac and \`codeql\.exe\` on Windows\. This overrides all other CodeQL CLI settings\.
+  Path to the CodeQL executable that should be used by the CodeQL extension\. The executable is named \`codeql\` on Linux\/Mac and \`codeql\.exe\` on Windows\. If empty\, the extension will look for a CodeQL executable on your shell PATH\, or if CodeQL is not on your PATH\, download and manage its own CodeQL executable\.
 
 - **`codeQL.queryHistory.format`**: `string`
 
@@ -327,7 +327,7 @@ This server accepts configuration via the `settings` key.
 
 - **`codeQL.telemetry.enableTelemetry`**: `boolean`
 
-  Specifies whether to send CodeQL usage telemetry\. This setting AND the global \`\#telemetry\.enableTelemetry\#\` setting must be checked for telemetry to be sent to GitHub\.
+  null
 
 - **`codeQL.telemetry.logTelemetry`**: `boolean`
 
@@ -667,11 +667,11 @@ This server accepts configuration via the `settings` key.
   
   Whether to show Flutter icons and colors in the editor gutter\.
 
-- **`dart.flutterHotReloadOnSave`**: `boolean`
+- **`dart.flutterHotReloadOnSave`**: `enum { "never", "always", "manual" }`
 
-  Default: `true`
+  Default: `"manual"`
   
-  Whether to automatically send a Hot Reload request during a debug session when saving files\.
+  null
 
 - **`dart.flutterHotRestartOnSave`**: `boolean`
 
@@ -1214,9 +1214,13 @@ This server accepts configuration via the `settings` key.
   
   The path to your elm\-test executable\. Should be empty by default\, in that case it will assume the name and try to first get it from a local npm installation or a global one\. If you set it manually it will not try to load from the npm folder\.
 
+- **`elmLS.onlyUpdateDiagnosticsOnSave`**: `boolean`
+
+  Only update compiler diagnostics on save\, not on document change\.
+
 - **`elmLS.skipInstallPackageConfirmation`**: `boolean`
 
-  Skips confirmation for the Install Package code action
+  Skips confirmation for the Install Package code action\.
 
 - **`elmLS.trace.server`**: `enum { "off", "messages", "verbose" }`
 
@@ -1698,6 +1702,11 @@ require'lspconfig'.hls.setup{}
     cmd = { "haskell-language-server-wrapper", "--lsp" }
     filetypes = { "haskell", "lhaskell" }
     root_dir = root_pattern("*.cabal", "stack.yaml", "cabal.project", "package.yaml", "hie.yaml")
+    settings = {
+      languageServerHaskell = {
+        formattingProvider = "ormolu"
+      }
+    }
 ```
 
 ## html
@@ -1790,7 +1799,7 @@ require'lspconfig'.jdtls.setup{}
   Commands:
   
   Default Values:
-    cmd = { "/usr/lib/jvm/adoptopenjdk-8-hotspot-amd64/bin/java", "-Declipse.application=org.eclipse.jdt.ls.core.id1", "-Dosgi.bundles.defaultStartLevel=4", "-Declipse.product=org.eclipse.jdt.ls.core.product", "-Dlog.protocol=true", "-Dlog.level=ALL", "-Xms1g", "-Xmx2G", "-jar", "vim.NIL", "-configuration", "vim.NIL", "-data", "vim.NIL", "--add-modules=ALL-SYSTEM", "--add-opens java.base/java.util=ALL-UNNAMED", "--add-opens java.base/java.lang=ALL-UNNAMED" }
+    cmd = { "/usr/lib/jvm/adoptopenjdk-11-hotspot-amd64/bin/java", "-Declipse.application=org.eclipse.jdt.ls.core.id1", "-Dosgi.bundles.defaultStartLevel=4", "-Declipse.product=org.eclipse.jdt.ls.core.product", "-Dlog.protocol=true", "-Dlog.level=ALL", "-Xms1g", "-Xmx2G", "-jar", "vim.NIL", "-configuration", "vim.NIL", "-data", "vim.NIL", "--add-modules=ALL-SYSTEM", "--add-opens java.base/java.util=ALL-UNNAMED", "--add-opens java.base/java.lang=ALL-UNNAMED" }
     cmd_env = {
       GRADLE_HOME = "/usr/share/gradle",
       JAR = vim.NIL
@@ -4436,6 +4445,26 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`Lua.hint.enable`**: `boolean`
+
+  null
+
+- **`Lua.hint.paramName`**: `boolean`
+
+  Default: `true`
+  
+  null
+
+- **`Lua.hint.paramType`**: `boolean`
+
+  Default: `true`
+  
+  null
+
+- **`Lua.hint.setType`**: `boolean`
+
+  null
+
 - **`Lua.hover.enable`**: `boolean`
 
   Default: `true`
@@ -4524,7 +4553,7 @@ This server accepts configuration via the `settings` key.
   
   null
 
-- **`Lua.window.progress`**: `boolean`
+- **`Lua.window.progressBar`**: `boolean`
 
   Default: `true`
   

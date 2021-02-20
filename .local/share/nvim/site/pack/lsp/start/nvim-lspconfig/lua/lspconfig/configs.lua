@@ -55,13 +55,30 @@ function configs.__newindex(t, config_name, config_def)
     else
       trigger = "BufReadPost *"
     end
-    api.nvim_command(string.format(
-        "autocmd %s lua require'lspconfig'[%q].manager.try_add()"
-        , trigger
-        , config.name
-        ))
+    if not (config.autostart == false) then
+      api.nvim_command(string.format(
+          "autocmd %s lua require'lspconfig'[%q].manager.try_add()"
+          , trigger
+          , config.name
+          ))
+    end
 
     local get_root_dir = config.root_dir
+
+    function M.autostart()
+      local root_dir = get_root_dir(api.nvim_buf_get_name(0), api.nvim_get_current_buf())
+      api.nvim_command(string.format(
+          "autocmd %s lua require'lspconfig'[%q].manager.try_add_wrapper()"
+          , "BufReadPost " .. root_dir .. "/*"
+          , config.name
+          ))
+      for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+        local buf_dir = api.nvim_buf_get_name(bufnr)
+        if buf_dir:sub(1, root_dir:len()) == root_dir then
+          M.manager.try_add_wrapper(bufnr)
+        end
+      end
+    end
 
     -- Used by :LspInfo
     M.get_root_dir = config.root_dir
@@ -70,10 +87,12 @@ function configs.__newindex(t, config_name, config_def)
     M.cmd = config.cmd
 
     -- In the case of a reload, close existing things.
+    local reload = false
     if M.manager then
       for _, client in ipairs(M.manager.clients()) do
         client.stop(true)
       end
+      reload = true
       M.manager = nil
     end
 
@@ -113,7 +132,7 @@ function configs.__newindex(t, config_name, config_def)
       new_config._on_attach = new_config.on_attach
       new_config.on_attach = vim.schedule_wrap(function(client, bufnr)
         if bufnr == api.nvim_get_current_buf() then
-          M._setup_buffer(client.id)
+          M._setup_buffer(client.id, bufnr)
         else
           api.nvim_command(string.format(
               "autocmd BufEnter <buffer=%d> ++once lua require'lspconfig'[%q]._setup_buffer(%d)"
@@ -132,25 +151,41 @@ function configs.__newindex(t, config_name, config_def)
       return make_config(_root_dir)
     end)
 
-    function manager.try_add()
-      if vim.bo.buftype == 'nofile' then
+    function manager.try_add(bufnr)
+      bufnr = bufnr or api.nvim_get_current_buf()
+      if vim.api.nvim_buf_get_option(bufnr, 'filetype') == 'nofile' then
         return
       end
-      local root_dir = get_root_dir(api.nvim_buf_get_name(0), api.nvim_get_current_buf())
+      local root_dir = get_root_dir(api.nvim_buf_get_name(bufnr), bufnr)
       local id = manager.add(root_dir)
       if id then
-        lsp.buf_attach_client(0, id)
+        lsp.buf_attach_client(bufnr, id)
+      end
+    end
+
+    function manager.try_add_wrapper(bufnr)
+      local buftype = vim.api.nvim_buf_get_option(bufnr, 'filetype')
+      for _, filetype in ipairs(config.filetypes) do
+        if buftype == filetype then
+          manager.try_add(bufnr)
+          return
+        end
       end
     end
 
     M.manager = manager
     M.make_config = make_config
+    if reload and not (config.autostart == false) then
+      for _, bufnr in ipairs(vim.api.nvim_list_bufs()) do
+        manager.try_add_wrapper(bufnr)
+      end
+    end
   end
 
-  function M._setup_buffer(client_id)
+  function M._setup_buffer(client_id, bufnr)
     local client = lsp.get_client_by_id(client_id)
     if client.config._on_attach then
-      client.config._on_attach(client)
+      client.config._on_attach(client, bufnr)
     end
     if client.config.commands and not vim.tbl_isempty(client.config.commands) then
       M.commands = util.tbl_deep_extend("force", M.commands, client.config.commands)
