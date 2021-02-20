@@ -18,14 +18,53 @@ Plug 'nvim-lua/plenary.nvim'
 
 ## Modules
 
+- `plenary.job`
 - `plenary.path`
+- `plenary.scandir`
 - `plenary.context_manager`
 - `plenary.test_harness`
+- `plenary.filetype`
 - `plenary.neorocks` (This may move to packer.nvim, but I have added some improvements to use it more as a library.)
+
+### plenary.job
+
+A Lua module to interactive with system processes. Pass in your `command`, the desired `args`, `env` and `cwd`.
+Define optional callbacks for `on_stdout`, `on_stderr` and `on_exit` and `start` your Job.
+
+Note: Each job has an empty environment.
+
+```lua
+local Job = require'plenary.job'
+
+Job:new({
+  command = 'rg',
+  args = { '--files' },
+  cwd = '/usr/bin',
+  env = { ['a'] = 'b' },
+  on_exit = function(j, return_val)
+    print(return_val)
+    print(j:result())
+  end,
+}):sync() -- or start()
+```
 
 ### plenary.path
 
 A Lua module that implements a bunch of the things from `pathlib` from Python, so that paths are easy to work with.
+
+### plenary.scandir
+
+`plenery.scandir` is fast recursive file operations. It is similar to unix `find` or `fd` in that it can do recursive scan over a given directory, or a set of directories.
+
+It offers a wide range of opts for limiting the depth, show hidden and more. `plenary.scan_dir` can be ran synchronously and asynchronously and offers `on_insert(file, typ)` and `on_exit(files)` callbacks. `on_insert(file, typ)` is available for both while `on_exit(files)` is only available for async.
+
+```lua
+local scan = require'plenary.scandir`
+scan.scan_dir('.', { hidden = true, depth = 2 })
+```
+
+This module also offers `ls -la` sync and async functions that will return a formated string for all files in the directory.
+Why? Just for fun
 
 ### plenary.context_manager
 
@@ -75,6 +114,9 @@ So far, the only supported busted items are:
 - `describe`
 - `it`
 - `pending`
+- `before_each`
+- `after_each`
+- `clear`
 - `assert.*` etc. (from luassert, which is bundled)
 
 OTHER NOTE:
@@ -86,6 +128,17 @@ for the difficulty of getting them setup, particularly on other platforms or in 
 Please take a look at the new APIs and make any issues for things that aren't clear. I am happy to fix them
 and make it work well :)
 
+#### Colors
+To have "Success" in green and "Failed" in red, you need [nvim-terminal.lua](https://github.com/norcalli/nvim-terminal.lua).
+In order for it to work, make sure to run the setup function in your config.
+For `init.vim`:
+```vim
+lua require('terminal').setup()
+```
+For `init.lua`:
+```lua
+require('terminal').setup()
+```
 
 ### plenary.filetype
 
