@@ -263,6 +263,16 @@ list.scala = {
   }
 }
 
+list.supercollider = {
+	install_info = {
+		url = "https://github.com/madskjeldgaard/tree-sitter-supercollider",
+		files = {"src/parser.c", "src/scanner.c"},
+		branch = "main",
+	},
+	maintainers = {"@madskjeldgaard"},
+	filetype = "supercollider",
+}
+
 list.haskell = {
   install_info = {
     url = "https://github.com/tree-sitter/tree-sitter-haskell",
@@ -290,7 +300,17 @@ list.vue = {
   install_info = {
     url = "https://github.com/ikatyang/tree-sitter-vue",
     files = { "src/parser.c", "src/scanner.cc" },
-  }
+  },
+  maintainers = {"@WhyNotHugo"},
+}
+
+list.jsonc = {
+  install_info = {
+    url = "https://gitlab.com/WhyNotHugo/tree-sitter-jsonc.git",
+    files = { "src/parser.c" },
+  },
+  readme_name = "JSON with comments",
+  maintainers = {"@WhyNotHugo"},
 }
 
 list.elm = {
@@ -310,7 +330,7 @@ list.yaml = {
 list.nix = {
   install_info = {
     url = "https://github.com/cstrahan/tree-sitter-nix",
-    files = { "src/parser.c", "src/scanner.cc" },
+    files = { "src/parser.c", "src/scanner.c" },
   },
   maintainers = {"@leo60228"},
 }
@@ -414,6 +434,16 @@ list.turtle = {
     branch = "main",
   },
   maintainers = { "@bonabeavis" },
+}
+
+list.devicetree = {
+  install_info = {
+    url = "https://github.com/joelspadin/tree-sitter-devicetree",
+    files = { "src/parser.c" },
+    branch = "main",
+  },
+  filetype = 'dts',
+  maintainers = { "@jedrzejboczar" },
 }
 
 local M = {
