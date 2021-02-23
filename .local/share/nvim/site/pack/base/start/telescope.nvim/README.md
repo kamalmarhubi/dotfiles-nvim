@@ -354,6 +354,7 @@ Built-in functions. Ready to be bound to any key you like. :smile:
 | `builtin.git_files`                 | Lists Git files in current directory.                                                       |
 | `builtin.grep_string`               | Searches for a string under the cursor in current directory.                                |
 | `builtin.live_grep`                 | Searches in current directory files. (respecting .gitignore)                                |
+| `builtin.file_browser`              | Ivy-like file explorer. Creates files by typing in filename and pressing <C-e>. Press <C-e> without prompt for more info |
 
 ### Vim Pickers
 
@@ -373,7 +374,7 @@ Built-in functions. Ready to be bound to any key you like. :smile:
 | `builtin.vim_options`               | Lists vim options and on enter edit the options value.                                      |
 | `builtin.registers`                 | Lists vim registers and edit or paste selection.                                            |
 | `builtin.autocommands`              | Lists vim autocommands and go to their declaration.                                         |
-| `builtin.spell_suggest`             | Lists spelling suggestions for <cword>.
+| `builtin.spell_suggest`             | Lists spelling suggestions for <cword>.                                                     |
 | `builtin.keymaps`                   | Lists normal-mode mappings.                                                                 |
 | `builtin.filetypes`                 | Lists all filetypes.                                                                        |
 | `builtin.highlights`                | Lists all highlights.                                                                       |
@@ -491,7 +492,7 @@ Telescope find_files theme=get_dropdown
 ```
 
 Themes should work with every `telescope.builtin` function.  If you wish to
-make theme, check out `lua/telescope/themes.lua`.
+make a theme, check out `lua/telescope/themes.lua`.
 
 ## Autocmds
 
@@ -510,29 +511,34 @@ Telescope provides the capabilties to create & register extensions, which improv
 Some extensions provide integration with external tools, outside of the scope of `builtins`. Others provide performance
 enhancements by using compiled C and interfacing directly with Lua.
 
-### Community Extensions
-- [telescope-fzy-native.nvim](https://github.com/nvim-telescope/telescope-fzy-native.nvim) - Native FZY sorter that uses compiled C to do the matching
-- [telescope-dap.nvim](https://github.com/nvim-telescope/telescope-dap.nvim) - [`nvim-dap`](https://github.com/mfussenegger/nvim-dap) integration
-- [telescope-packer.nvim](https://github.com/nvim-telescope/telescope-packer.nvim) - A Telescope extension that provides extra functionality for Packer.nvim
-- [telescope-github.nvim](https://github.com/nvim-telescope/telescope-github.nvim) - Integration with github cli
-- [telescope-vimspector.nvim](https://github.com/nvim-telescope/telescope-vimspector.nvim) - Integration for [vimspector](https://github.com/puremourning/vimspector)
-- [telescope-fzf-writer.nvim](https://github.com/nvim-telescope/telescope-fzf-writer.nvim) - Incorporating some fzf concepts with plenary jobs and telescope
-- [telescope-symbols.nvim](https://github.com/nvim-telescope/telescope-symbols.nvim) - Picking symbols and insert them at point.
-- [telescope-asynctasks.nvim](https://github.com/GustavoKatel/telescope-asynctasks.nvim) - Integration for [asynctasks](https://github.com/skywind3000/asynctasks.vim)
+### Loading extensions
 
-Extensions can be refenced by doing the following:
-
-```lua
--- Run the `configurations` picker from nvim-dap (not yet implemented)
-require('telescope').extensions.dap.configurations()
-```
-
-To pre-load an extension (so that it will override default configurations), you can do:
-
+To load an extension, use the `load_extension` function as shown in the example below:
 ```lua
 -- This will load fzy_native and have it override the default file sorter
 require('telescope').load_extension('fzy_native')
 ```
+
+You may skip explicitly loading extensions (they will then be lazy-loaded), but tab completions will not be available right away.
+
+### Accessing pickers from extensions
+
+Pickers from extensions are added to the `:Telescope` command under their respective name.
+For example:
+```viml
+" Run the `configurations` picker from nvim-dap
+:Telescope dap configurations
+```
+
+They can also be called directly from lua:
+```lua
+-- Run the `configurations` picker from nvim-dap
+require('telescope').extensions.dap.configurations()
+```
+
+### Community Extensions
+
+For a list of community extensions, please consult the wiki: [Extensions](https://github.com/nvim-telescope/telescope.nvim/wiki/Extensions)
 
 ## API
 <!-- TODO: need to provide working examples for every api -->
