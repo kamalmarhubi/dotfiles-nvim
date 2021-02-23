@@ -22,6 +22,7 @@ that config.
 - [elmls](#elmls)
 - [flow](#flow)
 - [fortls](#fortls)
+- [fsautocomplete](#fsautocomplete)
 - [gdscript](#gdscript)
 - [ghcide](#ghcide)
 - [gopls](#gopls)
@@ -1010,10 +1011,14 @@ Deno's built-in language server
 require'lspconfig'.denols.setup{}
 
   Commands:
+  - DenolsCache: Cache a module and all of its dependencies.
   
   Default Values:
     cmd = { "deno", "lsp" }
     filetypes = { "javascript", "javascriptreact", "javascript.jsx", "typescript", "typescriptreact", "typescript.tsx" }
+    handlers = {
+      ["textDocument/definition"] = <function 1>
+    }
     init_options = {
       enable = true,
       lint = false,
@@ -1111,7 +1116,7 @@ unzip elixir-ls.zip -d /path/to/elixir-ls
 chmod +x /path/to/elixir-ls/language_server.sh
 ```
 
-**By default, elixir-ls doesn't have a `cmd` set.** This is because nvim-lspconfig does not make assumptions about your path. You must add the following to your init.vim or init.lua to set `cmd` to the absolute path ($HOME and ~ are not expanded) of you unzipped elixir-ls.
+**By default, elixir-ls doesn't have a `cmd` set.** This is because nvim-lspconfig does not make assumptions about your path. You must add the following to your init.vim or init.lua to set `cmd` to the absolute path ($HOME and ~ are not expanded) of your unzipped elixir-ls.
 
 ```lua
 require'lspconfig'.elixirls.setup{
@@ -1464,6 +1469,45 @@ require'lspconfig'.fortls.setup{}
     settings = {
       nthreads = 1
     }
+```
+
+## fsautocomplete
+
+https://github.com/fsharp/FsAutoComplete
+
+Language Server for F# provded by FsAutoComplete (FSAC).
+
+Download a release of FsAutoComplete from [here](https://github.com/fsharp/FsAutoComplete/releases).
+Instructions to compile from source are found on the main repository.
+
+FsAutoComplete requires the [dotnet-sdk](https://dotnet.microsoft.com/download) to be installed.
+
+You may also need to configure the filetype as Vim defaults to Forth for `*.fs` files:
+
+`autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi set filetype=fsharp`
+
+This is automatically done by plugins such as [vim-polyglot](https://github.com/sheerun/vim-polyglot), [PhilT/vim-fsharp](https://github.com/PhilT/vim-fsharp) or [fsharp/vim-fsharp](https://github.com/fsharp/vim-fsharp).
+
+**By default, this config doesn't have a `cmd` set.** This is because nvim-lspconfig does not make assumptions about your path. You must add the following to your init.vim or init.lua to set `cmd` to the absolute path ($HOME and ~ are not expanded) of your unzipped and compiled fsautocomplete.dll.
+
+```lua
+require'lspconfig'.fsautocomplete.setup{
+  cmd = {'dotnet', 'path/to/fsautocomplete.dll', '--background-service-enabled'}
+}
+```
+    
+
+```lua
+require'lspconfig'.fsautocomplete.setup{}
+
+  Commands:
+  
+  Default Values:
+    filetypes = { "fsharp" }
+    init_options = {
+      AutomaticWorkspaceInit = true
+    }
+    root_dir = <function 1>
 ```
 
 ## gdscript
@@ -4310,7 +4354,7 @@ Lua language server.
 
 `lua-language-server` can be installed by following the instructions [here](https://github.com/sumneko/lua-language-server/wiki/Build-and-Run-(Standalone)).
 
-**By default, lua-language-server doesn't have a `cmd` set.** This is because nvim-lspconfig does not make assumptions about your path. You must add the following to your init.vim or init.lua to set `cmd` to the absolute path ($HOME and ~ are not expanded) of you unzipped and compiled lua-language-server.
+**By default, lua-language-server doesn't have a `cmd` set.** This is because nvim-lspconfig does not make assumptions about your path. You must add the following to your init.vim or init.lua to set `cmd` to the absolute path ($HOME and ~ are not expanded) of your unzipped and compiled lua-language-server.
 
 ```lua
 local system_name
@@ -4598,6 +4642,12 @@ This server accepts configuration via the `settings` key.
 - **`Lua.workspace.useGitIgnore`**: `boolean`
 
   Default: `true`
+  
+  null
+
+- **`lua.runtime.fileEncoding`**: `enum { "utf8", "ansi" }`
+
+  Default: `"utf8"`
   
   null
 

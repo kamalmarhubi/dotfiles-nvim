@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/neovim/nvim-lspconfig.git
 	branch = master
-	commit = 1eb00d7c2ad2efadac85529eccc46f22986bf140
-	parent = 7cfd05eefad7e8469b2bca151f707a21fb3cc690
+	commit = a21a509417aa530fb7b54020f590fa5ccc67de77
+	parent = 1e584fa5919aaafad2054821b47c63de6eff5b1d
 	method = rebase
 	cmdver = 0.4.0
