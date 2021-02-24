@@ -21,6 +21,10 @@ require('nvim-treesitter.configs').setup {
 
 require('telescope').setup {
   defaults = {
+    file_previewer = require('telescope.previewers').vim_buffer_cat.new,
+    -- For some reason this one doesn't work; file a bug.
+    -- grep_previewer = require('telescope.previewers').vim_buffer_vimgrep,new,
+    qflist_previewer = require('telescope.previewers').vim_buffer_qflist.new,
     layout_strategy = 'flex',
     layout_defaults = {
       flex = {
