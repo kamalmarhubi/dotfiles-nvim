@@ -1,0 +1,91 @@
+{
+  "private": true,
+  "name": "vim-doge",
+  "version": "3.7.0",
+  "description": "A Vim polyglot plugin for generating documentation",
+  "scripts": {
+    "release": "release-it",
+    "release:beta": "release-it --preRelease=beta",
+    "prebuild": "rimraf build && rm -f ./bin/vim-doge && ln -s ../build/src/index.js ./bin/vim-doge",
+    "watch": "npm run prebuild && tsc -p tsconfig.json --watch true --sourceMap",
+    "build": "tsc -p tsconfig.json",
+    "build:binary:unix": "rimraf build && ncc build ./src/index.ts -m -o build && ./scripts/build.sh",
+    "build:binary:windows": "rimraf build && ncc build .\\src\\index.ts -m -o build && powershell.exe -file .\\scripts\\build.ps1",
+    "lint": "eslint \"src/**/*.ts\" --fix",
+    "format": "prettier --write \"src/**/*.ts\""
+  },
+  "bin": {
+    "vim-doge": "build/index.js"
+  },
+  "pkg": {
+    "assets": [
+      "build/build/Release/*.node"
+    ]
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/kkoomen/vim-doge.git"
+  },
+  "bugs": {
+    "url": "https://github.com/kkoomen/vim-doge/issues"
+  },
+  "homepage": "https://github.com/kkoomen/vim-doge#readme",
+  "author": "Kim 金可明 <koomen@protonmail.com>",
+  "license": "GPL-3.0",
+  "config": {
+    "commitizen": {
+      "path": "./node_modules/cz-conventional-changelog"
+    }
+  },
+  "husky": {
+    "hooks": {
+      "pre-commit": "lint-staged --allow-empty",
+      "commit-msg": "commitlint -E HUSKY_GIT_PARAMS"
+    }
+  },
+  "lint-staged": {
+    "*.ts": [
+      "prettier --write",
+      "eslint --ext ts"
+    ],
+    "*.{md,html,json,js}": [
+      "prettier --write"
+    ]
+  },
+  "dependencies": {
+    "tree-sitter": "^0.18.1",
+    "tree-sitter-bash": "^0.16.1",
+    "tree-sitter-c": "^0.16.1",
+    "tree-sitter-cpp": "^0.16.0",
+    "tree-sitter-java": "^0.16.0",
+    "tree-sitter-lua": "^1.6.2",
+    "tree-sitter-php": "^0.16.2",
+    "tree-sitter-python": "^0.17.1",
+    "tree-sitter-ruby": "^0.17.0",
+    "tree-sitter-typescript": "^0.16.3"
+  },
+  "devDependencies": {
+    "@commitlint/cli": "^11.0.0",
+    "@commitlint/config-conventional": "^11.0.0",
+    "@release-it/conventional-changelog": "^2.0.0",
+    "@types/node": "^14.14.31",
+    "@typescript-eslint/eslint-plugin": "^4.15.1",
+    "@typescript-eslint/parser": "^4.15.1",
+    "@vercel/ncc": "^0.27.0",
+    "conventional-changelog-cli": "^2.1.1",
+    "cz-conventional-changelog": "^3.3.0",
+    "eslint": "^7.20.0",
+    "eslint-config-airbnb-typescript": "^12.3.1",
+    "eslint-config-prettier": "^8.0.0",
+    "eslint-plugin-import": "^2.22.1",
+    "husky": "^5.1.0",
+    "lint-staged": "^10.5.4",
+    "nodemon": "^2.0.7",
+    "pkg": "^4.4.9",
+    "prettier": "^2.2.1",
+    "release-it": "^14.4.1",
+    "rimraf": "^3.0.2",
+    "ts-node": "^9.1.1",
+    "typescript": "^4.1.5"
+  }
+}

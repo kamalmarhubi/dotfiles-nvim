@@ -1,0 +1,119 @@
+# ==============================================================================
+# Functions using the Numpy doc standard.
+# ==============================================================================
+Given python(function without paramters without return type where b:doge_doc_standard='numpy'):
+  def myFunc():
+    pass
+
+
+Do (trigger doge):
+  :let b:doge_doc_standard='numpy'\<CR>
+  \<C-d>
+
+Expect python (generated comment with nothing but the summary and description 'TODO'):
+  def myFunc():
+    """
+    [TODO:summary]
+
+    [TODO:description]
+    """
+    pass
+
+# ------------------------------------------------------------------------------
+
+Given python(function with parameters without return type where b:doge_doc_standard='numpy'):
+  def myFunc(p1: Callable[[int], None] = False, p2: Callable[[int, Exception], None] = {}):
+    pass
+
+Do (trigger doge):
+  :let b:doge_doc_standard='numpy'\<CR>
+  \<C-d>
+
+Expect python (generated comment with Parameters tag):
+  def myFunc(p1: Callable[[int], None] = False, p2: Callable[[int, Exception], None] = {}):
+    """
+    [TODO:summary]
+
+    [TODO:description]
+
+    Parameters
+    ----------
+    p1 : Callable[[int], None]
+      [TODO:description]
+    p2 : Callable[[int, Exception], None]
+      [TODO:description]
+    """
+    pass
+
+# ------------------------------------------------------------------------------
+
+Given python(function with parameters with return type where b:doge_doc_standard='numpy'):
+  def myFunc(p1: Callable[[int], None] = False, p2: Callable[[int, Exception], None] = {}) -> Sequence[T]:
+    pass
+
+Do (trigger doge):
+  :let b:doge_doc_standard='numpy'\<CR>
+  \<C-d>
+
+Expect python (generated comment with Parameters and Returns tag):
+  def myFunc(p1: Callable[[int], None] = False, p2: Callable[[int, Exception], None] = {}) -> Sequence[T]:
+    """
+    [TODO:summary]
+
+    [TODO:description]
+
+    Parameters
+    ----------
+    p1 : Callable[[int], None]
+      [TODO:description]
+    p2 : Callable[[int, Exception], None]
+      [TODO:description]
+
+    Returns
+    -------
+    Sequence[T]:
+      [TODO:description]
+    """
+    pass
+
+# ==============================================================================
+# Read out the exceptions in the function body
+# ==============================================================================
+Given python (function with exceptions being raised in the body):
+  def myFunc(p1 = 'string'):
+    try:
+      foo = ValueError()
+      raise foo
+      raise Exception()
+    except Exception as error:
+      pass
+
+Do (trigger doge):
+  :let b:doge_doc_standard='numpy'\<CR>
+  \<C-d>
+
+Expect python (generated comment with :param and :raises tags):
+  def myFunc(p1 = 'string'):
+    """
+    [TODO:summary]
+
+    [TODO:description]
+
+    Parameters
+    ----------
+    p1 : [TODO:type]
+      [TODO:description]
+
+    Raises
+    ------
+    [TODO:name]:
+      [TODO:description]
+    Exception:
+      [TODO:description]
+    """
+    try:
+      foo = ValueError()
+      raise foo
+      raise Exception()
+    except Exception as error:
+      pass

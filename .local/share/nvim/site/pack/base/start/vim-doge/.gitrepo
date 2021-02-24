@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/kkoomen/vim-doge.git
+	branch = master
+	commit = fe8716ea423ecce36f4235a232c7d9f71b81a3cc
+	parent = 2b329ad15274ce66a1790c13ec7e0d5aa2ed12e3
+	method = merge
+	cmdver = 0.4.3

@@ -1,0 +1,110 @@
+# ==============================================================================
+# Template functions with parameters with return type.
+# ==============================================================================
+Given cpp (template function with parameters with return type):
+  template <typename HandshakeHandler>
+  void myFunc(handshake_type type, HandshakeHandler handler) {}
+
+Do (trigger doge):
+  \<C-d>
+
+Expect cpp (generated comment with @brief, @tparam, and @param tags):
+  /**
+   * @brief [TODO:description]
+   *
+   * @tparam HandshakeHandler [TODO:description]
+   * @param type [TODO:description]
+   * @param handler [TODO:description]
+   */
+  template <typename HandshakeHandler>
+  void myFunc(handshake_type type, HandshakeHandler handler) {}
+
+# ==============================================================================
+# Template functions without template parameters with return type.
+# ==============================================================================
+Given cpp (template function without template parameters with return type):
+  template <>
+  void myFunc(handshake_type type, HandshakeHandler handler) {}
+
+Do (trigger doge):
+  \<C-d>
+
+Expect cpp (generated comment with @brief, and @param tags):
+  /**
+   * @brief [TODO:description]
+   *
+   * @param type [TODO:description]
+   * @param handler [TODO:description]
+   */
+  template <>
+  void myFunc(handshake_type type, HandshakeHandler handler) {}
+
+# ==============================================================================
+# Template functions with parameters with return types with default # values.
+# ==============================================================================
+Given cpp (template function with parameters with return types with default values):
+  template<class...T> void h(int i = 0, T... args) {}
+
+Do (trigger doge):
+  \<C-d>
+
+Expect cpp (generated comment with @tparam and @param tags):
+  /**
+   * @brief [TODO:description]
+   *
+   * @tparam T [TODO:description]
+   * @param i [TODO:description]
+   * @param args [TODO:description]
+   */
+  template<class...T> void h(int i = 0, T... args) {}
+
+# ==============================================================================
+# Template classes
+# ==============================================================================
+Given cpp (class template):
+  template<typename Test>
+  class test
+  {
+    //
+  }
+
+Do (trigger doge):
+  \<C-d>
+
+Expect cpp (generated comment with @brief, @tparam tags):
+  /**
+   * @brief [TODO:description]
+   *
+   * @tparam Test [TODO:description]
+   */
+  template<typename Test>
+  class test
+  {
+    //
+  }
+
+# ==============================================================================
+# Template structs
+# ==============================================================================
+Given cpp (class struct):
+  template <typename Test1, typename Test2>
+  struct test
+  {
+    //
+  }
+
+Do (trigger doge):
+  \<C-d>
+
+Expect cpp (generated comment with @brief, @tparam tags):
+  /**
+   * struct test - [TODO:description]
+   *
+   * @tparam Test1 [TODO:description]
+   * @tparam Test2 [TODO:description]
+   */
+  template <typename Test1, typename Test2>
+  struct test
+  {
+    //
+  }

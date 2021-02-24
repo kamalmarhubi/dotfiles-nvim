@@ -1,0 +1,18 @@
+# ==============================================================================
+# Inline functions with parameters with return type.
+# ==============================================================================
+Given cpp (inline function with parameters with return type):
+  inline bool operator<(const value_t lhs, const value_t rhs) noexcept {}
+
+Do (trigger doge):
+  \<C-d>
+
+Expect cpp (generated comment with @brief, @param and @return tags):
+  /**
+   * @brief [TODO:description]
+   *
+   * @param lhs [TODO:description]
+   * @param rhs [TODO:description]
+   * @return [TODO:description]
+   */
+  inline bool operator<(const value_t lhs, const value_t rhs) noexcept {}

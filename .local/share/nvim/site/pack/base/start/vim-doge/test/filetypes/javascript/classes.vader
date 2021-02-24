@@ -1,0 +1,103 @@
+# ==============================================================================
+# Classes without 'extends' or 'implements'.
+# ==============================================================================
+Given javascript (class without extends or implements):
+  class Child {}
+
+  export class Child {}
+
+Do (trigger doge):
+  \<C-d>
+  :7\<CR>
+  \<C-d>
+
+Expect javascript (generated comment with nothing but the text 'TODO'):
+  /**
+   * [TODO:description]
+   */
+  class Child {}
+
+  /**
+   * [TODO:description]
+   */
+  export class Child {}
+
+# ==============================================================================
+# Classes with 'extends' without 'implements'.
+# ==============================================================================
+Given javascript (class with extends without implements):
+  class Child extends Parent {}
+
+  export default class Child extends React.Component {}
+
+Do (trigger doge):
+  \<C-d>
+  :7\<CR>
+  \<C-d>
+
+Expect javascript (generated comment with @extends):
+  /**
+   * [TODO:description]
+   * @extends Parent
+   */
+  class Child extends Parent {}
+
+  /**
+   * [TODO:description]
+   * @extends React.Component
+   */
+  export default class Child extends React.Component {}
+
+# ==============================================================================
+# Classes without 'extends' with 'implements'.
+# ==============================================================================
+Given javascript (class without extends with implements):
+  class Child implements CustomInterfaceName {}
+
+  export class Child implements CustomInterfaceName {}
+
+Do (trigger doge):
+  \<C-d>
+  :7\<CR>
+  \<C-d>
+
+Expect javascript (generated comment with @implements tag):
+  /**
+   * [TODO:description]
+   * @implements CustomInterfaceName
+   */
+  class Child implements CustomInterfaceName {}
+
+  /**
+   * [TODO:description]
+   * @implements CustomInterfaceName
+   */
+  export class Child implements CustomInterfaceName {}
+
+# ==============================================================================
+# Classes with 'extends' and 'implements'.
+# ==============================================================================
+Given javascript (class with extends and with implements):
+  class Child extends React.Component implements CustomInterfaceName {}
+
+  export class Child extends React.Component implements CustomInterfaceName {}
+
+Do (trigger doge):
+  \<C-d>
+  :9\<CR>
+  \<C-d>
+
+Expect javascript (generated comment with @extends and @implements tags):
+  /**
+   * [TODO:description]
+   * @extends React.Component
+   * @implements CustomInterfaceName
+   */
+  class Child extends React.Component implements CustomInterfaceName {}
+
+  /**
+   * [TODO:description]
+   * @extends React.Component
+   * @implements CustomInterfaceName
+   */
+  export class Child extends React.Component implements CustomInterfaceName {}

@@ -1,0 +1,66 @@
+" vint: -ProhibitSetNoCompatible
+
+if expand('$CI') == 'true'
+  set runtimepath^=$PWD
+  set runtimepath^=$PWD/vader.vim
+else
+  set runtimepath^=$PWD
+  set runtimepath^=$PWD/../vader.vim
+endif
+
+" Set a variable to indicate we're inside a test env.
+let g:doge_test_env = 1
+
+" Since the <Leader> key is not an easy way for Vader we'll use <C-d>.
+let g:doge_mapping = '<C-d>'
+
+" Disable the continues comment cyling since this breaks existing tests.
+let g:doge_comment_jump_wrap = 0
+
+" Disable the lazyredraw check since this breaks existing tests.
+let g:doge_lazyredraw = 0
+
+" Disable interactive mode in tests, because it will break existing tests and we
+" want to test this manually.
+let g:doge_comment_interactive = 0
+
+" The following is just an example
+filetype plugin indent on
+syntax on
+
+if !has('win32')
+  set shell=/bin/sh
+  set shellcmdflag=-c
+endif
+
+set nocompatible
+set tabstop=2
+set softtabstop=2
+set shiftwidth=2
+set expandtab
+set backspace=2
+set ttimeoutlen=0
+set nowrap
+set ttyfast
+set autoindent
+set smartindent
+set smarttab
+
+augroup styles
+  autocmd!
+
+  " Force 2 spaces for Python to prevent other filetypes inherit these settings.
+  autocmd FileType python setlocal tabstop=2 shiftwidth=2 softtabstop=2
+augroup END
+
+" The encoding must be explicitly set for tests for Windows.
+execute 'set encoding=utf-8'
+
+" @see https://github.com/vim/vim/issues/3117
+if !has('patch-8.1.201')
+  silent! python3 1
+endif
+
+if !exists(expand('~/.vim/')) && !has('win32')
+  call mkdir(expand('~/.vim/'), 'p')
+endif

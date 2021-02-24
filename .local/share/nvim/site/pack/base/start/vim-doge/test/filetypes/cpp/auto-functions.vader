@@ -1,0 +1,56 @@
+# ==============================================================================
+# Auto-functions with parameters using return type 'auto'
+# ==============================================================================
+Given cpp (auto-function with parameters using return type 'auto'):
+  template<class F, class... Args>
+  auto Person::getPersonType (const Builder& builder) -> PersonType
+  {
+      return _person_type;
+  }
+
+Do (trigger doge):
+  \<C-d>
+
+Expect cpp (generated comment with @brief, @tparam, @param and @return tags):
+  /**
+   * @brief [TODO:description]
+   *
+   * @tparam F [TODO:description]
+   * @tparam Args [TODO:description]
+   * @param builder [TODO:description]
+   * @return [TODO:description]
+   */
+  template<class F, class... Args>
+  auto Person::getPersonType (const Builder& builder) -> PersonType
+  {
+      return _person_type;
+  }
+
+# ==============================================================================
+# Auto-functions with parameters with type hints using return type 'auto'
+# ==============================================================================
+Given cpp (auto-function with parameters with advanced type hints using return type 'auto'):
+  template<class T, class U>
+  auto add(T t, U u)
+  {
+    //
+  }
+
+Do (trigger doge):
+  \<C-d>
+
+Expect cpp (generated comment with @brief, @tparam, @param and @return tags):
+  /**
+   * @brief [TODO:description]
+   *
+   * @tparam T [TODO:description]
+   * @tparam U [TODO:description]
+   * @param t [TODO:description]
+   * @param u [TODO:description]
+   * @return [TODO:description]
+   */
+  template<class T, class U>
+  auto add(T t, U u)
+  {
+    //
+  }

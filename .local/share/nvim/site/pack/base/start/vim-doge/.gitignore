@@ -1,0 +1,43 @@
+# OS
+.DS_Store
+
+# Compiled output
+/dist
+/node_modules
+/bin
+/build
+vim-doge-macos
+vim-doge-linux
+vim-doge-win.exe
+*.tar.gz
+*.zip
+__pycache__/
+*.tsbuildinfo
+
+# Logs
+logs
+*.log
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+lerna-debug.log*
+
+# Tests
+/coverage
+/.nyc_output
+
+# Vim
+*.swo
+*.swp
+
+# IDEs and editors
+/.idea
+.project
+.classpath
+.c9/
+*.launch
+.settings/
+*.sublime-workspace
+
+# IDE - VSCode
+.vscode/

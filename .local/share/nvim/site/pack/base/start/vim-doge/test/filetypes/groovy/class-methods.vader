@@ -1,0 +1,101 @@
+# Groovy tests should be equal to groovy tests.
+
+# ==============================================================================
+# Method without parameters.
+# ==============================================================================
+Given groovy (method without parameters):
+  class Test {
+    List<Element> createSortedList() {}
+
+    void foo();
+  }
+
+Do (trigger doge):
+  :2\<CR>
+  \<C-d>
+  :9\<CR>
+  \<C-d>
+
+Expect groovy (method with 'TODO' and a @return tag):
+  class Test {
+    /**
+     * [TODO:description]
+     *
+     * @return [TODO:description]
+     */
+    List<Element> createSortedList() {}
+
+    /**
+     * [TODO:description]
+     */
+    void foo();
+  }
+
+# ==============================================================================
+# Methods with parameters.
+# ==============================================================================
+Given groovy (methods with parameters):
+  class Test {
+    private static MstRelation MyParameterizedMethod(String p1, int p2, Boolean ...params) throws IOException, IndexOutOfBoundsException {}
+
+    ListResultBean<MstRelation> MyParameterizedMethod(String p1, int p2, Boolean... params) {}
+  }
+
+Do (trigger doge):
+  :2\<CR>
+  \<C-d>
+  :16\<CR>
+  \<C-d>
+
+Expect groovy (generated comments with @param and @return tags):
+  class Test {
+    /**
+     * [TODO:description]
+     *
+     * @param p1 [TODO:description]
+     * @param p2 [TODO:description]
+     * @param params [TODO:description]
+     *
+     * @return [TODO:description]
+     *
+     * @throws IOException [TODO:description]
+     * @throws IndexOutOfBoundsException [TODO:description]
+     */
+    private static MstRelation MyParameterizedMethod(String p1, int p2, Boolean ...params) throws IOException, IndexOutOfBoundsException {}
+
+    /**
+     * [TODO:description]
+     *
+     * @param p1 [TODO:description]
+     * @param p2 [TODO:description]
+     * @param params [TODO:description]
+     *
+     * @return [TODO:description]
+     */
+    ListResultBean<MstRelation> MyParameterizedMethod(String p1, int p2, Boolean... params) {}
+  }
+
+# ==============================================================================
+# Methods with parameters.
+# ==============================================================================
+Given groovy (methods with parameters with '@Override'):
+  class Test {
+    @Override
+    protected void MyParameterizedMethod(String p1, int p2) {}
+  }
+
+Do (trigger doge):
+  :2\<CR>
+  \<C-d>
+
+Expect groovy (generated comments with @param and @return tags inserted above the '@Override'):
+  class Test {
+    /**
+     * [TODO:description]
+     *
+     * @param p1 [TODO:description]
+     * @param p2 [TODO:description]
+     */
+    @Override
+    protected void MyParameterizedMethod(String p1, int p2) {}
+  }

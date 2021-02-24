@@ -1,0 +1,76 @@
+# ==============================================================================
+# Functions that contain JSX.
+# ==============================================================================
+Given javascript (function that contains JSX):
+  const Test = ({ someVal }) => {
+    return (
+      <div>
+        <div>{true && someVal ? <small className="helper-text">{someVal}</small> : null}</div>
+        <span />
+        <span />
+      </div>
+    );
+  };
+
+  const SomeWrapperComponent = ({ onSubmit, previewImages, onPreviewFileDelete, ...rest }) => {
+    return (
+      <div className="">
+        <div className="">
+          <SomeComponent
+            files={previewImages?.map((image) => ({
+              id: image?.id
+            }))}
+            onDelete={onPreviewFileDelete}
+          />
+        </div>
+      </div>
+    );
+  };
+
+
+Do (trigger doge):
+  \<C-d>
+  :18\<CR>
+  \<C-d>
+
+Expect javascript (generated comment with a description, @param and @return tags):
+  /**
+   * [TODO:description]
+   *
+   * @param {[TODO:type]} [TODO:name] - [TODO:description]
+   * @param {[TODO:type]} [TODO:name].someVal - [TODO:description]
+   * @return {[TODO:type]} [TODO:description]
+   */
+  const Test = ({ someVal }) => {
+    return (
+      <div>
+        <div>{true && someVal ? <small className="helper-text">{someVal}</small> : null}</div>
+        <span />
+        <span />
+      </div>
+    );
+  };
+
+  /**
+   * [TODO:description]
+   *
+   * @param {[TODO:type]} [TODO:name] - [TODO:description]
+   * @param {[TODO:type]} [TODO:name].onSubmit - [TODO:description]
+   * @param {[TODO:type]} [TODO:name].previewImages - [TODO:description]
+   * @param {[TODO:type]} [TODO:name].onPreviewFileDelete - [TODO:description]
+   * @return {[TODO:type]} [TODO:description]
+   */
+  const SomeWrapperComponent = ({ onSubmit, previewImages, onPreviewFileDelete, ...rest }) => {
+    return (
+      <div className="">
+        <div className="">
+          <SomeComponent
+            files={previewImages?.map((image) => ({
+              id: image?.id
+            }))}
+            onDelete={onPreviewFileDelete}
+          />
+        </div>
+      </div>
+    );
+  };

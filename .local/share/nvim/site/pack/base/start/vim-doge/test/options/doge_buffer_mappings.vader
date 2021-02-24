@@ -1,0 +1,36 @@
+# ==============================================================================
+# Tests the functionality for the g:doge_buffer_mappings option.
+# ==============================================================================
+Given php (PHP function without parameters where g:doge_buffer_mappings = 1):
+  <?php
+  function myFunction() {}
+
+Do (trigger doge):
+  :let g:doge_comment_interactive = 1\<CR>
+  :2\<CR>
+  \<C-d>
+  Lorem ipsum
+  \<Tab>
+  void
+  \<Tab>
+  Lorem ipsum
+
+# Trigger an additional <Tab> to deactivate DoGe.
+  \<Tab>
+
+Then (all buffer mappings should not exists anymore):
+  AssertEqual 0, hasmapto('<Plug>(doge-comment-jump-forward)', 'nis')
+  AssertEqual 0, hasmapto('<Plug>(doge-comment-jump-backward)', 'nis')
+
+Expect php (generated comment with a description and @return tag):
+  <?php
+  /**
+   * Lorem ipsum
+   *
+   * @return void Lorem ipsum 
+   */
+  function myFunction() {}
+
+Do (let g:doge_comment_interactive = 0):
+# Disable the option again so that upcoming tests will not fail.
+  :let g:doge_comment_interactive = 0\<CR>

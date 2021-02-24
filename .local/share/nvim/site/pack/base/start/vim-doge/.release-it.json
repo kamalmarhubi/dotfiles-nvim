@@ -1,0 +1,24 @@
+{
+  "hooks": {
+    "before:init": ["npm run format", "npm run lint"],
+    "after:bump": ["echo v${version} > .version && git add .version"]
+  },
+  "git": {
+    "commitMessage": "chore(release): v${version} :tada:",
+    "tagAnnotation": "Release v${version}",
+    "tagName": "v${version}"
+  },
+  "npm": {
+    "publish": false
+  },
+  "github": {
+    "release": true,
+    "releaseName": "Release v${version}"
+  },
+  "plugins": {
+    "@release-it/conventional-changelog": {
+      "preset": "angular",
+      "infile": "CHANGELOG.md"
+    }
+  }
+}

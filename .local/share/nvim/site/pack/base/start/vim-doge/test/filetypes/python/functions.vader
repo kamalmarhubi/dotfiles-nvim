@@ -1,0 +1,190 @@
+# ==============================================================================
+# Functions without parameters.
+# ==============================================================================
+Given python (function without parameters):
+  def myFunc(): # inline comment
+    pass
+
+Do (trigger doge):
+  \<C-d>
+
+Expect python (no changes):
+  def myFunc(): # inline comment
+    """
+    [TODO:description]
+
+    """
+    pass
+
+# ==============================================================================
+# Functions without type hints.
+# ==============================================================================
+Given python (function without type hints):
+  def myFunc(p1 = 'string', p2 = 5, p3, p4):
+    pass
+
+  async def myFunc(p1 = 'string', p2 = 5, p3, p4):
+    pass
+
+Do (trigger doge):
+  \<C-d>
+  :12\<CR>
+  \<C-d>
+
+Expect python (generated comment with :param tags):
+  def myFunc(p1 = 'string', p2 = 5, p3, p4):
+    """
+    [TODO:description]
+
+    :param p1 [TODO:type]: [TODO:description]
+    :param p2 [TODO:type]: [TODO:description]
+    :param p3 [TODO:type]: [TODO:description]
+    :param p4 [TODO:type]: [TODO:description]
+    """
+    pass
+
+  async def myFunc(p1 = 'string', p2 = 5, p3, p4):
+    """
+    [TODO:description]
+
+    :param p1 [TODO:type]: [TODO:description]
+    :param p2 [TODO:type]: [TODO:description]
+    :param p3 [TODO:type]: [TODO:description]
+    :param p4 [TODO:type]: [TODO:description]
+    """
+    pass
+
+# ==============================================================================
+# Functions with parameters.
+# ==============================================================================
+Given python (function with parameters):
+  def myFunc(p1: str = 'string', p2: int = 5):
+    pass
+
+Do (trigger doge):
+  \<C-d>
+
+Expect python (generated comment with :param tags):
+  def myFunc(p1: str = 'string', p2: int = 5):
+    """
+    [TODO:description]
+
+    :param p1 str: [TODO:description]
+    :param p2 int: [TODO:description]
+    """
+    pass
+
+# ==============================================================================
+# Functions with advanced type hint parameters.
+# ==============================================================================
+Given python (functions with advanced type hint parameters):
+  def myFunc(p1: Callable[[int], None] = False, p2: Callable[[int, Exception], None] = {}) -> Sequence[T]:
+
+    pass
+
+  def myFunc(p1: Sequence[T], p2: my_module.types) -> Generator[int, float, str]:
+    pass
+
+Do (trigger doge):
+  \<C-d>
+  :12\<CR>
+  \<C-d>
+
+Expect python (generated comments with :param tags):
+  def myFunc(p1: Callable[[int], None] = False, p2: Callable[[int, Exception], None] = {}) -> Sequence[T]:
+    """
+    [TODO:description]
+
+    :param p1 Callable[[int], None]: [TODO:description]
+    :param p2 Callable[[int, Exception], None]: [TODO:description]
+    :rtype Sequence[T]: [TODO:description]
+    """
+
+    pass
+
+  def myFunc(p1: Sequence[T], p2: my_module.types) -> Generator[int, float, str]:
+    """
+    [TODO:description]
+
+    :param p1 Sequence[T]: [TODO:description]
+    :param p2 my_module.types: [TODO:description]
+    :rtype Generator[int, float, str]: [TODO:description]
+    """
+    pass
+
+# ==============================================================================
+# Functions defined multi-line.
+# ==============================================================================
+Given python (multi-line function with type hint parameters):
+  def myFunc(p1: str, p2: dict,
+      p3: list, p4: tuple) -> Iterator[int]:
+    pass
+
+Do (trigger doge):
+  \<C-d>
+
+Expect python (generated comment with :param and :rtype tags):
+  def myFunc(p1: str, p2: dict,
+      p3: list, p4: tuple) -> Iterator[int]:
+    """
+    [TODO:description]
+
+    :param p1 str: [TODO:description]
+    :param p2 dict: [TODO:description]
+    :param p3 list: [TODO:description]
+    :param p4 tuple: [TODO:description]
+    :rtype Iterator[int]: [TODO:description]
+    """
+    pass
+
+# ==============================================================================
+# Single quotes using the {'single_quote': 1} option.
+# ==============================================================================
+Given python (function where the quotes should be single quotes when {'single_quote': 1} is set):
+  def myFunc(p1 = 'string'):
+    pass
+
+Do (trigger doge):
+  :let g:doge_python_settings = {'single_quotes': 1}\<CR>
+  \<C-d>
+  :let g:doge_python_settings = {'single_quotes': 0}\<CR>
+
+Expect python (generated comment with :param tags):
+  def myFunc(p1 = 'string'):
+    '''
+    [TODO:description]
+
+    :param p1 [TODO:type]: [TODO:description]
+    '''
+    pass
+
+# ==============================================================================
+# Read out the exceptions in the function body
+# ==============================================================================
+Given python (function with exceptions being raised in the body):
+  def myFunc(p1 = 'string'):
+    try:
+      foo = ValueError()
+      raise foo
+      raise Exception()
+    except Exception as error:
+      pass
+
+Do (trigger doge):
+  \<C-d>
+
+Expect python (generated comment with :param and :raises tags):
+  def myFunc(p1 = 'string'):
+    """
+    [TODO:description]
+
+    :param p1 [TODO:type]: [TODO:description]
+    :raises [TODO:name]: [TODO:description]
+    :raises Exception: [TODO:description]
+    """
+    try:
+      foo = ValueError()
+      raise foo
+      raise Exception()
+    except Exception as error:
+      pass

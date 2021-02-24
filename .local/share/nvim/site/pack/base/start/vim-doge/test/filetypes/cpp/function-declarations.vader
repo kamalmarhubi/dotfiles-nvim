@@ -1,0 +1,17 @@
+# ==============================================================================
+# Function declarations with parameters.
+# ==============================================================================
+Given cpp (function declaration with parameters):
+  void append_token(const std::string& text /* inline comment */, const AST_Node* node);
+
+Do (trigger doge):
+  \<C-d>
+
+Expect cpp (generated comment with @param and @return tags):
+  /**
+   * @brief [TODO:description]
+   *
+   * @param text [TODO:description]
+   * @param node [TODO:description]
+   */
+  void append_token(const std::string& text /* inline comment */, const AST_Node* node);

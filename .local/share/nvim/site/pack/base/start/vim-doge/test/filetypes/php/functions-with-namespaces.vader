@@ -1,0 +1,183 @@
+# ==============================================================================
+# Functions where the type hint should result in its FQN.
+# ==============================================================================
+
+# This should return \Symfony\Component\HttpFoundation\Response since
+# 'Response' is not defined as a an alias.
+# ------------------------------------------------------------------------------
+
+Given php (function where the type should result in its FQN):
+  <?php
+  use Symfony\Component\HttpFoundation\Response;
+
+  function myFunction(Response $p1): Response {}
+
+Do (trigger doge):
+  :4\<CR>
+  \<C-d>
+
+Expect php (generated comment containing the FQN):
+  <?php
+  use Symfony\Component\HttpFoundation\Response;
+
+  /**
+   * [TODO:description]
+   *
+   * @param \Symfony\Component\HttpFoundation\Response $p1 [TODO:description]
+   *
+   * @return \Symfony\Component\HttpFoundation\Response [TODO:description]
+   */
+  function myFunction(Response $p1): Response {}
+
+# ------------------------------------------------------------------------------
+
+Given php (function where the type should result in its FQN with multiple FQN statements after it):
+  <?php
+  use Symfony\Component\HttpFoundation\Response, use Symfony\Component\Routing\Annotation\Route as BaseRoute;
+
+  function myFunction(Response $p1) {}
+
+Do (trigger doge):
+  :4\<CR>
+  \<C-d>
+
+Expect php (generated comment containing the FQN):
+  <?php
+  use Symfony\Component\HttpFoundation\Response, use Symfony\Component\Routing\Annotation\Route as BaseRoute;
+
+  /**
+   * [TODO:description]
+   *
+   * @param \Symfony\Component\HttpFoundation\Response $p1 [TODO:description]
+   *
+   * @return [TODO:type] [TODO:description]
+   */
+  function myFunction(Response $p1) {}
+
+# ------------------------------------------------------------------------------
+
+Given php (function where the type should result in its FQN with multiple FQN statements before it):
+  <?php
+  use Symfony\Component\Routing\Annotation\Route as BaseRoute, Symfony\Component\HttpFoundation\Response;
+
+  function myFunction(Response $p1) {}
+
+Do (trigger doge):
+  :4\<CR>
+  \<C-d>
+
+Expect php (generated comment containing the FQN):
+  <?php
+  use Symfony\Component\Routing\Annotation\Route as BaseRoute, Symfony\Component\HttpFoundation\Response;
+
+  /**
+   * [TODO:description]
+   *
+   * @param \Symfony\Component\HttpFoundation\Response $p1 [TODO:description]
+   *
+   * @return [TODO:type] [TODO:description]
+   */
+  function myFunction(Response $p1) {}
+
+# ------------------------------------------------------------------------------
+
+Given php (function where the type should NOT result in its FQN if let g:doge_php_settings = {'resolve_fqn': 0} is set):
+  <?php
+  use Symfony\Component\Routing\Annotation\Route as BaseRoute, Symfony\Component\HttpFoundation\Response;
+
+  function myFunction(Response $p1) {}
+
+Do (trigger doge):
+  :let g:doge_php_settings = {'resolve_fqn': 0}\<CR>
+  :4\<CR>
+  \<C-d>
+  :let g:doge_php_settings = {'resolve_fqn': 1}\<CR>
+
+Expect php (generated comment not containing the FQN):
+  <?php
+  use Symfony\Component\Routing\Annotation\Route as BaseRoute, Symfony\Component\HttpFoundation\Response;
+
+  /**
+   * [TODO:description]
+   *
+   * @param Response $p1 [TODO:description]
+   *
+   * @return [TODO:type] [TODO:description]
+   */
+  function myFunction(Response $p1) {}
+
+# This should return 'BaseRoute' since it is defined as an alias.
+# ------------------------------------------------------------------------------
+
+Given php (function where the type should not result in its FQN):
+  <?php
+  use Symfony\Component\Routing\Annotation\Route as BaseRoute;
+
+  function myFunction(BaseRoute $p1) {}
+
+Do (trigger doge):
+  :4\<CR>
+  \<C-d>
+
+Expect php (generated comment not containing the FQN):
+  <?php
+  use Symfony\Component\Routing\Annotation\Route as BaseRoute;
+
+  /**
+   * [TODO:description]
+   *
+   * @param BaseRoute $p1 [TODO:description]
+   *
+   * @return [TODO:type] [TODO:description]
+   */
+  function myFunction(BaseRoute $p1) {}
+
+# ------------------------------------------------------------------------------
+
+Given php (function where the type should not result in its FQN with multiple FQN statements after it):
+  <?php
+  use Symfony\Component\Routing\Annotation\Route as BaseRoute, Symfony\Component\HttpFoundation\Response;
+
+  function myFunction(BaseRoute $p1) {}
+
+Do (trigger doge):
+  :4\<CR>
+  \<C-d>
+
+Expect php (generated comment not containing the FQN):
+  <?php
+  use Symfony\Component\Routing\Annotation\Route as BaseRoute, Symfony\Component\HttpFoundation\Response;
+
+  /**
+   * [TODO:description]
+   *
+   * @param BaseRoute $p1 [TODO:description]
+   *
+   * @return [TODO:type] [TODO:description]
+   */
+  function myFunction(BaseRoute $p1) {}
+
+# ------------------------------------------------------------------------------
+
+Given php (function where the type should not result in its FQN with multiple FQN statements before it):
+  <?php
+  use Symfony\Component\HttpFoundation\Response, Symfony\Component\Routing\Annotation\Route as BaseRoute;
+
+  function myFunction(BaseRoute $p1) {}
+
+Do (trigger doge):
+  :4\<CR>
+  \<C-d>
+
+Expect php (generated comment not containing the FQN):
+  <?php
+  use Symfony\Component\HttpFoundation\Response, Symfony\Component\Routing\Annotation\Route as BaseRoute;
+
+  /**
+   * [TODO:description]
+   *
+   * @param BaseRoute $p1 [TODO:description]
+   *
+   * @return [TODO:type] [TODO:description]
+   */
+  function myFunction(BaseRoute $p1) {}
