@@ -19,3 +19,6 @@ vim.g.floaterm_autoclose = 1  -- close on clean exit of program
 vim.g.floaterm_width = 0.8
 vim.g.floaterm_height = 0.8
 vim.g.floaterm_borderchars = { '─', '│', '─', '│', '╭', '╮', '╯', '╰'}
+
+-- DoGe documentation generator
+vim.g.doge_doc_standard_python = 'google'
