@@ -3,7 +3,7 @@ vim.o.shell = '/usr/bin/fish'
 
 -- Make vim-which-key nice
 vim.o.timeoutlen = 250
-vim.g.which_key_timeout = 250
+vim.g.which_key_timeout = 350
 
 -- Less annoying search
 vim.o.ignorecase = true
