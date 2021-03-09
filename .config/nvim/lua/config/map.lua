@@ -21,6 +21,11 @@ vim.g.which_key_map = {
     T = { [[luaeval("require('telescope.builtin').builtin{}")]], 'telescope builtins' },
   },
   f = { [[luaeval("require('telescope.builtin').git_files{}")]], 'git files' },
+  l = {
+    name = '+lsp',
+    r = { [[luaeval("require('telescope.builtin').lsp_references()")]], 'references' },
+    d = { [[luaeval("vim.lsp.buf.definition()")]], 'references' },
+  },
   g = {
     name = '+git',
     m = { [[<Plug>(git-messenger)]], 'message at line' },
