@@ -14,6 +14,12 @@ vim.o.incsearch = true
 vim.o.foldmethod = 'expr'
 vim.o.foldexpr = 'foldexpr=nvim_treesitter#foldexpr()'
 
+-- Neovide
+vim.g.neovide_cursor_vfx_mode = 'pixiedust'
+vim.g.neovide_cursor_vfx_particle_density = 30
+vim.g.neovide_cursor_vfx_particle_speed = 20
+vim.g.neovide_cursor_animate_in_insert_mode = false
+
 -- Floaterm
 vim.g.floaterm_autoclose = 1  -- close on clean exit of program
 vim.g.floaterm_width = 0.8
