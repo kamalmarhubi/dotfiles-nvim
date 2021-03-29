@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/tools-life/taskwiki.git
+	branch = master
+	commit = a3ae9c52cdab4001be3471db8b28a19acdebb716
+	parent = e82dd04c32355edfc2b360aaf5c95c85f9748172
+	method = rebase
+	cmdver = 0.4.3

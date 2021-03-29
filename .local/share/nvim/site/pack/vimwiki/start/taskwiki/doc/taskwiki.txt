@@ -1,0 +1,816 @@
+*taskwiki.txt*          Taskwarrior tasks in Vimwiki                  v0.4   ~
+                   _____         _   __        ___ _    _                    ~
+        a         |_   _|_ _ ___| | _\ \      / (_) | _(_)         a         ~
+   command-line     | |/ _` / __| |/ /\ \ /\ / /| | |/ / |   personal wiki   ~
+    todo list       | | (_| \__ \   <  \ V  V / | |   <| |      for vim      ~
+     manager        |_|\__,_|___/_|\_\  \_/\_/  |_|_|\_\_|                   ~
+                                                                             ~
+==============================================================================
+QUICK-REFERENCE   --   use "<leader>t" and one of:   --    *taskwiki-quickref*
+
+| a  annotate         | C  calendar       | Ga ghistory annual | p  projects |
+| bd burndown daily   | d  done           | hm history month   | s  summary  |
+| bw burndown weekly  | D  delete         | ha history annual  | S  stats    |
+| bm burndown monthly | e  edit           | i  (or <CR>) info  | t  tags     |
+| cp choose project   | g  grid           | l  back-link       | +  start    |
+| ct choose tag       | Gm ghistory month | m  modify          | -  stop     |
+
+==============================================================================
+CONTENTS						   *taskwiki-contents*
+
+    1. Introduction 						    |taskwiki|
+    2. Requirements                                        |taskwiki-requires|
+    3. Installing					    |taskwiki-install|
+    4. Optional enhancements                               |taskwiki-optional|
+    5. More details about features                         |taskwiki-features|
+        5.1. Tasks                                    |taskwiki-features-task|
+        5.2. Viewports                            |taskwiki-features-viewport|
+        5.3. Extra data sources                   |taskwiki-features-warriors|
+    6. Mapping						    |taskwiki-mapping|
+    7. Commands						   |taskwiki-commands|
+    8. Settings						   |taskwiki-settings|
+    9. Troubleshooting					    |taskwiki-trouble|
+    10. Contributing					 |taskwiki-contribute|
+    11. Credits						    |taskwiki-credits|
+    12. License						    |taskwiki-license|
+
+=============================================================================
+1. INTRODUCTION							   *taskwiki*
+
+Taskwiki enhances simple vimwiki task lists by storing the task metadata in
+Taskwarrior. Taskwarrior uses plaintext data files as a back end, and taskwiki
+uses Taskwarrior as a back end. This allows taskwiki to leverage its powerful
+features, such as filtering, recurrent tasks, user defined attributes or hooks.
+
+NOTE: Taskwiki only handles check lists that use the asterisk "*". All
+other lists, i.e. those written with a hyphen "-" or a pound sign "#" as
+well as ordered lists, are left alone. This allows you to define plain
+lists and even vimwiki check lists that are unrelated to Taskwarrior.
+
+----------------------------------------------------------------------------
+Individual tasks
+
+~   * [ ] Install Taskwiki
+
+Such tasks get synced to TaskWarrior when the file is saved. Additional
+metadata, as project, tags, priority, can be stored with this task.
+
+Some of that metadata gets visually represented in vim, and is updated
+if the representation changes in vim.
+
+~   * [ ] Install Taskwiki !!! (2015-08-23 19:00)
+
+----------------------------------------------------------------------------
+Task lists
+
+Tasks can be grouped - simply written in one block. This has the advantage
+of any child tasks being marked as dependencies of the parent tasks.
+
+~   * [ ] Get married
+~       * [ ] Find a girlfriend
+~       * [ ] Buy a ring
+~       * [ ] Propose
+
+----------------------------------------------------------------------------
+Viewports
+
+A viewport is a header with a task query (filter) embedded, generating the
+corresponding task list. These tasks can be modified and changes will be
+synced back to task data.  A simple viewport can look as follows:
+
+~   == Home tasks | project:Home ==
+
+Filter query is concealed.
+
+Upon saving, this will generate the list of matching tasks, in a tree-like
+fashion (respecting dependencies).
+
+~   == Home tasks | project:Home ==
+~   * [ ] Feed the dog (2015-08-08)
+~   * [ ] Tidy up the house !!
+~     * [ ] Wash the dishes
+~     * [ ] Declare war on the cobwebs
+
+Tasks added (written) to the task list under the viewport inherit the defaults
+from its filter.
+
+~  == Home tasks | project:Home ==
+~  * [ ] Feed the dog
+~  * [ ] Tidy up the house !!
+~    * [ ] Wash the dishes
+~    * [ ] Declare war on the cobwebs
+~  * [ ] Call the landlord about rent payment (2015-08-23)
+~         ^ the task above will have project:Home set automatically
+
+For some more complex filters, defaults cannot be automatically derived.
+In such case, you can specify the defaults explicitly:
+
+~   == Urgent tasks | +OVERDUE or +urgent | +urgent ==
+~                                            ^ defaults definition
+
+Viewports can be inspected by hitting [CR] with cursor above them.
+
+----------------------------------------------------------------------------
+Preset headers
+
+A preset header has a similar syntax to a viewport:
+
+~   == Home tasks || project:Home ==
+
+In contrast to viewports it does not generate a list of associated tasks.
+Instead it sets a filter for all viewports and default attributes for all new
+tasks in the corresponding section.
+
+Like with viewports for complex filters the default attributes can be given
+manually.
+
+~   == Home tasks || project:house or project:garden || project:house ==
+
+Multiple levels of preset headers are chained. So you can do this:
+
+~   == Taskwiki development || project:Taskwiki ==
+~   * Non-task notes
+~   === Bugs || +bugs ===
+~   * [ ] Bug #42
+~   === Features || +features ===
+~   * [ ] Some Feature
+
+Here both tasks are assigned the Taskwiki project, as well the respective tag.
+
+----------------------------------------------------------------------------
+Report splits
+
+Taskwiki can provide additional information reports on a task list (selected,
+or part of a viewport) and on individual tasks as well. These reports are shown
+in dynamic temporary splits.
+
+~   * [ ] Tidy up the house !! (2015-08-23)
+
+For example, hitting [CR] on the above task runs :TaskWikiInfo and displays:
+
+    Name          Value
+    ------------- ---------------------------------------------------------
+    ID            6
+    Description   Tidy up the house
+                    2015-08-22 21:29:35 Tip: Use roomba for vacuum-cleaning
+    Status        Pending
+    Project       Home
+    Entered       2015-08-22 21:27:26 (2 minutes)
+    Due           2015-08-23 00:00:00
+    Last modified 2015-08-22 21:30:21 (1 second)
+    Virtual tags  ANNOTATED MONTH PENDING READY UNBLOCKED YEAR
+    UUID          448c2fa9-6a06-454e-a2bc-b0c8ae91994f
+    Urgency       9.895
+    Priority      H
+
+    Date                Modification
+    ------------------- ------------------------------------------------------------
+    2015-08-14 21:29:35 Annotation of 'Tip: Use roomba for vacuum-cleaning' added.
+    2015-08-14 21:30:11 Due set to '2015-08-23 00:00:00'.
+
+Running the :TaskWikiSummary can produce side-split like this:
+
+    Project            Remaining Avg age  Complete 0%                        100%
+    ------------------ --------- -------- -------- ------------------------------
+    Work                      18  4 weeks      74% ======================
+      Designs
+        Feature X              3  4 weeks      89% ==========================
+        Feature Y              7  2 weeks      47% =========
+      Tickets                  5  3 weeks      79% ======================
+      Blog                     1 4 months      50% ===============
+
+
+There are many more reports (burndown, calendar, history, projects, stats,
+summary, tags,..), but for the sake of brevity, they will not be described here.
+They work in a similar fashion.
+
+
+=============================================================================
+2. REQUIREMENTS					          *taskwiki-requires*
+
+* Vim 7.4 or newer, with +python or +python3 (NeoVim is also supported)
+* [Vimwiki](https://github.com/vimwiki/vimwiki/tree/dev) (the dev branch)
+
+    git clone https://github.com/vimwiki/vimwiki ~/.vim/bundle/ --branch dev
+
+* [Taskwarrior](http://taskwarrior.org) (version 2.4.0 or newer)
+- install either from [sources](http://taskwarrior.org/download/)
+or using your [package manager](http://taskwarrior.org/download/#dist)
+
+    sudo dnf install task
+
+* [tasklib](https://github.com/tbabej/tasklib/tree/develop) (the develop branch)
+- Python library for Taskwarrior.
+
+    sudo pip install --upgrade git+git://github.com/tbabej/tasklib@develop
+
+Taskwiki will automatically check whether the Vim and tasklib versions are
+sufficient, and raise error if not.
+
+=============================================================================
+3. INSTALLING						   *taskwiki-install*
+
+Using pathogen (or similar vim plugin manager), the taskwiki install is
+as simple as:
+
+    git clone https://github.com/tbabej/taskwiki ~/.vim/bundle/taskwiki
+
+However, make sure your box satisfies the requirements stated above.
+
+To access documentation, run :helptags and then :help taskwiki.
+
+=============================================================================
+4. OPTIONAL ENHANCEMENTS                                  *taskwiki-optional*
+
+The following optional plugins enhance and integrate with TaskWiki.
+At very least,I'd recommend the AnsiEsc plugin - Taskwarrior
+charts are much more fun when they're colorful!
+
+* [vim-plugin-AnsiEsc](https://github.com/powerman/vim-plugin-AnsiEsc)
+adds color support in charts.
+
+    git clone https://github.com/powerman/vim-plugin-AnsiEsc ~/.vim/bundle/
+
+* [tagbar](https://github.com/majutsushi/tagbar)
+provides taskwiki file navigation.
+
+    git clone https://github.com/majutsushi/tagbar ~/.vim/bundle/
+
+* [vim-taskwarrior](https://github.com/farseer90718/vim-taskwarrior)
+enables grid view.
+
+    git clone https://github.com/farseer90718/vim-taskwarrior ~/.vim/bundle/
+
+=============================================================================
+5. FEATURES IN DETAIL                                     *taskwiki-features*
+
+----------------------------------------------------------------------------
+5.1. Tasks                                          *taskwiki-features-task*
+
+Any task in the taskwiki file will be saved to Taskwarrior. Task is identified
+by an concealed UUID.
+
+~   * [ ] Install Taskwiki  #2a4f52
+~                           ^ this part is concealed
+
+----------------------
+5.1.1 Represented data
+
+Currently, following task metadata is represented in the buffer:
+
+* Status. Tasks are highlighted differently depending on their status.
+
+~   * [ ] Install Taskwiki   |   pending task
+~   * [X] Install Taskwiki   |   completed task
+~   * [D] Install Taskwiki   |   deleted task
+~   * [S] Install Taskwiki   |   started task
+~   * [W] Install Taskwiki   |   waiting task
+
+* Description. All the text that is not part of the other metadata.
+* Due date. Either a date, or date with time inside parentheses.
+
+~   * [X] Install Taskwiki (2015-08-08)        | task with due date
+~   * [X] Install Taskwiki (2015-08-08 14:00)  | task with due date and time
+
+* Priority. This is denoted by 1,2, or 3 exclamation marks for L, M and H
+  priority levels, respectively.
+
+~   * [X] Install Taskwiki !!   | task with medium priority
+
+* Dependency. If any task is indented right below other, the indented
+  task will be marked as dependency for the non-indented one.
+
+~   * [ ] Make sandwich  | will be marked as dependant on tasks below
+~     * [ ] Buy bread
+~     * [ ] Find butter
+
+The actual indentation (number of spaces) does not matter. Task will be
+marked as dependency only for its direct parent.
+
+Any changes to the buffer representation of the task will be saved to the
+Taskwarrior data files. You can hence conveniently change description, or
+add due dates, directly from your taskwiki files.
+
+------------------------------
+5.1.2 Assigning other metadata
+
+Tasks can be assigned any other metadata that Taskwarrior supports, such
+as tags or custom user-defined attributes. To simplify parsing, however,
+not all of them are represented in the buffer. Nevertheless they can be used
+for filtering, etc.
+
+To add arbitrary metadata to the tasks, see |taskwiki-commands|, especially
+|:TaskWikiMod|, |:TaskWikiAnnotate| and friends.
+
+To assign metadata when creating a task, you can use put it into the
+description, separating it from the real description using the '--' divider.
+
+Note that the spaces around the divider are required.
+
+~   * [ ] This has project home -- project:Home
+
+Upon saving, the metadata string will disappear, saving the metadata into
+Taskwarrior:
+
+~   * [ ] This has project home  #431f42
+
+Typing additional metadata can be simplified by using omni completion (see
+|compl-omni|), like so:
+
+~   * [ ] This has project home -- project:<C-X><C-O>
+
+----------------------------------------------------------------------------
+5.2. Viewports                                  *taskwiki-features-viewport*
+
+---------------
+5.2.1 Filtering
+
+Viewport is a enhanced header, which generates a list of tasks under itself.
+
+As noted in the |taskwiki| introduction, each viewport has an embedded filter
+query. When the taskwiki file is loaded or saved, the viewport will re-generate
+the list of tasks matching the embedded filter.
+
+~   == Home tasks | project:Home ==
+~   * [ ] Feed the dog (2015-08-08)
+~   * [ ] Tidy up the house !!
+~     * [ ] Wash the dishes
+~     * [ ] Declare war on the cobwebs
+
+Filter strings can be arbitrary taskwarrior filter strings; usage of
+attribute modifiers or virtual tags is allowed:
+
+~   == Overdue tasks | +OVERDUE ==
+~   == Today tasks | +TODAY ==
+~   == Today tasks | due:today ==
+~   == Tomorrow-morning tasks | due.after:tomorrow due.before:tomorrow+12h ==
+
+--------------
+5.2.2 Defaults
+
+Any task added to the viewport will be assigned default values, which are
+derived from the filter definition. This only makes sense, since otherwise
+a task added below the viewport would be removed (it would not match the
+filter).
+
+~   == Home tasks | project:Home ==
+~   * [ ] This task I just wrote here will have project home
+
+However, for more complex filters, defaults cannot be derived directly. For
+example when attribute modifiers are being used:
+
+~   == Any documentation tasks | project.has:docs ==
+~   * [ ] Should I have project taskwiki.docs or tasklib.docs?
+
+In such a case, no default attributes are derived. Nevertheless the user can
+specify the defaults directly:
+
+~   == Any documentation tasks | project.has:docs | project:taskwiki.docs ==
+
+-------------
+5.2.3 Sorting
+
+Tasks within the viewport are sorted in the form of a dependency tree - all
+the tasks that are blocking a particular task are displayed below that task,
+indented.
+
+The ordering of the tasks within the same level (and parent) is determined by
+the default sort order, see |taskwiki_sort_order|. Sort order can be
+customized per-viewport, in which case you need to set an alternative sort
+order in the |taskwiki_sort_orders| option, along with its identifier.
+
+    Example:
+    let g:taskwiki_sort_orders={"T": "project+,due-"}
+
+Using this sort order is as simple as using $[IDENTIFIER] at the end of
+viewport definition:
+
+~   == Differently ordered home tasks | project:Home $T ==
+
+------------------
+5.2.4 Limiting number of tasks displayed
+
+By default, taskwiki will present the full list of tasks that match the
+viewport definition.
+
+You can limit the number of tasks listed by using the limit filter:
+
+~   == List only the 5 first tasks | project:Home limit:5 ==
+
+This will instruct taskwiki to limit the list of tasks to 5.
+
+The limit must always come last. For instance, if you are also using a sorting
+identifier:
+
+~   == List only the 5 first tasks | project:Home $T limit:5 ==
+
+The limit keyword will not be passed over to taskwarrior and is consumed only
+only by taskwiki.
+
+--------------------
+5.2.5 Default filter
+
+By default, every viewport filter is extended with the -DELETED and -PARENT
+virtual tags.
+
+This is quite sensible, however, there might be a case where you wish to
+override this behaviour. To do so, use the following virtual tag syntax, which
+forces the virtual tag, no matter its presence in the defaults.
+
+    !?TAG - any presence in the defaults will not be considered
+    !+TAG - +TAG will be forced, even if -TAG is present in the defaults
+    !-TAG - -TAG will be forced, even if +TAG is present in the defaults
+
+Examples:
+
+~   == Home tasks, even deleted | project:Home !?DELETED ==
+~   == Home tasks, only deleted | project:Home !+DELETED ==
+~   == Home tasks, excluding deleted | project:Home !-DELETED ==
+
+-----------------------
+5.2.6 Meta virtual tags
+
+Currently there is one meta virtual tag: -VISIBLE. This tag can be used to
+filter out tasks that are displayed elsewhere in the same taskwiki file.
+
+Example:
+
+~    == Work tasks not belonging to any subproject | project:Work -VISIBLE ==
+~    == Work coding tasks | project:Work.Coding ==
+~    == Work review tasks | project:Work.Review ==
+
+----------------
+5.2.7 Inspection
+
+You can inspect a given viewport (see what filter and defaults are being used,
+as well as other pieces of information) by using the |:TaskWikiInspect|
+command (or hitting <CR>) over a viewport definition.
+
+-------------------------------------------
+5.2.8 Usage of existing context definitions
+
+If you use the context feature in Taskwarrior, you can easily reference
+definition of any context using the @[context_name] syntax in the viewport's
+filter.
+
+For example, if you define the following context in the Taskwarrior,
+
+    $ task context define worktoday project:Work due:today
+
+you can leverage this definition in the filter:
+
+~   == Work tasks today | @worktoday ==
+
+Which is equivalent to (context gets expanded):
+
+~   == Work tasks today | project:Work due:today ==
+
+You can also verify the expansion by inspecting the viewport.
+
+----------------------------------------------------------------------------
+5.3. Extra data sources                         *taskwiki-features-warriors*
+
+Taskwiki can work with multiple instances of the taskwarrior databases at
+the same time. This is handy if you keep different taskwarrior databases
+for various reasons, i.e. one for tasks (stored in ~/.task) and one for
+habits (stored in ~/.habit).
+
+To utilize both in taskwiki, you will need to define any non-default
+taskwarriors using the |taskwiki_extra_warriors| setting.
+
+Example:
+let g:taskwiki_extra_warriors={'H': {'data_location': '/home/tbabej/.habit/', 'taskrc_location': '/home/tbabej/.habitrc'}
+
+Any extra taskwarrior instance is defined by its identifier, along with the
+alternative data and taskrc locations.
+
+Having done so, you simply need to mark a viewport so that it knows to use
+the alternative data source:
+
+~   === Home habits | project:Home #H ===
+
+To mark a newly entered task as belonging to the alternative database, use
+the following syntax:
+
+~   * [ ] This is a habit task #H:
+
+where you explicitly write '#[KEY]:' manually. When saved, UUID will be filled
+in:
+
+~   * [ ] This is a habit task #H:2f45ae
+
+=============================================================================
+6. MAPPING						   *taskwiki-mapping*
+
+n	<CR> 	is mapped to show task info, VP details or follow vimwiki link
+		After editing a task in insert mode, <CR> starts a new task
+
+    Normal mode key mappings (those with "v" also work in visual mode)
+    <Leader>t +
+vn	a 	|:TaskWikiAnnotate|
+ n	bd 	|:TaskWikiBurndownDaily|
+ n	bw 	|:TaskWikiBurndownWeekly|
+ n	bm 	|:TaskWikiBurndownMonthly|
+vn	cp 	|:TaskWikiChooseProject|
+vn	ct 	|:TaskWikiChooseTag|
+ n	C 	|:TaskWikiCalendar|
+vn	d 	|:TaskWikiDone|
+vn	D 	|:TaskWikiDelete|
+vn	e 	|:TaskWikiEdit|
+vn	g 	|:TaskWikiGrid|
+ n	Gm 	|:TaskWikiGhistoryMonthly|
+ n	Ga 	|:TaskWikiGhistoryAnnual|
+ n	hm 	|:TaskWikiHistoryMonthly|
+ n	ha 	|:TaskWikiHistoryAnnual|
+vn	i 	|:TaskWikiInfo|
+vn	l 	|:TaskWikiLink|
+vn	m 	|:TaskWikiMod|
+ n	p 	|:TaskWikiProjects|
+ n	s 	|:TaskWikiProjectsSummary|
+ n	S 	|:TaskWikiStats|
+ n	t 	|:TaskWikiTags|
+vn	+ 	|:TaskWikiStart|
+vn	- 	|:TaskWikiStop|
+
+=============================================================================
+7. COMMANDS						  *taskwiki-commands*
+
+-----------------------------------------------------------------------------
+Split reports commands.
+
+This family of commands displays TaskWarrior reports in a read-only
+vertical/horizontal split. Size of these splits can be limited,
+see |taskwiki_max_split_height| and |taskwiki_max_split_width| options.
+
+These commands will by default use filter from the nearest viewport. If you
+want to display report window using global, non-filtered data, explicitly
+pass the 'global' argument, i.e:
+
+    :TaskWikiStats global
+
+To specify an explicit filter, you can use the filter as the argument, i.e:
+
+    :TaskWikiStats project:Home
+
+To close the split windows, just hit <CR> or "q".
+
+NOTE: To allow color output in the split windows, make sure you have AnsiEsc
+vim plugin installed, see |taskwiki-optional|.
+
+List of split report commands:
+
+*:TaskWikiBurndownDaily* [args]
+*:TaskWikiBurndownWeekly* [args]
+*:TaskWikiBurndownMonthly* [args]
+    Opens a horizontal split window with the burndown report.
+
+*:TaskWikiCalendar* [args]
+    Opens a horizontal split window with the calendar report.
+
+*:TaskWikiGhistoryMonthly* [args]
+*:TaskWikiGhistoryAnnual* [args]
+    Opens a horizontal split window with the ghistory report.
+
+*:TaskWikiHistoryMonthly* [args]
+*:TaskWikiHistoryAnnual* [args]
+    Opens a horizontal split window with the history report.
+
+*:TaskWikiProjects* [args]
+    Opens a vertical split window with the projects report.
+
+*:TaskWikiProjectsSummary* [args]
+    Opens a vertical split window with the summary report.
+
+*:TaskWikiStats* [args]
+    Opens a vertical split window with the stats report.
+
+*:TaskWikiTags* [args]
+    Opens a vertical split window with the tags report.
+
+-----------------------------------------------------------------------------
+Commands operating on selected tasks.
+
+This group of commands operates on a selected tasks. Selected tasks can be
+either the task which is currently under cursor, or any group of visually
+selected tasks.
+
+*:TaskWikiAnnotate*
+    Opens a prompt to add annotation to selected task(s).
+
+*:TaskWikiDone*
+    Marks the selected task(s) as completed.
+
+*:TaskWikiDelete*
+    Deletes the selected task(s). Removes them from the file.
+
+*:TaskWikiEdit*
+    Opens the task in a separate vim instance using 'task edit'.
+
+*:TaskWikiGrid*
+    Opens a new buffer with the selected ViewPort displayed as a grid.
+    Requires vim-taskwarrior plugin, see |taskwiki-optional|.
+
+*:TaskWikiInfo* (or <CR> over a task)
+    Opens a split window with the info report of task under the cursor. To
+    close the split, use "q" or <CR>.
+
+    NOTE: This split can have very big height for tasks with many past
+    modifications. See |taskwiki_split_max_height|.
+
+*:TaskWikiLink*
+    Adds an annotation to selected task(s) with ~/path/to/file.wiki.
+
+*:TaskWikiStart*
+    "Starts" the selected task(s).
+
+*:TaskWikiStop*
+    "Stops" the selected task(s).
+
+*:TaskWikiMod* [mods]
+    Opens a prompt for task modification, for selected task(s).
+
+    Supports |cmdline-completion|.
+
+----------------------------------------------------------------------------
+Interactive commands.
+
+Following commands work similarly as the previous group, they can operate
+on selected tasks. The modification is done via choosing the particular
+modification (project, tag) in a split window.
+
+*:TaskWikiChooseProject*
+    Interactively choose project for selected task(s) by hitting <CR> over the
+    desired value in the split window. Use "q" to close the split, without
+    performing any modifications.
+
+*:TaskWikiChooseTag*
+    Interactively choose tag for selected task(s) by hitting <CR> over the
+    desired value in the split window. Use "q" to close the split, without
+    performing any modifications.
+
+----------------------------------------------------------------------------
+Meta commands
+
+This group of commands is directly related to taskwiki or taskwiki specific
+constructs.
+
+*:TaskWikiBufferLoad*
+    Updates the tasks from the Taskwarrior database. This command is run
+    automatically when the taskwiki file is opened.
+
+*:TaskWikiBufferSave*
+    Saves the changes to the Taskwarrior database. This parses and saves all
+    the buffer-only changes (such as changing the description, or due date).
+    This command is run automatically when the taskwiki file is saved.
+
+    NOTE: Using commands such as |:TaskWikiDone| or |:TaskWikiMod| will save
+    the modifications both in the buffer and the Taskwarrior database.
+
+*:TaskWikiInspect* (or <CR> over a viewport)
+    Opens a split window with details of viewport under the cursor. To
+    close the split, use "q" or <CR>.
+
+=============================================================================
+8. SETTINGS						  *taskwiki-settings*
+
+*taskwiki_taskrc_location*
+    The location of the taskrc file used by taskwiki. Defaults to ~/.taskrc.
+
+*taskwiki_data_location*
+    The location of the data directory for taskwarrior data used by taskwiki.
+    Defaults to ~/.task.
+
+*taskwiki_extra_warriors*
+    A dictionary containing alternative taskwarrior instance definitions.
+
+    A key for any alternative taskwarrior definition must be a single,
+    uppercase letter. Value is dictionary containing respective
+    data_location and taskrc_location overrides.
+
+    Example:
+    let g:taskwiki_extra_warriors={'H': {'data_location': '/home/tbabej/.habit/', 'taskrc_location': '/home/tbabej/.habitrc'}
+
+    Specifying particular extra warrior in the viewport can be done using
+    #[KEY] at the end of the viewport definition, in this case:
+
+~   === Home habits | project:Home #H ===
+
+*taskwiki_sort_order*
+    The default sort order used to sort the tasks within viewports. Defaults
+    to 'status+,end+,due+,priority-,project+'. Expects a comma-separated list
+    of attributes, optionally followed by + or - to denote the increasing or
+    decreasing order, respectively.
+
+*taskwiki_sort_orders*
+    The sort order can also be customized per viewport. This configuration
+    variable stores a dictionary with the alternative sort order definitions,
+    each indexed by a uppercase letter.
+
+    Example:
+    let g:taskwiki_sort_orders={"T": "project+,due-"}
+
+    Specifying a particular sort order in the viewport can be achieved
+    using $[KEY] at the end of the viewport definition, in this case:
+
+~   === Work tasks by decreased due, grouped by project | project:Work $T ===
+
+*taskwiki_split_max_width*
+    Use to limit the width of any vertical split created by taskwiki.
+
+*taskwiki_split_max_height*
+    Use to limit the height of any vertical split created by taskwiki.
+
+*taskwiki_source_tw_colors*
+    If set to a non-empty value (such as "yes"), taskwiki will try to
+    use the same colors for task highlighting as those defined in
+    taskwarrior.
+
+*taskwiki_dont_preserve_folds*
+    If set to a non-empty value (such as "yes"), taskwiki will not
+    preserve folding when entering or leaving a vimwiki buffer.
+
+*taskwiki_disable_concealcursor*
+    If set to any non-empty value (such as "yes"), taskwiki will not conceal
+    characters on the cursor line in normal mode via `concealcursor=nc`.
+
+*taskwiki_disable*
+    Setting any non-empty value for this variable will disable taskwiki.
+
+*taskwiki_use_python2*
+    Setting this variable to non-empty value (such as "yes") will force
+    taskwiki to use python2.
+
+    Example:
+    let g:taskwiki_use_python2="yes"
+
+*taskwiki_suppress_mappings*
+        Setting this variable to a non-empty value (such as "yes") will
+        prevent taskwiki from setting up any |<Leader>|-mappings. This is
+        useful if you would rather specify your own mappings or have
+        conflicting mappings.
+
+        Example:
+        let g:taskwiki_suppress_mappings="yes"
+
+*taskwiki_maplocalleader*
+        This variable sets the |maplocalleader| to the leader which will be
+        used for all function mappings (unless |taskwiki_suppress_mappings| is
+        set). If this variable is not set, <Leader>t will be used.
+
+        Example:
+        let g:taskwiki_maplocalleader=",t"
+
+=============================================================================
+9. TROUBLESHOOTING					   *taskwiki-trouble*
+
+Make sure both your taskwiki and tasklib versions are updated. If this does
+not resolve your issue, feel free to submit a bug report, or seek support
+on #taskwarrior IRC channel on Freenode.
+
+=============================================================================
+10. CONTRIBUTIONS					*taskwiki-contribute*
+
+Code and issue tracker is hosted at: https://github.com/tbabej/taskwiki
+
+Feel free to submit pull requests and/or file issues for bugs and suggestions.
+
+=============================================================================
+11. CREDITS						   *taskwiki-credits*
+
+Created by: Tomas Babej.
+
+Design suggestions contributed by: David J Patrick.
+
+Inspired by: [vimwiki-tasks plugin](https://github.com/teranex/vimwiki-tasks).
+
+Taskwiki wouldn't be possible without all the work and support from the
+Taskwarrior community. Come hang out at #taskwarrior on Freenode.
+
+=============================================================================
+12. LICENSE						   *taskwiki-license*
+
+Copyright 2014-2015 Tomas Babej
+http://github.com/tbabej/taskwiki
+
+This software is released under MIT licence.
+
+Permission is hereby granted, free of charge, to any person obtaining
+a copy of this software and associated documentation files (the
+"Software"), to deal in the Software without restriction, including
+without limitation the rights to use, copy, modify, merge, publish,
+distribute, sublicense, and/or sell copies of the Software, and to
+permit persons to whom the Software is furnished to do so, subject to
+the following conditions:
+
+The above copyright notice and this permission notice shall be
+included in all copies or substantial portions of the Software.
+
+THE SOFTWARE IS PROVIDED "AS IS", WITHOUT WARRANTY OF ANY KIND,
+EXPRESS OR IMPLIED, INCLUDING BUT NOT LIMITED TO THE WARRANTIES OF
+MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE AND
+NONINFRINGEMENT. IN NO EVENT SHALL THE AUTHORS OR COPYRIGHT HOLDERS BE
+LIABLE FOR ANY CLAIM, DAMAGES OR OTHER LIABILITY, WHETHER IN AN ACTION
+OF CONTRACT, TORT OR OTHERWISE, ARISING FROM, OUT OF OR IN CONNECTION
+WITH THE SOFTWARE OR THE USE OR OTHER DEALINGS IN THE SOFTWARE.
+
+ vim:tw=78:ts=8:ft=help

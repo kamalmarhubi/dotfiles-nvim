@@ -1,0 +1,3 @@
+[run]
+source = taskwiki, extra
+data_file = /tmp/taskwiki-coverage/.coverage
