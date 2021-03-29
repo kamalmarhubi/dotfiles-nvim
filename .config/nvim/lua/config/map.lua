@@ -39,4 +39,8 @@ wk.register_keymap('leader', {
     name = '+navigation',
     f = { ":lua require('telescope.builtin').git_files{}<CR>", 'git files' },
   },
+  w = {
+    name = '+wiki',
+    [vim.g.mapleader] = { name = '+diary' },
+  },
 })
