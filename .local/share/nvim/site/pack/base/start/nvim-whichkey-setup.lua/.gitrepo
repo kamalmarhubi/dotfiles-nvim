@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/AckslD/nvim-whichkey-setup.lua.git
+	branch = main
+	commit = 59aa0a4287adf6c2c9faabf912cdc005230e7c98
+	parent = 0351ec022a96e1f7bbde586c877dc279b8143cce
+	method = rebase
+	cmdver = 0.4.3
