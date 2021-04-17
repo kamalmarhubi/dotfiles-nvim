@@ -2,6 +2,7 @@ require('config.abbr')
 require('config.highlight')
 require('config.map')
 require('config.opt')
+require('config.vimwiki')
 
 require('nvim-treesitter.configs').setup {
   ensure_installed = "maintained",
