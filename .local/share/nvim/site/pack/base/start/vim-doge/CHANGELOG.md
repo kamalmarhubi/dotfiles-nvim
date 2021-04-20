@@ -1,3 +1,44 @@
+## [3.9.1](https://github.com/kkoomen/vim-doge/compare/v3.9.0...v3.9.1) (2021-03-29)
+
+
+### Bug Fixes
+
+* **c:** support pointer return types ([#294](https://github.com/kkoomen/vim-doge/issues/294)) ([4e814d7](https://github.com/kkoomen/vim-doge/commit/4e814d7047b2bcfb81a1e14eec3873295f84b076))
+
+# [3.9.0](https://github.com/kkoomen/vim-doge/compare/v3.8.1...v3.9.0) (2021-03-15)
+
+
+### Features
+
+* implement Errors and Safety sections ([358a0fa](https://github.com/kkoomen/vim-doge/commit/358a0fa0eb4ba78b00dea8b35c3bee7727740aa7))
+* implement rust with support for functions/methods ([77becd5](https://github.com/kkoomen/vim-doge/commit/77becd56a4ad67740863815c088a150b7d6e39f6))
+
+## [3.8.1](https://github.com/kkoomen/vim-doge/compare/v3.8.0...v3.8.1) (2021-03-07)
+
+
+### Bug Fixes
+
+* **windows:** remove old param in build.ps1 ([5aec2f6](https://github.com/kkoomen/vim-doge/commit/5aec2f69be194a7373ac9e043c8f81322ca9472b))
+
+# 3.8.0 (2021-03-07)
+
+
+### Bug Fixes
+
+* **ci:** remove old build params ([dbc4a96](https://github.com/kkoomen/vim-doge/commit/dbc4a9637a0fba122ef5b967d31299130a29b66f))
+* remove prettier/[@typescript-eslint](https://github.com/typescript-eslint) from eslintrc ([cd8b9fb](https://github.com/kkoomen/vim-doge/commit/cd8b9fb515befdd209b6a20d247bb132bdf7ca4c))
+* **ci:** add strings around command for windows ([ffcfc74](https://github.com/kkoomen/vim-doge/commit/ffcfc7484d7ce12f0f6cc6432a4aa9a9af4b331f))
+* **ci:** do not pass any params to build binary scripts ([27545b4](https://github.com/kkoomen/vim-doge/commit/27545b4e6a311d2d463a28610c7ae5f0c624dc25))
+
+
+### Features
+
+* replace vercel/pkg with caxa ([3c145fd](https://github.com/kkoomen/vim-doge/commit/3c145fd343e95099d4c723db7bc8f98d18c9a790))
+
+### Features
+
+* replace vercel/pkg with caxa ([3c145fd](https://github.com/kkoomen/vim-doge/commit/3c145fd343e95099d4c723db7bc8f98d18c9a790))
+
 # [3.7.0](https://github.com/kkoomen/vim-doge/compare/v3.6.0...v3.7.0) (2021-02-17)
 
 
