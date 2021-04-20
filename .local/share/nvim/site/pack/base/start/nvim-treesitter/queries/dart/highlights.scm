@@ -2,8 +2,9 @@
 
 ; Methods
 ; --------------------
-(function_type
-  name: (identifier) @method)
+;; TODO: does not work
+;(function_type
+  ;name: (identifier) @method)
 (super) @function
 
 ; Annotations
@@ -74,8 +75,9 @@
   name: (identifier) @type)
 (constructor_signature
   name: (identifier) @type)
-(type_identifier
-  (identifier) @type)
+;; TODO: does not work
+;(type_identifier
+  ;(identifier) @type)
 (scoped_identifier
   scope: (identifier) @type)
 (function_signature
@@ -144,7 +146,7 @@
     ; (hex_floating_point_literal)
 ] @number
 
-(symbol_literal) @string.special
+(symbol_literal) @symbol
 (string_literal) @string
 (true) @boolean
 (false) @boolean

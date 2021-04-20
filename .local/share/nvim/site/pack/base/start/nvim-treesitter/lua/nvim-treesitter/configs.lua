@@ -1,6 +1,7 @@
 local api = vim.api
 
 local queries = require'nvim-treesitter.query'
+local ts_query = require'vim.treesitter.query'
 local parsers = require'nvim-treesitter.parsers'
 local utils = require'nvim-treesitter.utils'
 local caching = require'nvim-treesitter.caching'
@@ -10,6 +11,7 @@ local M = {}
 local config = {
   modules = {},
   ensure_installed = {},
+  ignore_install = {},
   update_strategy = 'lockfile',
 }
 -- List of modules that need to be setup on initialization.
@@ -22,7 +24,8 @@ local builtin_modules = {
     enable = false,
     disable = {'markdown'}, -- FIXME(vigoux): markdown highlighting breaks everything for now
     custom_captures = {},
-    is_supported = queries.has_highlights
+    is_supported = queries.has_highlights,
+    additional_vim_regex_highlighting = false,
   },
   incremental_selection = {
     module_path = 'nvim-treesitter.incremental_selection',
@@ -187,11 +190,52 @@ end
 --        for vim.inspect (https://github.com/kikito/inspect.lua#optionsprocess)
 local function config_info(process_function)
   process_function = process_function or function(item, path)
-     if path[#path] == vim.inspect.METATABLE then return end
-     if path[#path] == "is_supported" then return end
-     return item
+    if path[#path] == vim.inspect.METATABLE then return end
+    if path[#path] == "is_supported" then return end
+    return item
   end
   print(vim.inspect(config, {process = process_function}))
+end
+
+function M.edit_query_file(query_group, lang)
+  lang = lang or parsers.get_buf_lang()
+  local files = ts_query.get_query_files(lang, query_group, true)
+  if #files == 0 then
+    vim.notify('No query file found! Creating a new one!')
+    M.edit_query_file_user_after(query_group, lang)
+  elseif #files == 1 then
+    vim.cmd(':edit '..files[1])
+  else
+    local counter = 0
+    local choices = {
+      'Select a file:',
+      unpack(vim.tbl_map(function(f)
+          counter = counter + 1
+          return counter..'. '..f
+        end,
+        files
+      ))
+    }
+    local choice = vim.fn.inputlist(choices)
+    if choice > 0 and choice <= #files then
+      vim.cmd(':edit '..files[choice])
+    end
+  end
+end
+
+function M.edit_query_file_user_after(query_group, lang)
+  lang = lang or parsers.get_buf_lang()
+  local folder = utils.join_path(vim.fn.stdpath('config'), 'after', 'queries', lang)
+  local file = utils.join_path(folder, query_group..'.scm')
+  if vim.fn.isdirectory(folder) ~= 1 then
+    local choice = vim.fn.inputlist({'"'..folder.." does not exist. Create it?", "1. Yes", "2. No"})
+    if choice == 1 then
+      vim.fn.mkdir(folder, "p", "0755")
+    else
+      return
+    end
+  end
+  vim.cmd(':edit '..file)
 end
 
 M.commands = {
@@ -243,6 +287,20 @@ M.commands = {
       "-nargs=0",
     },
   },
+  TSEditQuery = {
+    run = M.edit_query_file,
+    args = {
+      "-nargs=+",
+      "-complete=custom,nvim_treesitter#available_query_groups",
+    },
+  },
+  TSEditQueryUserAfter = {
+    run = M.edit_query_file_user_after,
+    args = {
+      "-nargs=+",
+      "-complete=custom,nvim_treesitter#available_query_groups",
+    },
+  },
 }
 
 -- @param mod: module (string)
@@ -270,6 +328,7 @@ end
 -- @param user_data module overrides
 function M.setup(user_data)
   config.modules = vim.tbl_deep_extend('force', config.modules, user_data)
+  config.ignore_install = user_data.ignore_install or {}
 
   local ensure_installed = user_data.ensure_installed or {}
   if #ensure_installed > 0 then
@@ -346,8 +405,8 @@ function M.attach_module(mod_name, bufnr, lang)
   local resolved_mod = resolve_module(mod_name)
 
   if resolved_mod
-      and not attached_buffers_by_module.has(mod_name, bufnr)
-      and M.is_enabled(mod_name, lang) then
+    and not attached_buffers_by_module.has(mod_name, bufnr)
+    and M.is_enabled(mod_name, lang) then
     attached_buffers_by_module.set(mod_name, bufnr, true)
     resolved_mod.attach(bufnr, lang)
   end
@@ -393,7 +452,7 @@ end
 function M.is_module(mod)
   return type(mod) == 'table'
     and ((type(mod.attach) == 'function' and type(mod.detach) == 'function')
-      or type(mod.module_path) == 'string')
+    or type(mod.module_path) == 'string')
 end
 
 -- Initializes built-in modules and any queued modules
@@ -409,6 +468,10 @@ end
 
 function M.get_update_strategy()
   return config.update_strategy
+end
+
+function M.get_ignored_parser_installs()
+  return config.ignore_install or {}
 end
 
 return M

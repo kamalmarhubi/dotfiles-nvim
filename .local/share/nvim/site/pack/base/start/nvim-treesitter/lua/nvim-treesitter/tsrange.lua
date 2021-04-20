@@ -3,11 +3,11 @@ local TSRange = {}
 TSRange.__index = TSRange
 
 local api = vim.api
-local parsers = require'nvim-treesitter.parsers'
+local ts_utils = require'nvim-treesitter.ts_utils'
 
 local function get_byte_offset(buf, row, col)
   return api.nvim_buf_get_offset(buf, row)
-         + vim.fn.byteidx(api.nvim_buf_get_lines(buf, row, row + 1, false), col)
+    + vim.fn.byteidx(api.nvim_buf_get_lines(buf, row, row + 1, false), col)
 end
 
 function TSRange.new(buf, start_row, start_col, end_row, end_col)
@@ -55,10 +55,12 @@ function TSRange.from_table(buf, range)
     TSRange)
 end
 
-function TSRange:parent(range)
-  local parser = parsers.get_parser(self.buf, parsers.get_buf_lang(range))
-  local root = parser:parse()[1]:root()
-  return root:named_descendant_for_range(self.start_pos[1], self.start_pos[2], self.end_pos[1], self.end_pos[2])
+function TSRange:parent()
+  local root = ts_utils.get_root_for_position(self[1], self[2])
+
+  return root
+    and root:named_descendant_for_range(self.start_pos[1], self.start_pos[2], self.end_pos[1], self.end_pos[2])
+    or nil
 end
 
 function TSRange:field()

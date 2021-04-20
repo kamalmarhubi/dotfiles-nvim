@@ -1,4 +1,4 @@
-; inherits: javascript
+; inherits: ecma
 [
 "abstract"
 "declare"
@@ -12,9 +12,8 @@
 "protected"
 "public"
 "type"
+"readonly"
 ] @keyword
-
-(readonly) @keyword
 
 ; types
 

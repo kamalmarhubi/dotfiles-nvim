@@ -7,6 +7,8 @@ local caching = require'nvim-treesitter.caching'
 
 local M = {}
 
+local EMPTY_ITER = function() end
+
 M.built_in_query_groups = {'highlights', 'locals', 'folds', 'indents'}
 
 -- Creates a function that checks whether a given query exists
@@ -21,13 +23,26 @@ for _, query in ipairs(M.built_in_query_groups) do
   M["has_" .. query] = get_query_guard(query)
 end
 
+function M.available_query_groups()
+  local query_files = api.nvim_get_runtime_file('queries/*/*.scm', true)
+  local groups = {}
+  for _, f in ipairs(query_files) do
+    groups[vim.fn.fnamemodify(f, ':t:r')] = true
+  end
+  local list = {}
+  for k, _ in pairs(groups) do
+    table.insert(list, k)
+  end
+  return list
+end
+
 do
   local query_cache = caching.create_buffer_cache()
 
   local function update_cached_matches(bufnr, changed_tick, query_group)
     query_cache.set(query_group, bufnr, {
-        tick = changed_tick,
-        cache= M.collect_group_results(bufnr, query_group) or {}
+      tick = changed_tick,
+      cache= M.collect_group_results(bufnr, query_group) or {}
     })
   end
 
@@ -66,27 +81,27 @@ do
   --- Same as `vim.treesitter.query` except will return cached values
   function M.get_query(lang, query_name)
     if cache[lang][query_name] == nil then
-      M.reload_file_cache(lang, query_name)
+      cache[lang][query_name] = tsq.get_query(lang, query_name)
     end
 
     return cache[lang][query_name]
   end
 
-  --- Reloads the query file cache.
+  --- Invalidates the query file cache.
   --- If lang and query_name is both present, will reload for only the lang and query_name.
   --- If only lang is present, will reload all query_names for that lang
   --- If none are present, will reload everything
-  function M.reload_file_cache(lang, query_name)
+  function M.invalidate_query_cache(lang, query_name)
     if lang and query_name then
-      cache[lang][query_name] = tsq.get_query(lang, query_name)
+      cache[lang][query_name] = nil
     elseif lang and not query_name then
       for query_name, _ in pairs(cache[lang]) do
-        M.reload_file_cache(lang, query_name)
+        M.invalidate_query_cache(lang, query_name)
       end
     elseif not lang and not query_name then
       for lang, _ in pairs(cache) do
         for query_name, _ in pairs(cache[lang]) do
-          M.reload_file_cache(lang, query_name)
+          M.invalidate_query_cache(lang, query_name)
         end
       end
     else
@@ -96,9 +111,9 @@ do
 end
 
 --- This function is meant for an autocommand and not to be used. Only use if file is a query file.
-function M.reload_file_cache_on_write(fname)
+function M.invalidate_query_file(fname)
   local fnamemodify = vim.fn.fnamemodify
-  M.reload_file_cache(fnamemodify(fname, ':p:h:t'), fnamemodify(fname, ':t:r'))
+  M.invalidate_query_cache(fnamemodify(fname, ':p:h:t'), fnamemodify(fname, ':t:r'))
 end
 
 function M.iter_prepared_matches(query, qnode, bufnr, start_row, end_row)
@@ -152,7 +167,7 @@ function M.iter_prepared_matches(query, qnode, bufnr, start_row, end_row)
           end
           if pred[1] == "make-range!" and type(pred[2]) == "string" and #pred == 4 then
             insert_to_path(prepared_match, split(pred[2]..'.node'),
-                           tsrange.TSRange.from_nodes(bufnr, match[pred[3]], match[pred[4]]))
+              tsrange.TSRange.from_nodes(bufnr, match[pred[3]], match[pred[4]]))
           end
         end
       end
@@ -166,82 +181,130 @@ end
 --- Return all nodes corresponding to a specific capture path (like @definition.var, @reference.type)
 -- Works like M.get_references or M.get_scopes except you can choose the capture
 -- Can also be a nested capture like @definition.function to get all nodes defining a function
-function M.get_capture_matches(bufnr, capture_string, query_group)
-    if not string.sub(capture_string, 1,2) == '@' then
-      print('capture_string must start with "@"')
-      return
+function M.get_capture_matches(bufnr, capture_string, query_group, root, lang)
+  if not string.sub(capture_string, 1, 1) == '@' then
+    print('capture_string must start with "@"')
+    return
+  end
+
+  --remove leading "@"
+  capture_string = string.sub(capture_string, 2)
+
+  local matches = {}
+  for match in M.iter_group_results(bufnr, query_group, root, lang) do
+    local insert = utils.get_at_path(match, capture_string)
+
+    if insert then
+      table.insert(matches, insert)
     end
-
-    --remove leading "@"
-    capture_string = string.sub(capture_string, 2)
-
-    local matches = {}
-    for match in M.iter_group_results(bufnr, query_group) do
-      local insert = utils.get_at_path(match, capture_string)
-
-      if insert then
-        table.insert(matches, insert)
-      end
-    end
-    return matches
+  end
+  return matches
 end
 
-function M.find_best_match(bufnr, capture_string, query_group, filter_predicate, scoring_function)
-    if not string.sub(capture_string, 1,2) == '@' then
-      api.nvim_err_writeln('capture_string must start with "@"')
-      return
-    end
-
+function M.find_best_match(bufnr, capture_string, query_group, filter_predicate, scoring_function, root)
+  if string.sub(capture_string, 1, 1) == '@' then
     --remove leading "@"
     capture_string = string.sub(capture_string, 2)
+  end
 
-    local best
-    local best_score
+  local best
+  local best_score
 
-    for maybe_match in M.iter_group_results(bufnr, query_group) do
-      local match = utils.get_at_path(maybe_match, capture_string)
+  for maybe_match in M.iter_group_results(bufnr, query_group, root) do
+    local match = utils.get_at_path(maybe_match, capture_string)
 
-      if match and filter_predicate(match) then
-        local current_score = scoring_function(match)
-        if not best then
-          best = match
-          best_score = current_score
-        end
-        if current_score > best_score then
-          best = match
-          best_score = current_score
-        end
+    if match and filter_predicate(match) then
+      local current_score = scoring_function(match)
+      if not best then
+        best = match
+        best_score = current_score
+      end
+      if current_score > best_score then
+        best = match
+        best_score = current_score
       end
     end
-    return best
+  end
+  return best
 end
 
 -- Iterates matches from a query file.
 -- @param bufnr the buffer
 -- @param query_group the query file to use
 -- @param root the root node
-function M.iter_group_results(bufnr, query_group, root)
-  local lang = parsers.get_buf_lang(bufnr)
-  if not lang then return function() end end
+-- @param root the root node lang, if known
+function M.iter_group_results(bufnr, query_group, root, root_lang)
+  local buf_lang = parsers.get_buf_lang(bufnr)
 
-  local query = M.get_query(lang, query_group)
-  if not query then return function() end end
+  if not buf_lang then return EMPTY_ITER end
 
-  local parser = parsers.get_parser(bufnr, lang)
-  if not parser then return function() end end
+  local parser = parsers.get_parser(bufnr, buf_lang)
+  if not parser then return EMPTY_ITER end
 
-  local root = root or parser:parse()[1]:root()
-  local start_row, _, end_row, _ = root:range()
+  if not root then
+    local first_tree = parser:trees()[1]
+
+    if first_tree then
+      root = first_tree:root()
+    end
+  end
+
+  if not root then return EMPTY_ITER end
+
+  local range = {root:range()}
+
+  if not root_lang then
+    local lang_tree = parser:language_for_range(range)
+
+    if lang_tree then
+      root_lang = lang_tree:lang()
+    end
+  end
+
+  if not root_lang then return EMPTY_ITER end
+
+  local query = M.get_query(root_lang, query_group)
+  if not query then return EMPTY_ITER end
 
   -- The end row is exclusive so we need to add 1 to it.
-  return M.iter_prepared_matches(query, root, bufnr, start_row, end_row + 1)
+  return M.iter_prepared_matches(query, root, bufnr, range[1], range[3] + 1)
 end
 
-function M.collect_group_results(bufnr, query_group, root)
+function M.collect_group_results(bufnr, query_group, root, lang)
   local matches = {}
 
-  for prepared_match in M.iter_group_results(bufnr, query_group, root) do
+  for prepared_match in M.iter_group_results(bufnr, query_group, root, lang) do
     table.insert(matches, prepared_match)
+  end
+
+  return matches
+end
+
+--- Same as get_capture_matches except this will recursively get matches for every language in the tree.
+-- @param bufnr The bufnr
+-- @param capture_or_fn The capture to get. If a function is provided then that
+--                      function will be used to resolve both the capture and query argument.
+--                      The function can return `nil` to ignore that tree.
+-- @param query_type The query to get the capture from. This is ignore if a function is provided
+--                   for the captuer argument.
+function M.get_capture_matches_recursively(bufnr, capture_or_fn, query_type)
+  local type_fn = type(capture_or_fn) == 'function'
+    and capture_or_fn
+    or function()
+      return capture_or_fn, query_type
+    end
+  local parser = parsers.get_parser(bufnr)
+  local matches = {}
+
+  if parser then
+    parser:for_each_tree(function(tree, lang_tree)
+      local lang = lang_tree:lang()
+      local capture, type_ = type_fn(lang, tree, lang_tree)
+
+      if capture then
+        vim.list_extend(matches, M.get_capture_matches(bufnr, capture, type_, tree:root(), lang))
+      end
+    end)
   end
 
   return matches

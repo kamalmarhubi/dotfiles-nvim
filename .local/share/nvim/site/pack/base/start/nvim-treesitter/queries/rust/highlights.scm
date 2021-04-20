@@ -4,6 +4,7 @@
 
 ; Identifier conventions
 
+(identifier) @variable
 ; Assume all-caps names are constants
 ((identifier) @constant
  (#vim-match? @constant "^[A-Z][A-Z\\d_]+$'"))
@@ -120,9 +121,11 @@
 "::"
 "."
 ";"
+","
  ] @punctuation.delimiter
 
 (parameter (identifier) @parameter)
+(closure_parameters (_) @parameter)
 
 (lifetime (identifier) @label)
 
@@ -236,6 +239,7 @@
 "@"
 ".."
 "..="
+"?"
 ] @operator
 
 (closure_parameters "|" @operator "|" @operator)

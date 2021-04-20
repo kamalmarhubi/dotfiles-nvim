@@ -7,7 +7,7 @@ endif
 augroup NvimTreesitter
   " on every query file write we want to set an autocommand that will reload the cache
   autocmd FileType query
-      \ autocmd! NvimTreesitter BufWritePost <buffer> call v:lua.require('nvim-treesitter.query').reload_file_cache_on_write(expand('%:p'))
+      \ autocmd! NvimTreesitter BufWritePost <buffer> call v:lua.require('nvim-treesitter.query').invalidate_query_file(expand('%:p'))
 augroup END
 
 let g:loaded_nvim_treesitter = 1
@@ -54,6 +54,7 @@ highlight default link TSConstructor Special
 highlight default link TSAnnotation PreProc
 highlight default link TSAttribute PreProc
 highlight default link TSNamespace Include
+highlight default link TSSymbol Identifier
 
 highlight default link TSConditional Conditional
 highlight default link TSRepeat Repeat
@@ -75,9 +76,17 @@ highlight default TSStrong term=bold cterm=bold gui=bold
 highlight default TSEmphasis term=italic cterm=italic gui=italic
 highlight default TSUnderline term=underline cterm=underline gui=underline
 highlight default TSStrike term=strikethrough cterm=strikethrough gui=strikethrough
+highlight default link TSMath Special
+highlight default link TSTextReference Constant
+highlight default link TSEnviroment Macro
+highlight default link TSEnviromentName Type
 highlight default link TSTitle Title
 highlight default link TSLiteral String
 highlight default link TSURI Underlined
+
+highlight default link TSNote SpecialComment
+highlight default link TSWarning Todo
+highlight default link TSDanger WarningMsg
 
 highlight default link TSTag Label
 highlight default link TSTagDelimiter Delimiter

@@ -8,11 +8,11 @@ function M.setup_commands(mod, commands)
   for command_name, def in pairs(commands) do
     local call_fn = string.format("lua require'nvim-treesitter.%s'.commands.%s.run(<f-args>)", mod, command_name)
     local parts = vim.tbl_flatten({
-        "command!",
-        def.args,
-        command_name,
-        call_fn,
-      })
+      "command!",
+      def.args,
+      command_name,
+      call_fn,
+    })
     api.nvim_command(table.concat(parts, " "))
   end
 end
@@ -111,6 +111,7 @@ end
 -- @param path the '.' separated path
 -- @returns the value at path or nil
 function M.get_at_path(tbl, path)
+  if path == '' then return tbl end
   local segments = vim.split(path, '.', true)
   local result = tbl
 
@@ -139,6 +140,43 @@ function M.index_of(tbl, obj)
       return i
     end
   end
+end
+
+-- Filters a list based on the given predicate
+-- @param tbl The list to filter
+-- @param predicate The predicate to filter with
+function M.filter(tbl, predicate)
+  local result = {}
+
+  for i, v in ipairs(tbl) do
+    if predicate(v, i) then
+      table.insert(result, v)
+    end
+  end
+
+  return result
+end
+
+-- Returns a list of all values from the first list
+-- that are not present in the second list.
+-- @params tbl1 The first table
+-- @params tbl2 The second table
+function M.difference(tbl1, tbl2)
+  return M.filter(tbl1, function(v)
+    return not vim.tbl_contains(tbl2, v)
+  end)
+end
+
+function M.identity(a)
+  return a
+end
+
+function M.constant(a)
+  return function() return a end
+end
+
+function M.to_func(a)
+  return type(a) == 'function' and a or M.constant(a)
 end
 
 return M

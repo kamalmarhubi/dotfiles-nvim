@@ -18,6 +18,9 @@
 ((identifier) @constant
  (#vim-match? @constant "^[A-Z][A-Z\\d_]+$"))
 
+(const_spec
+  name: (identifier) @constant)
+
 ; Function calls
 
 (call_expression
@@ -101,6 +104,19 @@
 "switch" @conditional
 "type" @keyword
 "var" @keyword
+
+
+;; Builtin types
+
+((type_identifier) @type.builtin
+ (#match? @type.builtin "^(bool|byte|complex128|complex64|error|float32|float64|int|int16|int32|int64|int8|rune|string|uint|uint16|uint32|uint64|uint8|uintptr)$"))
+
+
+;; Builtin functions
+
+((identifier) @function.builtin
+ (#match? @function.builtin "^(append|cap|close|complex|copy|delete|imag|len|make|new|panic|print|println|real|recover)$"))
+
 
 ; Delimiters
 

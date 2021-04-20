@@ -68,7 +68,7 @@
 ; Constants
 ;----------
 
-(boolean) @constant
+[(boolean) (unit)] @constant
 
 [(number) (signed_number)] @number
 
@@ -80,31 +80,10 @@
 
 (escape_sequence) @string.escape
 
-(conversion_specification) @punctuation.special
-
-; Operators
-;----------
-
-(match_expression (match_operator) @keyword)
-
-(value_definition [(let_operator) (and_operator)] @keyword)
-
 [
-  (prefix_operator)
-  (infix_operator)
-  (indexing_operator)
-  (let_operator)
-  (and_operator)
-  (match_operator)
-] @operator
-
-(prefix_operator "!" @operator)
-
-(infix_operator ["&" "+" "-" "=" ">" "|" "%"] @operator)
-
-(signed_number ["+" "-"] @operator)
-
-["*" "#" "::" "<-"] @operator
+  (conversion_specification)
+  (pretty_printing_indication)
+] @punctuation.special
 
 ; Keywords
 ;---------
@@ -146,6 +125,31 @@
   "," "." ";" ":" "=" "|" "~" "?" "+" "-" "!" ">" "&"
   "->" ";;" ":>" "+=" ":=" ".."
 ] @punctuation.delimiter
+
+; Operators
+;----------
+
+[
+  (prefix_operator)
+  (infix_operator)
+  (indexing_operator)
+  (let_operator)
+  (and_operator)
+  (match_operator)
+] @operator
+
+(match_expression (match_operator) @keyword)
+
+(value_definition [(let_operator) (and_operator)] @keyword)
+
+;; TODO: this is an error now
+;(prefix_operator "!" @operator)
+
+(infix_operator ["&" "+" "-" "=" ">" "|" "%"] @operator)
+
+(signed_number ["+" "-"] @operator)
+
+["*" "#" "::" "<-"] @operator
 
 ; Attributes
 ;-----------

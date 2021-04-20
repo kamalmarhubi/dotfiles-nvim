@@ -1,1 +1,3 @@
-((ocaml) @ocaml)
+(ocaml) @ocaml
+
+(comment) @comment

@@ -23,6 +23,10 @@
    left: (expression_list
            (identifier) @definition.var)))
 
+(const_declaration
+ (const_spec
+  name: (identifier) @definition.var))
+
 (type_declaration 
   (type_spec
     name: (type_identifier) @definition.type))
@@ -36,6 +40,10 @@
 
 (package_clause
    (package_identifier) @definition.namespace)
+
+(import_spec_list
+  (import_spec
+    name: (package_identifier) @definition.namespace))
 
 ;; Call references
 ((call_expression

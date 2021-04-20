@@ -28,7 +28,7 @@ jobs:
 
       - name: Update parsers
         env:
-          SKIP_LOCKFILE_UPDATE_FOR_LANGS: tsx,typescript,javascript # HACK: remove as soon tsx,typescript get updated
+          SKIP_LOCKFILE_UPDATE_FOR_LANGS: verilog
         run: |
           ./nvim.appimage --headless -c "luafile ./scripts/write-lockfile.lua" -c "q"
           # Pretty print

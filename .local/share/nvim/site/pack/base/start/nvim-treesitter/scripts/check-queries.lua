@@ -21,28 +21,38 @@ local function extract_captures()
 end
 
 local function do_check()
-  local parsers = require 'nvim-treesitter.parsers'.available_parsers()
+  local parsers = require 'nvim-treesitter.info'.installed_parsers()
   local queries = require 'nvim-treesitter.query'
   local query_types = queries.built_in_query_groups
 
   local captures = extract_captures()
+  local last_error
 
   for _, lang in pairs(parsers) do
     for _, query_type in pairs(query_types) do
       print('Checking '..lang..' '..query_type)
-      local query = queries.get_query(lang, query_type)
-
-      if query then
-        for _, capture in ipairs(query.captures) do
-          if not vim.startswith(capture, "_") -- We ignore things like _helper
-            and captures[query_type]
-            and not capture:find("^[A-Z]") -- Highlight groups
-            and not vim.tbl_contains(captures[query_type], capture) then
-            error(string.format("Invalid capture @%s in %s for %s.", capture, query_type, lang))
+      local ok, query = pcall(queries.get_query,lang, query_type)
+      if not ok then
+        vim.api.nvim_err_writeln(query)
+        last_error = query
+      else
+        if query then
+          for _, capture in ipairs(query.captures) do
+            if not vim.startswith(capture, "_") -- We ignore things like _helper
+              and captures[query_type]
+              and not capture:find("^[A-Z]") -- Highlight groups
+              and not vim.tbl_contains(captures[query_type], capture) then
+              error(string.format("Invalid capture @%s in %s for %s.", capture, query_type, lang))
+            end
           end
         end
       end
     end
+  end
+  if last_error then
+    print()
+    print("Last error: ")
+    error(last_error)
   end
 end
 

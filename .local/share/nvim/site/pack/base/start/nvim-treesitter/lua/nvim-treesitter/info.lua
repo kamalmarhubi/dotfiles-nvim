@@ -21,56 +21,113 @@ local function install_info()
   end
 end
 
-local function print_info_module(sorted_languages, mod)
-  local max_str_len = #sorted_languages[1]
-  local header = string.format('%s%s', string.rep(' ', max_str_len + 2), mod)
-  api.nvim_out_write(header..'\n')
-  for _, lang in pairs(sorted_languages) do
-    local padding = string.rep(' ', max_str_len - #lang + #mod / 2 + 1)
-    api.nvim_out_write(lang..":"..padding)
-    if configs.is_enabled(mod, lang) then
-      api.nvim_out_write('✓')
-    else
-      api.nvim_out_write('✗')
-    end
-    api.nvim_out_write('\n')
-  end
-end
-
-local function print_info_modules(sorted_languages)
-  local max_str_len = #sorted_languages[1]
-  local header = string.rep(' ', max_str_len + 2)
-  for _, mod in pairs(configs.available_modules()) do
-    header = string.format('%s%s ', header, mod)
-  end
-  api.nvim_out_write(header..'\n')
-
-  for _, lang in pairs(sorted_languages) do
-    local padding = string.rep(' ', max_str_len - #lang)
-    api.nvim_out_write(lang..":"..padding)
-
-    for _, mod in pairs(configs.available_modules()) do
-      local pad_len = #mod / 2 + 1
-      api.nvim_out_write(string.rep(' ', pad_len))
-
-      if configs.is_enabled(mod, lang) then
-        api.nvim_out_write('✓')
-      else
-        api.nvim_out_write('✗')
+-- Sort a list of modules into namespaces.
+-- {'mod1', 'mod2.sub1', 'mod2.sub2', 'mod3'}
+-- ->
+-- { default = {'mod1', 'mod3'}, mod2 = {'sub1', 'sub2'}}
+local function namespace_modules(modulelist)
+  local modules = {}
+  for _, module in ipairs(modulelist) do
+    if module:find('%.') then
+      local namespace, submodule = module:match('^(.*)%.(.*)$')
+      if not modules[namespace] then
+        modules[namespace] = {}
       end
-      api.nvim_out_write(string.rep(' ', pad_len - 1))
+      table.insert(modules[namespace], submodule)
+    else
+      if not modules.default then
+        modules.default = {}
+      end
+      table.insert(modules.default, module)
     end
-    api.nvim_out_write('\n')
   end
+  return modules
 end
 
-local function module_info(mod)
-  if mod and not configs.get_module(mod) then return end
+local function longest_string_length(list)
+  local length = 0
+  for _, value in ipairs(list) do
+    if #value > length then
+      length = #value
+    end
+  end
+  return length
+end
+
+local function append_module_table(curbuf, parserlist, namespace, modulelist)
+  local maxlen_parser = longest_string_length(parserlist)
+  table.sort(modulelist)
+
+  -- header
+  local header = '>> ' .. namespace .. string.rep(' ', maxlen_parser - #namespace - 1)
+  for _, module in pairs(modulelist) do
+    header = header .. module .. '  '
+  end
+  api.nvim_buf_set_lines(curbuf, -1, -1, true, {header})
+
+  -- actual table
+  for _, parser in ipairs(parserlist) do
+    local padding = string.rep(' ', maxlen_parser - #parser + 2)
+    local line = parser ..  padding
+    local namespace_prefix = (namespace == 'default') and '' or namespace .. '.'
+    for _, module in pairs(modulelist) do
+      local modlen = #module
+      module = namespace_prefix .. module
+      if configs.is_enabled(module, parser) then
+        line = line .. '✓'
+      else
+        line = line .. '✗'
+      end
+      line = line .. string.rep(' ', modlen + 1)
+    end
+    api.nvim_buf_set_lines(curbuf, -1, -1, true, {line})
+  end
+
+  api.nvim_buf_set_lines(curbuf, -1, -1, true, {''})
+end
+
+local function print_info_modules(parserlist, module)
+  api.nvim_command('enew')
+  local curbuf = api.nvim_get_current_buf()
+
+  local modules
+  if module then
+    modules = namespace_modules({module})
+  else
+    modules = namespace_modules(configs.available_modules())
+  end
+
+  local namespaces = {}
+  for k, _ in pairs(modules) do table.insert(namespaces, k) end
+  table.sort(namespaces)
+
+  table.sort(parserlist)
+  for _, namespace in ipairs(namespaces) do
+    append_module_table(curbuf, parserlist, namespace, modules[namespace])
+  end
+
+  api.nvim_buf_set_option(curbuf, 'modified', false)
+  api.nvim_buf_set_option(curbuf, 'buftype', 'nofile')
+  api.nvim_exec([[
+    syntax match TSModuleInfoGood      /✓/
+    syntax match TSModuleInfoBad       /✗/
+    syntax match TSModuleInfoHeader    /^>>.*$/ contains=TSModuleInfoNamespace
+    syntax match TSModuleInfoNamespace /^>> \w*/ contained
+    syntax match TSModuleInfoParser    /^[^> ]*\ze /
+    highlight default TSModuleInfoGood guifg=LightGreen gui=bold
+    highlight default TSModuleInfoBad  guifg=Crimson
+    highlight default link TSModuleInfoHeader    Type
+    highlight default link TSModuleInfoNamespace Statement
+    highlight default link TSModuleInfoParser    Identifier
+  ]], false)
+end
+
+local function module_info(module)
+  if module and not configs.get_module(module) then return end
 
   local parserlist = parsers.available_parsers()
-  table.sort(parserlist, function(a, b) return #a > #b end)
-  if mod then
-    print_info_module(parserlist, mod)
+  if module then
+    print_info_modules(parserlist, module)
   else
     print_info_modules(parserlist)
   end

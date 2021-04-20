@@ -102,6 +102,8 @@
 
 ;; Keywords
 [
+ "this"
+ "override"
  "enum"
  "as"
  "class"
@@ -119,6 +121,8 @@
  "constructor"
  "throw"
 ] @keyword
+
+(null_literal) @keyword
 
 ; const etc.
 (property_modifier) @keyword

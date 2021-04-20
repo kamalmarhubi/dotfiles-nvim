@@ -143,6 +143,7 @@ effect on highlighting. We will work on improving highlighting in the near futur
 @type
 @type.builtin
 @namespace for identifiers referring to namespaces
+@symbol for identifiers referring to symbols
 @attribute for e.g. Python decorators
 ```
 
@@ -166,6 +167,14 @@ Mainly for markup languages.
 @text.title
 @text.literal
 @text.uri
+@text.math (e.g. for LaTeX math environments)
+@text.environment (e.g. for text environments of markup languages)
+@text.environment.name (e.g. for the name/the string indicating the type of text environment)
+@text.reference (for footnotes, text references, citations)
+
+@text.note
+@text.warning
+@text.danger
 ```
 
 #### Tags

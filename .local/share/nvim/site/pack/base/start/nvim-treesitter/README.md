@@ -101,6 +101,7 @@ All modules are disabled by default and need to be activated explicitly in your 
 lua <<EOF
 require'nvim-treesitter.configs'.setup {
   ensure_installed = "maintained", -- one of "all", "maintained" (parsers with maintainers), or a list of languages
+  ignore_install = { "javascript" }, -- List of parsers to ignore installing
   highlight = {
     enable = true,              -- false will disable the whole extension
     disable = { "c", "rust" },  -- list of language that will be disabled
@@ -133,9 +134,12 @@ We are looking for maintainers to add more parsers and to write query files for 
 <!--This section of the README is automatically updated by a CI job-->
 <!--parserinfo-->
 - [x] [bash](https://github.com/tree-sitter/tree-sitter-bash) (maintained by @TravonteD)
+- [x] [beancount](https://github.com/polarmutex/tree-sitter-beancount) (maintained by @polarmutex)
+- [x] [bibtex](https://github.com/latex-lsp/tree-sitter-bibtex) (maintained by @theHamsta by asking @clason)
 - [x] [c](https://github.com/tree-sitter/tree-sitter-c) (maintained by @vigoux)
 - [x] [c_sharp](https://github.com/tree-sitter/tree-sitter-c-sharp) (maintained by @svermeulen)
 - [x] [clojure](https://github.com/sogaiu/tree-sitter-clojure) (maintained by @sogaiu)
+- [x] [comment](https://github.com/stsewd/tree-sitter-comment) (maintained by @stsewd)
 - [x] [cpp](https://github.com/tree-sitter/tree-sitter-cpp) (maintained by @theHamsta)
 - [x] [css](https://github.com/tree-sitter/tree-sitter-css) (maintained by @TravonteD)
 - [x] [dart](https://github.com/UserNobody14/tree-sitter-dart) (maintained by @Akin909)
@@ -143,7 +147,8 @@ We are looking for maintainers to add more parsers and to write query files for 
 - [ ] [elm](https://github.com/elm-tooling/tree-sitter-elm)
 - [x] [erlang](https://github.com/AbstractMachinesLab/tree-sitter-erlang) (maintained by @ostera)
 - [x] [fennel](https://github.com/travonted/tree-sitter-fennel) (maintained by @TravonteD)
-- [x] [Godot (gdscript)](https://github.com/PrestonKnopp/tree-sitter-gdscript) (maintained by not @tjdevries)
+- [x] [Godot (gdscript)](https://github.com/PrestonKnopp/tree-sitter-gdscript) (maintained by @Shatur95)
+- [x] [Glimmer and Ember](https://github.com/alexlafroscia/tree-sitter-glimmer) (maintained by @alexlafroscia)
 - [x] [go](https://github.com/tree-sitter/tree-sitter-go) (maintained by @theHamsta, @WinWisely268)
 - [x] [graphql](https://github.com/bkegley/tree-sitter-graphql) (maintained by @bkegley)
 - [ ] [haskell](https://github.com/tree-sitter/tree-sitter-haskell)
@@ -154,7 +159,8 @@ We are looking for maintainers to add more parsers and to write query files for 
 - [x] [json](https://github.com/tree-sitter/tree-sitter-json) (maintained by @steelsojka)
 - [x] [JSON with comments](https://gitlab.com/WhyNotHugo/tree-sitter-jsonc.git) (maintained by @WhyNotHugo)
 - [x] [julia](https://github.com/tree-sitter/tree-sitter-julia) (maintained by @mroavi, @theHamsta)
-- [x] [kotlin](https://github.com/QthCN/tree-sitter-kotlin) (maintained by @tormodatt)
+- [x] [kotlin](https://github.com/tormodatt/tree-sitter-kotlin) (maintained by @tormodatt)
+- [x] [latex](https://github.com/latex-lsp/tree-sitter-latex) (maintained by @theHamsta by asking @clason)
 - [x] [ledger](https://github.com/cbarrete/tree-sitter-ledger) (maintained by @cbarrete)
 - [x] [lua](https://github.com/nvim-treesitter/tree-sitter-lua) (maintained by @vigoux)
 - [x] [nix](https://github.com/cstrahan/tree-sitter-nix) (maintained by @leo60228)
@@ -165,23 +171,26 @@ We are looking for maintainers to add more parsers and to write query files for 
 - [x] [python](https://github.com/tree-sitter/tree-sitter-python) (maintained by @stsewd, @theHamsta)
 - [x] [ql](https://github.com/tree-sitter/tree-sitter-ql) (maintained by @pwntester)
 - [x] [Tree-sitter query language](https://github.com/nvim-treesitter/tree-sitter-query) (maintained by @steelsojka)
+- [x] [r](https://github.com/r-lib/tree-sitter-r) (maintained by @jimhester)
 - [x] [regex](https://github.com/tree-sitter/tree-sitter-regex) (maintained by @theHamsta)
 - [x] [rst](https://github.com/stsewd/tree-sitter-rst) (maintained by @stsewd)
 - [x] [ruby](https://github.com/tree-sitter/tree-sitter-ruby) (maintained by @TravonteD)
 - [x] [rust](https://github.com/tree-sitter/tree-sitter-rust) (maintained by @vigoux)
 - [ ] [scala](https://github.com/tree-sitter/tree-sitter-scala)
+- [ ] [scss](https://github.com/elianiva/tree-sitter-scss)
 - [x] [sparql](https://github.com/BonaBeavis/tree-sitter-sparql) (maintained by @bonabeavis)
 - [x] [supercollider](https://github.com/madskjeldgaard/tree-sitter-supercollider) (maintained by @madskjeldgaard)
 - [x] [svelte](https://github.com/Himujjal/tree-sitter-svelte) (maintained by @elianiva)
 - [ ] [swift](https://github.com/tree-sitter/tree-sitter-swift)
 - [x] [teal](https://github.com/euclidianAce/tree-sitter-teal) (maintained by @euclidianAce)
 - [x] [toml](https://github.com/ikatyang/tree-sitter-toml) (maintained by @tk-shirasaka)
-- [ ] [tsx](https://github.com/tree-sitter/tree-sitter-typescript)
+- [x] [tsx](https://github.com/tree-sitter/tree-sitter-typescript) (maintained by @steelsojka)
 - [x] [turtle](https://github.com/BonaBeavis/tree-sitter-turtle) (maintained by @bonabeavis)
 - [x] [typescript](https://github.com/tree-sitter/tree-sitter-typescript) (maintained by @steelsojka)
 - [x] [verilog](https://github.com/tree-sitter/tree-sitter-verilog) (maintained by @zegervdv)
 - [x] [vue](https://github.com/ikatyang/tree-sitter-vue) (maintained by @WhyNotHugo)
-- [ ] [yaml](https://github.com/ikatyang/tree-sitter-yaml)
+- [x] [yaml](https://github.com/ikatyang/tree-sitter-yaml) (maintained by @stsewd)
+- [x] [zig](https://github.com/Himujjal/tree-sitter-zig) (maintained by @Himujjal)
 <!--parserinfo-->
 
 
@@ -246,7 +255,7 @@ EOF
 
 #### Folding
 
-Tree-sitter based folding.
+Tree-sitter based folding. *(Technically not a module because it's per windows and not per buffer.)*
 
 ```vim
 set foldmethod=expr

@@ -1,6 +1,6 @@
 local parsers = require'nvim-treesitter.parsers'
 local queries = require'nvim-treesitter.query'
-local utils = require'nvim-treesitter.ts_utils'
+local tsutils = require'nvim-treesitter.ts_utils'
 
 local M = {}
 
@@ -21,9 +21,9 @@ local function node_fmt(node)
   return tostring(node)
 end
 
-local get_indents = utils.memoize_by_buf_tick(function(bufnr)
+local get_indents = tsutils.memoize_by_buf_tick(function(bufnr, root, lang)
   local get_map = function(capture)
-    local matches = queries.get_capture_matches(bufnr, capture, 'indents') or {}
+    local matches = queries.get_capture_matches(bufnr, capture, 'indents', root, lang) or {}
     local map = {}
     for _, node in ipairs(matches) do
       map[tostring(node)] = true
@@ -37,37 +37,53 @@ local get_indents = utils.memoize_by_buf_tick(function(bufnr)
     returns = get_map('@return.node'),
     ignores = get_map('@ignore.node'),
   }
-end)
-
-local function get_indent_size()
-  return vim.bo.softtabstop > 0 and vim.bo.shiftwidth or vim.bo.tabstop
-end
+end, {
+  -- Memoize by bufnr and lang together.
+  key = function(bufnr, _, lang)
+    return tostring(bufnr) .. '_' .. lang
+  end
+})
 
 function M.get_indent(lnum)
   local parser = parsers.get_parser()
   if not parser or not lnum then return -1 end
 
-  local q = get_indents(vim.api.nvim_get_current_buf())
-  local root = parser:parse()[1]:root()
+  local root, _, lang_tree = tsutils.get_root_for_position(lnum, 0, parser)
+
+  -- Not likely, but just in case...
+  if not root then return 0 end
+
+  local q = get_indents(vim.api.nvim_get_current_buf(), root, lang_tree:lang())
   local node = get_node_at_line(root, lnum-1)
 
   local indent = 0
-  local indent_size = get_indent_size()
+  local indent_size = vim.fn.shiftwidth()
 
-  -- to get corret indetation when we land on an empty line (for instance by typing `o`), we try
+  -- to get correct indentation when we land on an empty line (for instance by typing `o`), we try
   -- to use indentation of previous nonblank line, this solves the issue also for languages that
   -- do not use @branch after blocks (e.g. Python)
   if not node then
     local prevnonblank = vim.fn.prevnonblank(lnum)
     if prevnonblank ~= lnum then
       local prev_node = get_node_at_line(root, prevnonblank-1)
-      -- we take that node only if ends before lnum, or else we would get incorrect indent
-      -- on <cr> in positions like e.g. `{|}` in C (| denotes cursor position)
-      local use_prev = prev_node and (prev_node:end_() < lnum-1)
+      -- get previous node in any case to avoid erroring
+      while not prev_node and prevnonblank-1 > 0 do
+        prevnonblank = vim.fn.prevnonblank(prevnonblank-1)
+        prev_node = get_node_at_line(root, prevnonblank-1)
+      end
+
       -- nodes can be marked @return to prevent using them
-      use_prev = use_prev and not q.returns[node_fmt(prev_node)]
-      if use_prev then
-        node = prev_node
+      if prev_node and not q.returns[node_fmt(prev_node)] then
+        local row = prev_node:start()
+        local end_row = prev_node:end_()
+
+        -- if the previous node is being constructed (like function() `o` in lua), or line is inside the node
+        -- we indent one more from the start of node, else we indent default
+        -- NOTE: this doesn't work for python which behave strangely
+        if prev_node:has_error() or lnum <= end_row then
+          return vim.fn.indent(row + 1) + indent_size
+        end
+        return vim.fn.indent(row + 1)
       end
     end
   end

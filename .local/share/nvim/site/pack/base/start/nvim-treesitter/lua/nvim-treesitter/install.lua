@@ -11,7 +11,7 @@ local shell = require'nvim-treesitter.shell_command_selectors'
 local M = {}
 local lockfile = {}
 
-M.compilers = { vim.fn.getenv('CC'), "cc", "gcc", "clang" }
+M.compilers = { vim.fn.getenv('CC'), "cc", "gcc", "clang", "cl" }
 
 local started_commands = 0
 local finished_commands = 0
@@ -28,12 +28,13 @@ end
 
 local function get_job_status()
   return "[nvim-treesitter] ["..finished_commands.."/"..started_commands
-                              ..(failed_commands > 0 and ", failed: "..failed_commands or "").."]"
+    ..(failed_commands > 0 and ", failed: "..failed_commands or "").."]"
 end
 
 local function get_revision(lang)
   if #lockfile == 0 then
-    lockfile = vim.fn.json_decode(vim.fn.readfile(utils.join_path(utils.get_package_path(), 'lockfile.json')))
+    local filename = utils.join_path(utils.get_package_path(), 'lockfile.json')
+    lockfile = vim.fn.filereadable(filename) == 1 and vim.fn.json_decode(vim.fn.readfile(filename)) or {}
   end
   return (lockfile[lang] and lockfile[lang].revision)
 end
@@ -53,7 +54,7 @@ local function outdated_parsers()
   return vim.tbl_filter(function(lang)
     return needs_update(lang)
   end,
-  info.installed_parsers())
+    info.installed_parsers())
 end
 
 function M.iter_cmd(cmd_list, i, lang, success_message)
@@ -76,7 +77,7 @@ function M.iter_cmd(cmd_list, i, lang, success_message)
       failed_commands = failed_commands + 1
       finished_commands = finished_commands + 1
       return api.nvim_err_writeln((attr.err or ("Failed to execute the following command:\n"..vim.inspect(attr)))
-                                   ..'\n'..vim.inspect(err))
+        ..'\n'..vim.inspect(err))
     end
   else
     local handle
@@ -93,13 +94,6 @@ function M.iter_cmd(cmd_list, i, lang, success_message)
 end
 
 local function get_command(cmd)
-  local ret = ''
-  if cmd.opts and cmd.opts.cwd then
-    ret = string.format('cd %s;\n', cmd.opts.cwd)
-  end
-
-  ret = string.format('%s%s ', ret, cmd.cmd)
-
   local options = ""
   if cmd.opts and cmd.opts.args then
     for _, opt in ipairs(cmd.opts.args) do
@@ -107,7 +101,11 @@ local function get_command(cmd)
     end
   end
 
-  return string.format('%s%s', ret, options)
+  local final = string.format('%s %s', cmd.cmd, options)
+  if cmd.opts and cmd.opts.cwd then
+    final = shell.make_directory_change_for_command(cmd.opts.cwd, final)
+  end
+  return final
 end
 
 local function iter_cmd_sync(cmd_list)
@@ -123,8 +121,8 @@ local function iter_cmd_sync(cmd_list)
       if vim.v.shell_error ~= 0 then
         print(ret)
         api.nvim_err_writeln((cmd.err and cmd.err..'\n' or '')
-                            .."Failed to execute the following command:\n"
-                            ..vim.inspect(cmd))
+          .."Failed to execute the following command:\n"
+          ..vim.inspect(cmd))
         return false
       end
     end
@@ -151,19 +149,34 @@ local function run_install(cache_folder, install_folder, lang, repo, with_sync, 
   if from_local_path then
     compile_location = repo.url
   else
-    compile_location = cache_folder..path_sep..(repo.location or project_name)
+    local repo_location = string.gsub(repo.location or project_name, '/', path_sep)
+    compile_location = cache_folder..path_sep..repo_location
   end
   local parser_lib_name = install_folder..path_sep..lang..".so"
 
+  if repo.requires_generate_from_grammar and vim.env.CI then
+    print("Skipping language "..lang.." on CI (requires npm)!")
+    return
+  end
+
+  generate_from_grammar = repo.requires_generate_from_grammar or generate_from_grammar
+
   if generate_from_grammar and vim.fn.executable('tree-sitter') ~= 1 then
     api.nvim_err_writeln('tree-sitter CLI not found: `tree-sitter` is not executable!')
+    if repo.requires_generate_from_grammar then
+      api.nvim_err_writeln('tree-sitter CLI is needed because `'..lang..'` is marked that it needs '
+                         ..'to be generated from the grammar definitions to be compatible with nvim!')
+    end
     return
+  end
+  if generate_from_grammar and vim.fn.executable('node') ~= 1 then
+    api.nvim_err_writeln('Node JS not found: `node` is not executable!')
   end
   local cc = shell.select_executable(M.compilers)
   if not cc then
     api.nvim_err_writeln('No C compiler found! "'
-                       ..table.concat(vim.tbl_filter(function(c) return type(c) == 'string' end, M.compilers), '", "')
-                       ..'" are not executable.')
+      ..table.concat(vim.tbl_filter(function(c) return type(c) == 'string' end, M.compilers), '", "')
+      ..'" are not executable.')
     return
   end
   local revision = configs.get_update_strategy() == 'lockfile' and get_revision(lang)
@@ -174,9 +187,26 @@ local function run_install(cache_folder, install_folder, lang, repo, with_sync, 
     vim.list_extend(command_list, shell.select_download_commands(repo, project_name, cache_folder, revision))
   end
   if generate_from_grammar then
+    if repo.generate_requires_npm then
+      if vim.fn.executable('npm') ~= 1 then
+        api.nvim_err_writeln('`'..lang..'` requires NPM to be installed from grammar.js')
+        return
+      end
+      vim.list_extend(command_list, {
+        {
+          cmd = 'npm',
+          info = 'Installing NPM dependencies of '..lang..' parser',
+          err = 'Error during `npm install` (required for parser generation of '..lang..' with npm dependencies)',
+          opts = {
+            args = {'install'},
+            cwd = compile_location
+          }
+        }
+      })
+    end
     vim.list_extend(command_list, {
       {
-        cmd = 'tree-sitter',
+        cmd = vim.fn.exepath('tree-sitter'),
         info = 'Generating source files from grammar.js...',
         err = 'Error during "tree-sitter generate"',
         opts = {
@@ -192,7 +222,7 @@ local function run_install(cache_folder, install_folder, lang, repo, with_sync, 
       info = 'Compiling...',
       err = 'Error during compilation',
       opts = {
-        args = vim.tbl_flatten(shell.select_compiler_args(repo)),
+        args = vim.tbl_flatten(shell.select_compiler_args(repo, cc)),
         cwd = compile_location
       }
     },
@@ -241,7 +271,13 @@ local function install_lang(lang, ask_reinstall, cache_folder, install_folder, w
   run_install(cache_folder, install_folder, lang, install_info, with_sync, generate_from_grammar)
 end
 
-local function install(with_sync, ask_reinstall, generate_from_grammar)
+local function install(options)
+  options = options or {}
+  local with_sync = options.with_sync
+  local ask_reinstall = options.ask_reinstall
+  local generate_from_grammar = options.generate_from_grammar
+  local exclude_configured_parsers = options.exclude_configured_parsers
+
   return function (...)
     if fn.executable('git') == 0 then
       return api.nvim_err_writeln('Git is required on your system to run this command')
@@ -266,6 +302,10 @@ local function install(with_sync, ask_reinstall, generate_from_grammar)
       ask = ask_reinstall
     end
 
+    if exclude_configured_parsers then
+      languages = utils.difference(languages, configs.get_ignored_parser_installs())
+    end
+
     if #languages > 1 then
       reset_progress_counter()
     end
@@ -280,16 +320,19 @@ function M.update(lang)
   M.lockfile = {}
   reset_progress_counter()
   if lang and lang ~= 'all' then
-    install(false, 'force')(lang)
+    install({ ask_reinstall = 'force' })(lang)
   else
     local parsers_to_update = configs.get_update_strategy() == 'lockfile'
-                              and outdated_parsers()
-                              or info.installed_parsers()
+      and outdated_parsers()
+      or info.installed_parsers()
     if #parsers_to_update == 0 then
       print('All parsers are up-to-date!')
     end
     for _, lang in pairs(parsers_to_update) do
-      install(false, 'force')(lang)
+      install({
+        ask_reinstall = 'force',
+        exclude_configured_parsers = true
+      })(lang)
     end
   end
 end
@@ -353,28 +396,28 @@ function M.write_lockfile(verbose, skip_langs)
     print(vim.inspect(lockfile))
   end
   vim.fn.writefile(vim.fn.split(vim.fn.json_encode(lockfile), '\n'),
-                   utils.join_path(utils.get_package_path(), "lockfile.json"))
+    utils.join_path(utils.get_package_path(), "lockfile.json"))
 end
 
-M.ensure_installed = install(false, false)
+M.ensure_installed = install({ exclude_configured_parsers = true })
 
 M.commands = {
   TSInstall = {
-    run = install(false, true),
+    run = install({ ask_reinstall = true }),
     args = {
       "-nargs=+",
       "-complete=custom,nvim_treesitter#installable_parsers",
     },
   },
   TSInstallFromGrammar = {
-    run = install(false, true, true),
+    run = install({ ask_reinstall = true, generate_from_grammar = true }),
     args = {
       "-nargs=+",
       "-complete=custom,nvim_treesitter#installable_parsers",
     },
   },
   TSInstallSync = {
-    run = install(true, true),
+    run = install({ with_sync = true, ask_reinstall = true }),
     args = {
       "-nargs=+",
       "-complete=custom,nvim_treesitter#installable_parsers",

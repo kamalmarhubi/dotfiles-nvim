@@ -83,6 +83,8 @@
   name: (identifier) @type)
 (class_declaration
   name: (identifier) @type)
+(record_declaration
+  name: (identifier) @type)
 (enum_declaration
   name: (identifier) @type)
 (constructor_declaration
@@ -97,6 +99,14 @@
 ((scoped_identifier
   scope: (identifier) @type)
   (#match? @type "^[A-Z]"))
+
+; Fields
+
+(field_declaration
+  declarator: (variable_declarator) @field)
+
+(field_access
+  field: (identifier) @field)
 
 [
 (boolean_type)
@@ -144,6 +154,7 @@
 "assert"
 "break"
 "class"
+"record"
 "continue"
 "default"
 "enum"
@@ -164,6 +175,7 @@
 "public"
 "requires"
 "return"
+"yield"
 "static"
 "strictfp"
 "synchronized"

@@ -8,6 +8,7 @@
   (match_expression)
   (tuple_expression)
   (match_arm)
+  (match_block)
   (if_let_expression)
   (call_expression)
   (assignment_expression)
@@ -26,3 +27,8 @@
   "{"
   "}"
 ] @branch
+
+[
+  (line_comment)
+  (raw_string_literal)
+] @ignore

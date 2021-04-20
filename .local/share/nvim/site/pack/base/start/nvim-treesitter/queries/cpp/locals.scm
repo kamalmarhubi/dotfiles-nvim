@@ -6,7 +6,6 @@
                 (identifier) @definition.parameter))
 (optional_parameter_declaration
   declarator: (identifier) @definition.parameter)
-
 ;; Class / struct defintions
 (class_specifier) @scope
 
@@ -56,7 +55,7 @@
 
 (function_declarator
   declarator: (scoped_identifier
-                name: (type_identifier) @definition.function)) @scope
+                name: (identifier) @definition.function)) @scope
 
 (field_declaration
         declarator: (function_declarator
@@ -69,6 +68,3 @@
   body: (_) @scope)
 
 (catch_clause) @scope
-
-(destructor_name
-  name: (_) @constructor)
