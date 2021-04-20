@@ -21,13 +21,24 @@ path.home = vim.loop.os_homedir()
 
 path.sep = (function()
   if jit then
-    if string.lower(jit.os) == 'linux' or string.lower(jit.os) == 'osx' then
+    local os = string.lower(jit.os)
+    if os == 'linux' or os == 'osx' or os == 'bsd' then
       return '/'
     else
       return '\\'
     end
   else
     return package.config:sub(1, 1)
+  end
+end)()
+
+path.root = (function()
+  if path.sep == '/' then return function() return '/' end
+  else
+    return function(base)
+      base = base or vim.loop.cwd()
+      return base:sub(1, 1) .. ':\\'
+    end
   end
 end)()
 
@@ -39,6 +50,60 @@ end
 
 local concat_paths = function(...)
   return table.concat({...}, path.sep)
+end
+
+local function is_root(pathname)
+  if path.sep == '\\' then
+    return string.match(pathname, '^[A-Z]:\\?$')
+  end
+  return pathname == '/'
+end
+
+local _split_by_separator = (function()
+    local formatted =  string.format("([^%s]+)", path.sep)
+    return function(filepath)
+        local t = {}
+        for str in string.gmatch(filepath, formatted) do
+            table.insert(t, str)
+        end
+        return t
+    end
+end)()
+
+local function _normalize_path(filename)
+  local out_file = filename
+
+  local has = string.find(filename, "..", 1, true)
+
+  if has then
+      local parts = _split_by_separator(filename)
+
+      local idx = 1
+      repeat
+          if parts[idx] == ".." then
+              table.remove(parts, idx)
+              table.remove(parts, idx - 1)
+              idx = idx - 2
+          end
+          idx = idx + 1
+      until idx > #parts
+
+      out_file = table.concat(parts, path.sep)
+  end
+
+  return out_file
+end
+
+
+local clean = function(pathname)
+  -- Remove double path seps, it's annoying
+  pathname = pathname:gsub(path.sep .. path.sep, path.sep)
+
+  -- Remove trailing path sep if not root
+  if not is_root(pathname) and pathname:sub(-1) == path.sep then
+    return pathname:sub(1, -2)
+  end
+  return pathname
 end
 
 -- S_IFCHR  = 0o020000  # character device
@@ -177,9 +242,9 @@ end
 
 function Path:absolute()
   if self:is_absolute() then
-    return self.filename
+    return _normalize_path(self.filename)
   else
-    return self._absolute or table.concat({self._cwd, self.filename}, self._sep)
+    return _normalize_path(self._absolute or table.concat({self._cwd, self.filename}, self._sep))
   end
 end
 
@@ -212,29 +277,32 @@ function Path:expand()
 end
 
 function Path:make_relative(cwd)
-  cwd = F.if_nil(cwd, self._cwd, cwd)
-  if self.filename:sub(1, #cwd) == cwd  then
-    local offset =  0
-    -- if  cwd does ends in the os separator, we need to take it off
-    if cwd:sub(#cwd, #cwd) ~= path.separator then
-      offset = 1
-    end
+  self.filename = clean(self.filename)
+  cwd = clean(F.if_nil(cwd, self._cwd, cwd))
 
-    self.filename = self.filename:sub(#cwd + 1 + offset, #self.filename)
+  if self.filename:sub(1, #cwd) == cwd then
+    if #self.filename == #cwd then
+      self.filename = "."
+    else
+      -- skip path separator, unless cwd is root
+      local offset = 2
+      if cwd:sub(-1) == path.sep then
+        offset = 1
+      end
+      self.filename = self.filename:sub(#cwd + offset, -1)
+    end
   end
 
   return self.filename
 end
 
 function Path:normalize(cwd)
-  cwd = F.if_nil(cwd, self._cwd, cwd)
   self:make_relative(cwd)
+
   -- Substitute home directory w/ "~"
   self.filename = self.filename:gsub("^" .. path.home, '~', 1)
-  -- Remove double path seps, it's annoying
-  self.filename = self.filename:gsub(path.sep .. path.sep, path.sep)
 
-  return self.filename
+  return _normalize_path(self.filename)
 end
 
 local shorten = (function()
@@ -314,6 +382,48 @@ function Path:rmdir()
   uv.fs_rmdir(self:absolute())
 end
 
+function Path:rename(opts)
+  opts = opts or {}
+  if not opts.new_name or opts.new_name == "" then
+    error("Please provide the new name!")
+  end
+
+    -- handles `.`, `..`, `./`, and `../`
+  if opts.new_name:match('^%.%.?/?\\?.+') then
+    opts.new_name = {
+      uv.fs_realpath(opts.new_name:sub(1, 3)),
+      opts.new_name:sub(4, #opts.new_name)
+    }
+  end
+
+  local new_path = Path:new(opts.new_name)
+
+  if new_path:exists() then
+    error('File or directory already exists!')
+  end
+
+  local status = uv.fs_rename(self:absolute(), new_path:absolute())
+  self.filename = new_path.filename
+
+  return status
+end
+
+function Path:copy(opts)
+  opts = opts or {}
+
+  -- handles `.`, `..`, `./`, and `../`
+  if opts.destination:match('^%.%.?/?\\?.+') then
+    opts.destination = {
+      uv.fs_realpath(opts.destination:sub(1, 3)),
+      opts.destination:sub(4, #opts.destination)
+    }
+  end
+
+  local dest = Path:new(opts.destination)
+
+  return uv.fs_copyfile(self:absolute(), dest:absolute(), { excl = true })
+end
+
 function Path:touch(opts)
   opts = opts or {}
 
@@ -327,7 +437,7 @@ function Path:touch(opts)
   end
 
   if parents then
-    Path:new(self:parents()):mkdir({ parents = true })
+    Path:new(self:parent()):mkdir({ parents = true })
   end
 
   local fd = uv.fs_open(self:_fs_filename(), "w", mode)
@@ -348,7 +458,7 @@ function Path:rm(opts)
     -- first unlink all files
     scan.scan_dir(abs, { hidden = true, on_insert = function(file) uv.fs_unlink(file) end})
 
-    local dirs = scan.scan_dir(abs, { add_dirs = true })
+    local dirs = scan.scan_dir(abs, { add_dirs = true, hidden = true })
     -- iterate backwards to clean up remaining dirs
     for i = #dirs, 1, -1 do
       uv.fs_rmdir(dirs[i])
@@ -385,8 +495,26 @@ function Path:_split()
   return vim.split(self:absolute(), self._sep)
 end
 
+local _get_parent = (function()
+  local formatted = string.format('^(.+)%s[^%s]+', path.sep, path.sep)
+  return function(abs_path)
+    return abs_path:match(formatted)
+  end
+end)()
+
+function Path:parent()
+  return _get_parent(self:absolute()) or path.root(self:absolute())
+end
+
 function Path:parents()
-  return self:absolute():match(string.format('^(.+)%s[^%s]+', self._sep, self._sep))
+  local results = {}
+  local cur = self:absolute()
+  repeat
+    cur = _get_parent(cur)
+    table.insert(results, cur)
+  until not cur
+  table.insert(results, path.root(self:absolute()))
+  return results
 end
 
 function Path:is_file()
@@ -459,7 +587,8 @@ function Path:head(lines)
   self = check_self(self)
   local chunk_size = 256
 
-  local fd = assert(uv.fs_open(self:expand(), "r", 438))
+  local fd = uv.fs_open(self:expand(), "r", 438)
+  if not fd then return end
   local stat = assert(uv.fs_fstat(fd))
   if stat.type ~= 'file' then return nil end
 
@@ -492,7 +621,8 @@ function Path:tail(lines)
   self = check_self(self)
   local chunk_size = 256
 
-  local fd = assert(uv.fs_open(self:expand(), "r", 438))
+  local fd = uv.fs_open(self:expand(), "r", 438)
+  if not fd then return end
   local stat = assert(uv.fs_fstat(fd))
   if stat.type ~= 'file' then return nil end
 

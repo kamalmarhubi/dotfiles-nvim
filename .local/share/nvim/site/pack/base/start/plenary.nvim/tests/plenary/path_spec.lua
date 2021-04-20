@@ -24,6 +24,11 @@ describe('Path', function()
       local p = Path:new { "./home/tj/" , sep = '/'}
       assert(not p:is_absolute(), "Is absolute")
     end)
+
+    it('will normalize the path', function()
+      local p = Path:new { "lua", "..", "README.md" , sep = '/'}
+      assert.are.same(p:absolute(), vim.fn.fnamemodify("README.md", ":p"))
+    end)
   end)
 
   it('can join paths by constructor or join path', function()
@@ -94,16 +99,60 @@ describe('Path', function()
   end)
 
   describe(':make_relative', function()
-    it('can take absoluate paths and make them relative to the cwd', function()
-      local absolute = vim.loop.cwd() .. '/lua/plenary/path.lua'
+    it('can take absolute paths and make them relative to the cwd', function()
+      local p = Path:new { 'lua', 'plenary', 'path.lua' }
+      local absolute = vim.loop.cwd() .. path.sep .. p.filename
       local relative = Path:new(absolute):make_relative()
-      assert.are.same(relative, 'lua/plenary/path.lua')
+      assert.are.same(relative, p.filename)
     end)
 
-    it('can take absoluate paths and make them relative to a given path', function()
-      local absolute = vim.loop.cwd() .. '/lua/plenary/path.lua'
-      local relative = Path:new(absolute):make_relative(vim.loop.cwd() .. '/lua')
-      assert.are.same(relative, 'plenary/path.lua')
+    it('can take absolute paths and make them relative to a given path', function()
+      local root = path.sep == "\\" and "c:\\" or "/"
+      local r = Path:new { root, 'home', 'prime' }
+      local p = Path:new { 'aoeu', 'agen.lua'}
+      local absolute = r.filename .. path.sep .. p.filename
+      local relative = Path:new(absolute):make_relative(r.filename)
+      assert.are.same(relative, p.filename)
+    end)
+
+    it('can take double separator absolute paths and make them relative to the cwd', function()
+      local p = Path:new { 'lua', 'plenary', 'path.lua' }
+      local absolute = vim.loop.cwd() .. path.sep .. path.sep .. p.filename
+      local relative = Path:new(absolute):make_relative()
+      assert.are.same(relative, p.filename)
+    end)
+
+    it('can take double separator absolute paths and make them relative to a given path', function()
+      local root = path.sep == "\\" and "c:\\" or "/"
+      local r = Path:new { root, 'home', 'prime' }
+      local p = Path:new { 'aoeu', 'agen.lua'}
+      local absolute = r.filename .. path.sep .. path.sep .. p.filename
+      local relative = Path:new(absolute):make_relative(r.filename)
+      assert.are.same(relative, p.filename)
+    end)
+
+    it('can take absolute paths and make them relative to a given path with trailing separator', function()
+      local root = path.sep == "\\" and "c:\\" or "/"
+      local r = Path:new { root, 'home', 'prime' }
+      local p = Path:new { 'aoeu', 'agen.lua'}
+      local absolute = r.filename .. path.sep .. p.filename
+      local relative = Path:new(absolute):make_relative(r.filename .. path.sep)
+      assert.are.same(relative, p.filename)
+    end)
+
+    it('can take absolute paths and make them relative to the root directory', function()
+      local root = path.sep == "\\" and "c:\\" or "/"
+      local p = Path:new { 'home', 'prime', 'aoeu', 'agen.lua'}
+      local absolute = root .. p.filename
+      local relative = Path:new(absolute):make_relative(root)
+      assert.are.same(relative, p.filename)
+    end)
+
+    it('can take absolute paths and make them relative to themselves', function()
+      local root = path.sep == "\\" and "c:\\" or "/"
+      local p = Path:new { root, 'home', 'prime', 'aoeu', 'agen.lua'}
+      local relative = Path:new(p.filename):make_relative(p.filename)
+      assert.are.same(relative, ".")
     end)
   end)
 
@@ -117,6 +166,12 @@ describe('Path', function()
     it('can take absolute paths with double seps'
       .. 'and make them relative with single seps', function()
       local orig = vim.loop.cwd() .. '/lua//plenary/path.lua'
+      local final = Path:new(orig):normalize()
+      assert.are.same(final, 'lua/plenary/path.lua')
+    end)
+
+    it('can remove the .. in paths', function()
+      local orig = 'lua//plenary/path.lua/foo/bar/../..'
       local final = Path:new(orig):normalize()
       assert.are.same(final, 'lua/plenary/path.lua')
     end)
@@ -193,15 +248,129 @@ describe('Path', function()
     it('does create dirs if nested in none existing dirs', function()
       local p1 = Path:new({ "nested", "nested2", "test_file.lua" })
       local p2 = Path:new({ "nested", "asdf", ".hidden" })
+      local d1 = Path:new({ "nested", "dir", ".hidden" })
       assert(pcall(p1.touch, p1, { parents = true }))
       assert(pcall(p2.touch, p2, { parents = true }))
+      assert(pcall(d1.mkdir, d1, { parents = true }))
       assert(p1:exists())
       assert(p2:exists())
+      assert(d1:exists())
 
       Path:new({ "nested" }):rm({ recursive = true })
       assert(not p1:exists())
       assert(not p2:exists())
+      assert(not d1:exists())
       assert(not Path:new({ "nested" }):exists())
+    end)
+  end)
+
+  describe('rename', function()
+    it('can rename a file', function()
+      local p = Path:new("a_random_filename.lua")
+      assert(pcall(p.touch, p))
+      assert(p:exists())
+
+      assert(pcall(p.rename, p, { new_name = "not_a_random_filename.lua" }))
+      assert.are.same("not_a_random_filename.lua", p.filename)
+
+      p:rm()
+    end)
+
+    it('can handle an invalid filename', function()
+      local p = Path:new("some_random_filename.lua")
+      assert(pcall(p.touch, p))
+      assert(p:exists())
+
+      assert(not pcall(p.rename, p, { new_name = "" }))
+      assert(not pcall(p.rename, p))
+      assert.are.same("some_random_filename.lua", p.filename)
+
+      p:rm()
+    end)
+
+    it('can move to parent dir', function()
+      local p = Path:new("some_random_filename.lua")
+      assert(pcall(p.touch, p))
+      assert(p:exists())
+
+      assert(pcall(p.rename, p, { new_name = "../some_random_filename.lua" }))
+      assert.are.same(vim.loop.fs_realpath(Path:new("../some_random_filename.lua"):absolute()), p:absolute())
+
+      p:rm()
+    end)
+
+    it('cannot rename to an existing filename', function()
+      local p1 = Path:new("a_random_filename.lua")
+      local p2 = Path:new("not_a_random_filename.lua")
+      assert(pcall(p1.touch, p1))
+      assert(pcall(p2.touch, p2))
+      assert(p1:exists())
+      assert(p2:exists())
+
+      assert(not pcall(p1.rename, p1, { new_name = "not_a_random_filename.lua" }))
+      assert.are.same(p1.filename, "a_random_filename.lua")
+
+      p1:rm()
+      p2:rm()
+    end)
+  end)
+
+  describe('copy', function()
+    it('can copy a file', function()
+      local p1 = Path:new("a_random_filename.rs")
+      local p2 = Path:new("not_a_random_filename.rs")
+      assert(pcall(p1.touch, p1))
+      assert(p1:exists())
+
+      assert(pcall(p1.copy, p1, { destination = "not_a_random_filename.rs" }))
+      assert.are.same(p1.filename, "a_random_filename.rs")
+      assert.are.same(p2.filename, "not_a_random_filename.rs")
+
+      p1:rm()
+      p2:rm()
+    end)
+
+    it('can copy to parent dir', function()
+      local p = Path:new("some_random_filename.lua")
+      assert(pcall(p.touch, p))
+      assert(p:exists())
+
+      assert(pcall(p.copy, p, { destination = "../some_random_filename.lua" }))
+      assert(pcall(p.exists, p))
+
+      p:rm()
+      Path:new(vim.loop.fs_realpath("../some_random_filename.lua")):rm()
+    end)
+
+    it('cannot copy a file if it\'s already exists' , function()
+      local p1 = Path:new("a_random_filename.rs")
+      local p2 = Path:new("not_a_random_filename.rs")
+      assert(pcall(p1.touch, p1))
+      assert(pcall(p2.touch, p2))
+      assert(p1:exists())
+      assert(p2:exists())
+
+      assert(pcall(p1.copy, p1, { destination = "not_a_random_filename.rs" }))
+      assert.are.same(p1.filename, "a_random_filename.rs")
+      assert.are.same(p2.filename, "not_a_random_filename.rs")
+
+      p1:rm()
+      p2:rm()
+    end)
+  end)
+
+  describe('parents', function()
+    it('should extract the ancestors of the path', function()
+      local p = Path:new(vim.loop.cwd())
+      local parents = p:parents()
+      assert(vim.tbl_islist(parents))
+      for _, parent in pairs(parents) do
+        assert.are.same(type(parent), 'string')
+      end
+    end)
+    it('should return itself if it corresponds to path.root', function()
+      local p = Path:new(Path.path.root(vim.loop.cwd()))
+      assert.are.same(p:parent(), p.filename)
     end)
   end)
 

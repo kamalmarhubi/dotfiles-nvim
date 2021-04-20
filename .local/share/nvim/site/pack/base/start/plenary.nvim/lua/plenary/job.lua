@@ -46,6 +46,15 @@ local shutdown_factory = function (child, options)
   end
 end
 
+local function expand(path)
+  if vim.in_fast_event() then
+    return assert(uv.fs_realpath(path), string.format("Path must be valid: %s", path))
+  else
+    -- TODO: Probably want to check that this is valid here... otherwise that's weird.
+    return vim.fn.expand(path, true)
+  end
+end
+
 ---@class Array
 --- Numeric table
 
@@ -55,11 +64,12 @@ end
 --- Create a new job
 ---
 ---@class Job
----@param o table
+---@class o
 ---@field command string          : Command to run
 ---@field args Array              : List of arguments to pass
 ---@field cwd string              : Working directory for job
 ---@field env Map|Array           : Environment looking like: { ['VAR'] = 'VALUE } or { 'VAR=VALUE' }
+---@field skip_validation boolean : Skip validating the arguments
 ---@field enable_handlers boolean : If set to false, disables all callbacks associated with output
 ---@field on_start function       : Run when starting job
 ---@field on_stdout function      : (error: string, data: string, self? Job)
@@ -72,19 +82,34 @@ function Job:new(o)
     error(debug.traceback("Options are required for Job:new"))
   end
 
-  if not o.command then
-    error(debug.traceback("'command' is required for Job:new"))
+  local command = o.command
+  if not command then
+    if o[1] then
+      command = o[1]
+    else
+      error(debug.traceback("'command' is required for Job:new"))
+    end
+  elseif o[1] then
+    error(debug.traceback("Cannot pass both 'command' and array args"))
   end
 
-  if 1 ~= vim.fn.executable(o.command) then
-    error(debug.traceback(o.command..": Executable not found"))
+  local args = o.args
+  if not args then
+    if #o > 1 then
+      args = {select(2, unpack(o))}
+    end
+  end
+
+  local ok, is_exe = pcall(vim.fn.executable, command)
+  if not o.skip_validation and ok and 1 ~= is_exe then
+    error(debug.traceback(command..": Executable not found"))
   end
 
   local obj = {}
 
-  obj.command = o.command
-  obj.args = o.args
-  obj.cwd = o.cwd and vim.fn.expand(o.cwd, true)
+  obj.command = command
+  obj.args = args
+  obj._raw_cwd = o.cwd
   if o.env then
     if type(o.env) ~= "table" then error('[plenary.job] env has to be a table') end
 
@@ -240,7 +265,7 @@ function Job:_create_uv_options()
   options.args = self.args
   options.stdio = { self.stdin, self.stdout, self.stderr }
 
-  if self.cwd then options.cwd = self.cwd end
+  if self._raw_cwd then options.cwd = expand(self._raw_cwd) end
   if self.env then options.env = self.env end
 
   return options
@@ -444,7 +469,11 @@ function Job:wait(timeout, wait_interval, should_redraw)
   wait_interval = wait_interval or 10
 
   if self.handle == nil then
-    vim.api.nvim_err_writeln(vim.inspect(self))
+    local msg = vim.inspect(self)
+    vim.schedule(function()
+      vim.api.nvim_err_writeln(msg)
+    end)
+
     return
   end
 
@@ -531,6 +560,7 @@ end
 
 function Job:after(fn)
   self:add_on_exit_callback(fn)
+  return self
 end
 
 function Job:and_then_on_success(next_job)

@@ -96,7 +96,7 @@ nmap <leader>t <Plug>PlenaryTestFile
 To run a whole directory from the command line, you could do something like:
 
 ```
-nvim --headless -c 'PlenaryBustedDirectory tests/plenary/ {minimal_init = "tests/minimal_init.vim"}'
+nvim --headless -c "PlenaryBustedDirectory tests/plenary/ {minimal_init = 'tests/minimal_init.vim'}"
 ```
 
 Where the first argument is the directory you'd like to test. It will search for files with
@@ -127,6 +127,9 @@ for the difficulty of getting them setup, particularly on other platforms or in 
 
 Please take a look at the new APIs and make any issues for things that aren't clear. I am happy to fix them
 and make it work well :)
+
+OTHER OTHER NOTE:
+Take a look at some test examples [here](TESTS_README.md).
 
 #### Colors
 To have "Success" in green and "Failed" in red, you need [nvim-terminal.lua](https://github.com/norcalli/nvim-terminal.lua).
@@ -224,12 +227,6 @@ neorocks.ensure_installed('lua-cjson', 'cjson')
 
 Inspiration: https://github.com/theHamsta/nvim_rocks . However, I've used quite a different end goal (following XDG_CONFIG standards, using `package.path` and `package.cpath` to load the packages and a different strategy of loading).
 
-
-### Bundled with:
-
-Currently comes bundled with slightly modified versions of:
-- luaunit: https://github.com/bluebird75/luaunit -> Used for unit testing
-- busted: Unit testing library
 
 ### And more to come :)
 
