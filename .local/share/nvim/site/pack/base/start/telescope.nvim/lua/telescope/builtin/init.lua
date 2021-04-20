@@ -1,15 +1,17 @@
---[[
-A collection of builtin pipelines for telesceope.
+---@tag telescope.builtin
 
-Meant for both example and for easy startup.
-
-Any of these functions can just be called directly by doing:
-
-:lua require('telescope.builtin').__name__()
-
-This will use the default configuration options.
-  Other configuration options still in flux at the moment
---]]
+---@brief [[
+--- A collection of builtin pickers for telescope.
+---
+--- Meant for both example and for easy startup.
+---
+--- Any of these functions can just be called directly by doing:
+---
+--- :lua require('telescope.builtin').$NAME()
+---
+--- This will use the default configuration options.
+---   Other configuration options are still in flux at the moment
+---@brief ]]
 
 if 1 ~= vim.fn.has('nvim-0.5') then
   vim.api.nvim_err_writeln("This plugins requires neovim 0.5")
@@ -19,7 +21,9 @@ end
 
 local builtin = {}
 
+--- Live grep means grep as you type.
 builtin.live_grep = require('telescope.builtin.files').live_grep
+
 builtin.grep_string = require('telescope.builtin.files').grep_string
 builtin.find_files = require('telescope.builtin.files').find_files
 builtin.fd = builtin.find_files
@@ -36,6 +40,7 @@ builtin.git_branches = require('telescope.builtin.git').branches
 builtin.git_status = require('telescope.builtin.git').status
 
 builtin.builtin = require('telescope.builtin.internal').builtin
+
 builtin.planets = require('telescope.builtin.internal').planets
 builtin.symbols = require('telescope.builtin.internal').symbols
 builtin.commands = require('telescope.builtin.internal').commands
@@ -56,11 +61,16 @@ builtin.filetypes = require('telescope.builtin.internal').filetypes
 builtin.highlights = require('telescope.builtin.internal').highlights
 builtin.autocommands = require('telescope.builtin.internal').autocommands
 builtin.spell_suggest = require('telescope.builtin.internal').spell_suggest
+builtin.tagstack = require('telescope.builtin.internal').tagstack
 
 builtin.lsp_references = require('telescope.builtin.lsp').references
+builtin.lsp_definitions = require('telescope.builtin.lsp').definitions
 builtin.lsp_document_symbols = require('telescope.builtin.lsp').document_symbols
 builtin.lsp_code_actions = require('telescope.builtin.lsp').code_actions
+builtin.lsp_document_diagnostics = require('telescope.builtin.lsp').diagnostics
+builtin.lsp_workspace_diagnostics = require('telescope.builtin.lsp').workspace_diagnostics
 builtin.lsp_range_code_actions = require('telescope.builtin.lsp').range_code_actions
 builtin.lsp_workspace_symbols = require('telescope.builtin.lsp').workspace_symbols
+builtin.lsp_dynamic_workspace_symbols = require('telescope.builtin.lsp').dynamic_workspace_symbols
 
 return builtin

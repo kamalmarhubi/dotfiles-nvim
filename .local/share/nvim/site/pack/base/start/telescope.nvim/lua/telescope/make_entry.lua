@@ -1,9 +1,8 @@
-local has_devicons, devicons = pcall(require, 'nvim-web-devicons')
-
-local conf = require('telescope.config').values
 local entry_display = require('telescope.pickers.entry_display')
 local path = require('telescope.path')
 local utils = require('telescope.utils')
+
+local Path = require('plenary.path')
 
 local get_default = utils.get_default
 
@@ -30,51 +29,14 @@ local lsp_type_highlight = {
   ["Variable"] = "TelescopeResultsVariable",
 }
 
+local lsp_type_diagnostic = {
+  [1] = "Error",
+  [2] = "Warning",
+  [3] = "Information",
+  [4] = "Hint"
+}
+
 local make_entry = {}
-
-local transform_devicons
-local get_devicons
-if has_devicons then
-  if not devicons.has_loaded() then
-    devicons.setup()
-  end
-
-  transform_devicons = function(filename, display, disable_devicons)
-    if disable_devicons or not filename then
-      return display
-    end
-
-    local icon, icon_highlight = devicons.get_icon(filename, string.match(filename, '%a+$'), { default = true })
-    local icon_display = (icon or ' ') .. ' ' .. display
-
-    if conf.color_devicons then
-      return icon_display, icon_highlight
-    else
-      return icon_display
-    end
-  end
-
-  get_devicons = function(filename, disable_devicons)
-    if disable_devicons or not filename then
-      return ''
-    end
-
-    local icon, icon_highlight = devicons.get_icon(filename, string.match(filename, '%a+$'), { default = true })
-    if conf.color_devicons then
-      return icon, icon_highlight
-    else
-      return icon
-    end
-  end
-else
-  transform_devicons = function(_, display, _)
-    return display
-  end
-
-  get_devicons = function(_, _)
-    return ''
-  end
-end
 
 do
   local lookup_keys = {
@@ -124,7 +86,7 @@ do
         display = utils.path_shorten(display)
       end
 
-      display, hl_group = transform_devicons(entry.value, display, disable_devicons)
+      display, hl_group = utils.transform_devicons(entry.value, display, disable_devicons)
 
       if hl_group then
         return display, { { {1, 3}, hl_group } }
@@ -195,7 +157,11 @@ do
 
     local execute_keys = {
       path = function(t)
-        return t.cwd .. path.separator .. t.filename, false
+        if Path:new(t.filename):is_absolute() then
+          return t.filename, false
+        else
+          return t.cwd .. path.separator .. t.filename, false
+        end
       end,
 
       filename = function(t)
@@ -240,7 +206,7 @@ do
           coordinates = string.format("%s:%s:", entry.lnum, entry.col)
         end
 
-        local display, hl_group = transform_devicons(
+        local display, hl_group = utils.transform_devicons(
           entry.filename,
           string.format(display_string, display_filename,  coordinates, entry.text),
           disable_devicons
@@ -357,6 +323,7 @@ function make_entry.gen_from_quickfix(opts)
         ) .. ' ' .. entry.text,
       display = make_display,
 
+      bufnr = entry.bufnr,
       filename = filename,
       lnum = entry.lnum,
       col = entry.col,
@@ -468,7 +435,7 @@ function make_entry.gen_from_buffer(opts)
 
   local icon_width = 0
   if not disable_devicons then
-    local icon, _ = get_devicons('fname', disable_devicons)
+    local icon, _ = utils.get_devicons('fname', disable_devicons)
     icon_width = utils.strdisplaywidth(icon)
   end
 
@@ -492,7 +459,7 @@ function make_entry.gen_from_buffer(opts)
       display_bufname = entry.filename
     end
 
-    local icon, hl_group = get_devicons(entry.filename, disable_devicons)
+    local icon, hl_group = utils.get_devicons(entry.filename, disable_devicons)
 
     return displayer {
       {entry.bufnr, "TelescopeResultsNumber"},
@@ -720,6 +687,54 @@ function make_entry.gen_from_highlights()
   end
 end
 
+function make_entry.gen_from_buffer_lines(opts)
+  local displayer = entry_display.create {
+    separator = ' │ ',
+    items = {
+      { width = 5 },
+      { remaining = true, },
+    },
+  }
+
+  local make_display = function(entry)
+
+    return displayer {
+      { entry.lnum, opts.lnum_highlight_group or 'TelescopeResultsSpecialComment' },
+      {
+        entry.text, function()
+          if not opts.line_highlights then return {} end
+
+          local line_hl = opts.line_highlights[entry.lnum] or {}
+          -- TODO: We could probably squash these together if the are the same...
+          --        But I don't think that it's worth it at the moment.
+          local result = {}
+
+          for col, hl in pairs(line_hl) do
+            table.insert(result, { {col, col+1}, hl })
+          end
+
+          return result
+        end
+      },
+    }
+  end
+
+  return function(entry)
+    if opts.skip_empty_lines and string.match(entry.text, '^$') then
+      return
+    end
+
+    return {
+      valid = true,
+      ordinal = entry.text,
+      display = make_display,
+      filename = entry.filename,
+      lnum = entry.lnum,
+      text = entry.text,
+    }
+  end
+end
+
 function make_entry.gen_from_vimoptions()
   local process_one_opt = function(o)
     local ok, value_origin
@@ -894,6 +909,84 @@ function make_entry.gen_from_ctags(opts)
   end
 end
 
+function make_entry.gen_from_lsp_diagnostics(opts)
+  opts = opts or {}
+  opts.tail_path = utils.get_default(opts.tail_path, true)
+
+  local signs
+  if not opts.no_sign then
+    signs = {}
+    for _, v in pairs(lsp_type_diagnostic) do
+      -- pcall to catch entirely unbound or cleared out sign hl group
+      local status, sign = pcall(
+        function() return vim.trim(vim.fn.sign_getdefined("LspDiagnosticsSign" .. v)[1].text) end)
+      if not status then
+        sign = v:sub(1,1)
+      end
+      signs[v] = sign
+    end
+  end
+
+  local layout = {
+    { width = utils.if_nil(signs, 8, 10) },
+    { remaining = true }
+  }
+  local line_width = utils.get_default(opts.line_width, 45)
+  if not opts.hide_filename then table.insert(layout, 2, {width = line_width}) end
+  local displayer = entry_display.create {
+    separator = "▏",
+    items = layout
+  }
+
+  local make_display = function(entry)
+    local filename
+    if not opts.hide_filename then
+      filename = entry.filename
+      if opts.tail_path then
+        filename = utils.path_tail(filename)
+      elseif opts.shorten_path then
+        filename = utils.path_shorten(filename)
+      end
+    end
+
+    -- add styling of entries
+    local pos = string.format("%4d:%2d", entry.lnum, entry.col)
+    local line_info = {
+      (signs and signs[entry.type] .. " " or "") .. pos,
+      "LspDiagnosticsDefault" .. entry.type
+    }
+
+    return displayer {
+      line_info,
+      entry.text,
+      filename,
+    }
+  end
+
+  return function(entry)
+    local filename = entry.filename or vim.api.nvim_buf_get_name(entry.bufnr)
+
+    return {
+      valid = true,
+
+      value = entry,
+      ordinal = (
+        not opts.ignore_filename and filename
+        or ''
+        ) .. ' ' .. entry.text,
+      display = make_display,
+      filename = filename,
+      type = entry.type,
+      lnum = entry.lnum,
+      col = entry.col,
+      text = entry.text,
+      start = entry.start,
+      finish = entry.finish,
+    }
+  end
+end
+
+
 function make_entry.gen_from_autocommands(_)
   local displayer = entry_display.create {
     separator = "▏",
@@ -932,28 +1025,93 @@ function make_entry.gen_from_autocommands(_)
   end
 end
 
-function make_entry.gen_from_git_status(opts)
+function make_entry.gen_from_commands(_)
   local displayer = entry_display.create {
-  separator = " ",
+    separator = "▏",
+    items = {
+      { width = 25 },
+      { width = 4 },
+      { width = 4 },
+      { width = 11 },
+      { remaining = true },
+    },
+  }
+
+  local make_display = function(entry)
+    local attrs = ""
+    if entry.bang then attrs = attrs .. "!" end
+    if entry.bar then attrs = attrs .. "|" end
+    if entry.register then attrs = attrs .. '"' end
+    return displayer {
+      {entry.name, "TelescopeResultsIdentifier"},
+      attrs,
+      entry.nargs,
+      entry.complete or "",
+      entry.definition,
+    }
+  end
+
+  return function(entry)
+    return {
+      name          = entry.name,
+      bang          = entry.bang,
+      nargs         = entry.nargs,
+      complete      = entry.complete,
+      definition    = entry.definition,
+      --
+      value         = entry,
+      valid         = true,
+      ordinal       = entry.name,
+      display       = make_display,
+    }
+  end
+end
+
+local git_icon_defaults = {
+  added     = "+",
+  changed   = "~",
+  copied    = ">",
+  deleted   = "-",
+  renamed   = "➡",
+  unmerged  = "‡",
+  untracked = "?"
+}
+
+function make_entry.gen_from_git_status(opts)
+  opts = opts or {}
+
+  local col_width = ((opts.git_icons and opts.git_icons.added) and opts.git_icons.added:len() + 2) or 2
+  local displayer = entry_display.create {
+  separator = "",
   items = {
-      { width = 1 },
-      { width = 1 },
+      { width = col_width},
+      { width = col_width},
       { remaining = true },
     }
   }
 
+  local icons = vim.tbl_extend("keep", opts.git_icons or {}, git_icon_defaults)
+
+  local git_abbrev = {
+    ["A"] = {icon = icons.added,      hl = "TelescopeResultsDiffAdd"},
+    ["U"] = {icon = icons.unmerged,   hl = "TelescopeResultsDiffAdd"},
+    ["M"] = {icon = icons.changed,    hl = "TelescopeResultsDiffChange"},
+    ["C"] = {icon = icons.copied,     hl = "TelescopeResultsDiffChange"},
+    ["R"] = {icon = icons.renamed,    hl = "TelescopeResultsDiffChange"},
+    ["D"] = {icon = icons.deleted,    hl = "TelescopeResultsDiffDelete"},
+    ["?"] = {icon = icons.untracked,  hl = "TelescopeResultsDiffUntracked"},
+  }
+
   local make_display = function(entry)
-    local modified = "TelescopeResultsDiffChange"
-    local staged = "TelescopeResultsDiffAdd"
+    local x = string.sub(entry.status, 1, 1)
+    local y = string.sub(entry.status, -1)
+    local status_x = git_abbrev[x] or {}
+    local status_y = git_abbrev[y] or {}
 
-    if entry.status == "??" then
-      modified = "TelescopeResultsDiffDelete"
-      staged = "TelescopeResultsDiffDelete"
-    end
-
+    local empty_space = (" ")
     return displayer {
-      { string.sub(entry.status, 1, 1), staged },
-      { string.sub(entry.status, -1), modified },
+      { status_x.icon or empty_space, status_x.hl},
+      { status_y.icon or empty_space, status_y.hl},
       entry.value,
     }
   end

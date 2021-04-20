@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/nvim-lua/telescope.nvim.git
 	branch = master
-	commit = 4dd35ef0e154ab1836fc923a33196a4101a97a9c
-	parent = 4dc79f43f4576550e40f4ff131c6bdb2db9d78c7
+	commit = f92b9b1fae70d5fac681a29f0df64549c399f18f
+	parent = 73cfc620cbb4344444c5c579abf0d4852e20e09d
 	method = rebase
 	cmdver = 0.4.0

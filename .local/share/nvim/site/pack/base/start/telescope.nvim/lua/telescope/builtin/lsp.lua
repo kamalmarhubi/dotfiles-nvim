@@ -4,6 +4,9 @@ local finders = require('telescope.finders')
 local make_entry = require('telescope.make_entry')
 local pickers = require('telescope.pickers')
 local utils = require('telescope.utils')
+local a = require('plenary.async_lib')
+local async, await = a.async, a.await
+local channel = a.util.channel
 
 local conf = require('telescope.config').values
 
@@ -38,6 +41,36 @@ lsp.references = function(opts)
   }):find()
 end
 
+lsp.definitions = function(opts)
+  opts = opts or {}
+
+  local params = vim.lsp.util.make_position_params()
+  local result = vim.lsp.buf_request_sync(0, "textDocument/definition", params, opts.timeout or 10000)
+  local flattened_results = {}
+  for _, server_results in pairs(result) do
+    if server_results.result then
+      vim.list_extend(flattened_results, server_results.result)
+    end
+  end
+
+  if #flattened_results == 0 then
+    return
+  elseif #flattened_results == 1 then
+    vim.lsp.util.jump_to_location(flattened_results[1])
+  else
+    local locations = vim.lsp.util.locations_to_items(flattened_results)
+    pickers.new(opts, {
+      prompt_title = 'LSP Definitions',
+      finder = finders.new_table {
+        results = locations,
+        entry_maker = opts.entry_maker or make_entry.gen_from_quickfix(opts),
+      },
+      previewer = conf.qflist_previewer(opts),
+      sorter = conf.generic_sorter(opts),
+    }):find()
+  end
+end
+
 lsp.document_symbols = function(opts)
   local params = vim.lsp.util.make_position_params()
   local results_lsp = vim.lsp.buf_request_sync(0, "textDocument/documentSymbol", params, opts.timeout or 10000)
@@ -64,7 +97,10 @@ lsp.document_symbols = function(opts)
       entry_maker = opts.entry_maker or make_entry.gen_from_lsp_symbols(opts)
     },
     previewer = conf.qflist_previewer(opts),
-    sorter = conf.generic_sorter(opts),
+    sorter = conf.prefilter_sorter{
+      tag = "symbol_type",
+      sorter = conf.generic_sorter(opts)
+    }
   }):find()
 end
 
@@ -151,22 +187,22 @@ lsp.workspace_symbols = function(opts)
   local params = {query = opts.query or ''}
   local results_lsp = vim.lsp.buf_request_sync(0, "workspace/symbol", params, opts.timeout or 10000)
 
-  if not results_lsp or vim.tbl_isempty(results_lsp) then
-    print("No results from workspace/symbol")
-    return
-  end
-
   local locations = {}
-  for _, server_results in pairs(results_lsp) do
-    if server_results.result then
-      vim.list_extend(locations, vim.lsp.util.symbols_to_items(server_results.result, 0) or {})
+
+  if results_lsp and not vim.tbl_isempty(results_lsp) then
+    for _, server_results in pairs(results_lsp) do
+      -- Some LSPs (like Clangd and intelephense) might return { { result = {} } }, so make sure we have result
+      if server_results and server_results.result and not vim.tbl_isempty(server_results.result) then
+        vim.list_extend(locations, vim.lsp.util.symbols_to_items(server_results.result, 0) or {})
+      end
     end
   end
 
   if vim.tbl_isempty(locations) then
+    print("No results from workspace/symbol. Maybe try a different query: " ..
+      "Telescope lsp_workspace_symbols query=example")
     return
   end
-
 
   opts.ignore_filename = utils.get_default(opts.ignore_filename, false)
   opts.hide_filename = utils.get_default(opts.hide_filename, false)
@@ -178,8 +214,72 @@ lsp.workspace_symbols = function(opts)
       entry_maker = opts.entry_maker or make_entry.gen_from_lsp_symbols(opts)
     },
     previewer = conf.qflist_previewer(opts),
-    sorter = conf.generic_sorter(opts),
+    sorter = conf.prefilter_sorter{
+      tag = "symbol_type",
+      sorter = conf.generic_sorter(opts)
+    }
   }):find()
+end
+
+local function get_workspace_symbols_requester(bufnr)
+  local cancel = function() end
+
+  return async(function(prompt)
+    local tx, rx = channel.oneshot()
+    cancel()
+    _, cancel = vim.lsp.buf_request(bufnr, "workspace/symbol", {query = prompt}, tx)
+
+    local err, _, results_lsp = await(rx())
+    assert(not err, err)
+
+    local locations = vim.lsp.util.symbols_to_items(results_lsp or {}, bufnr) or {}
+    return locations
+  end)
+end
+
+lsp.dynamic_workspace_symbols = function(opts)
+  local curr_bufnr = vim.api.nvim_get_current_buf()
+
+  pickers.new(opts, {
+    prompt_title = 'LSP Dynamic Workspace Symbols',
+    finder    = finders.new_dynamic {
+      entry_maker = opts.entry_maker or make_entry.gen_from_lsp_symbols(opts),
+      fn = get_workspace_symbols_requester(curr_bufnr),
+    },
+    previewer = conf.qflist_previewer(opts),
+    sorter = conf.generic_sorter()
+  }):find()
+end
+
+lsp.diagnostics = function(opts)
+  local locations = utils.diagnostics_to_tbl(opts)
+
+  if vim.tbl_isempty(locations) then
+    print('No diagnostics found')
+    return
+  end
+
+  opts.hide_filename = utils.get_default(opts.hide_filename, true)
+  pickers.new(opts, {
+    prompt_title = 'LSP Document Diagnostics',
+    finder = finders.new_table {
+      results = locations,
+      entry_maker = opts.entry_maker or make_entry.gen_from_lsp_diagnostics(opts)
+    },
+    previewer = conf.qflist_previewer(opts),
+    sorter = conf.prefilter_sorter{
+      tag = "type",
+      sorter = conf.generic_sorter(opts)
+    }
+  }):find()
+end
+
+lsp.workspace_diagnostics = function(opts)
+  opts = utils.get_default(opts, {})
+  opts.hide_filename = utils.get_default(opts.hide_filename, false)
+  opts.prompt_title = 'LSP Workspace Diagnostics'
+  opts.get_all = true
+  lsp.diagnostics(opts)
 end
 
 local function check_capabilities(feature)
@@ -188,10 +288,9 @@ local function check_capabilities(feature)
   local supported_client = false
   for _, client in pairs(clients) do
     supported_client = client.resolved_capabilities[feature]
-    if supported_client then goto continue end
+    if supported_client then break end
   end
 
-  ::continue::
   if supported_client then
     return true
   else
@@ -208,6 +307,7 @@ local feature_map = {
   ["code_actions"]      = "code_action",
   ["document_symbols"]  = "document_symbol",
   ["references"]        = "find_references",
+  ["definitions"]       = "goto_definition",
   ["workspace_symbols"] = "workspace_symbol",
 }
 
