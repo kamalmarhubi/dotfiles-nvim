@@ -21,6 +21,7 @@ return function ()
 
   local header = {
     "Configured servers: "..table.concat(vim.tbl_keys(configs), ', '),
+    "Neovim logs at: "..(vim.lsp.get_log_path()),
     "",
     tostring(#buf_clients).." client(s) attached to this buffer: "..table.concat(buf_client_names, ', '),
   }
@@ -45,12 +46,18 @@ return function ()
 
   local indent = "  "
   local function make_client_info(client)
+    local server_specific_info = ""
+    if client.config.lspinfo then
+      server_specific_info = client.config.lspinfo(client.config)
+    end
     return {
       "",
       indent.."Client: "..client.name.." (id "..tostring(client.id)..")",
       indent.."\troot:      "..client.workspaceFolders[1].name,
       indent.."\tfiletypes: "..table.concat(client.config.filetypes or {}, ', '),
       indent.."\tcmd:       "..remove_newlines(client.config.cmd),
+      indent.."\t"..server_specific_info,
+      ""
     }
   end
 
@@ -110,11 +117,13 @@ return function ()
        vim.list_extend(buf_lines, matching_config_info)
     end
   end
-  buf_lines = vim.lsp.util._trim_and_pad(buf_lines, { pad_left = 2, pad_top = 1})
+  buf_lines = vim.lsp.util._trim(buf_lines, {})
   vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, buf_lines )
   vim.api.nvim_buf_set_option(bufnr,'modifiable',false)
-  vim.fn.matchadd("Title", table.concat(vim.tbl_keys(configs), '\\|'))
-  vim.fn.matchadd("Title", buffer_filetype)
+  vim.api.nvim_buf_set_option(bufnr,'filetype','lspinfo')
+  local configs_pattern = '\\%(' .. table.concat(vim.tbl_keys(configs), '\\|') .. '\\)'
+  vim.cmd('syntax match Title /\\%(Client\\|Config\\):.*\\zs' .. configs_pattern .. '/')
+  vim.cmd('syntax match Identifier /filetypes:.*\\zs\\<' .. buffer_filetype .. '\\>/')
   vim.fn.matchadd("Error",
     "No filetypes defined, please define filetypes in setup().\\|"..
     "cmd not defined\\|" ..

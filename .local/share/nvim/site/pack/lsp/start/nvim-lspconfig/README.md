@@ -14,17 +14,17 @@ that are installed on your system.
   Update Neovim and nvim-lspconfig before reporting an issue.
 
 * nvim-lspconfig is just a plugin. Install it like any other Vim plugin, e.g. with [vim-plug](https://github.com/junegunn/vim-plug):
-  ```
-  :Plug 'neovim/nvim-lspconfig'
-  ```
+```vim
+:Plug 'neovim/nvim-lspconfig'
+```
 ## Quickstart
 1. Install a language server, e.g. [pyright](CONFIG.md#pyright) via `npm i -g pyright`
 2. Install `nvim-lspconfig` via your plugin manager
 3. Add the language server setup to your init.vim. The server name must match those found in the table of contents in [CONFIG.md](CONFIG.md)
 ```vim
-lua << EOF 
+lua << EOF
 require'lspconfig'.pyright.setup{}
-EOF 
+EOF
 ```
 4. Open a file that is placed in a directory recognized by the server 
 (see server configuration in [CONFIG.md](CONFIG.md); e.g., for [pyright](CONFIG.md#pyright), this is 
@@ -32,7 +32,16 @@ any directory containing ".git", "setup.py",  "setup.cfg", "pyproject.toml",
 or "requirements.txt")
 5. See [Keybindings and completion](#Keybindings-and-completion) for mapping useful functions and enabling
 omnifunc completion
-6. Try `:LspInfo` to see the status of active and configured language servers.
+
+## Built-in commands
+
+* `:LspInfo` shows the status of active and configured language servers.
+
+The following support tab-completion for all arguments:
+
+* `:LspStart <config_name>` Start the requested server name. Will only succesfully start if the command detects a root directory matching the current config. Pass `autostart = false` to your `.setup{}` call for a language server if you would like to launch clients solely with this command. Defaults to all servers matching current buffer filetype.
+* `:LspStop <client_id>` Defaults to stopping all buffer clients. 
+* `:LspRestart <client_id>` Defaults to restarting all buffer clients.
 
 ## Usage
 
@@ -79,8 +88,6 @@ the `name`, `log_level`, `message_level`, and `settings` of texlab:
 local lspconfig = require'lspconfig'
 lspconfig.texlab.setup{
   name = 'texlab_fancy';
-  log_level = vim.lsp.protocol.MessageType.Log;
-  message_level = vim.lsp.protocol.MessageType.Log;
   settings = {
     latex = {
       build = {
@@ -120,14 +127,28 @@ lspconfig.foo_lsp.setup{}
 
 ### Example: override default config for all servers
 
-If you want to change default configs for all servers, you can override default_config like this.
+If you want to change default configs for all servers, you can override default_config like this. In this example, we additionally add a check for log_level and message_level which can be passed to the server to control the verbosity of "window/logMessage".
 
 ```lua
 local lspconfig = require'lspconfig'
 lspconfig.util.default_config = vim.tbl_extend(
   "force",
   lspconfig.util.default_config,
-  { log_level = lsp.protocol.MessageType.Warning.Error }
+  {
+    autostart = false,
+    handlers = {
+      ["window/logMessage"] = function(err, method, params, client_id)
+          if params and params.type <= vim.lsp.protocol.MessageType.Log then
+            vim.lsp.handlers["window/logMessage"](err, method, params, client_id)
+          end
+        end;
+      ["window/showMessage"] = function(err, method, params, client_id)
+          if params and params.type <= vim.lsp.protocol.MessageType.Warning.Error then
+            vim.lsp.handlers["window/showMessage"](err, method, params, client_id)
+          end
+        end;
+    }
+  }
 )
 ```
 
@@ -165,6 +186,7 @@ local on_attach = function(client, bufnr)
   buf_set_keymap('n', '<space>wl', '<cmd>lua print(vim.inspect(vim.lsp.buf.list_workspace_folders()))<CR>', opts)
   buf_set_keymap('n', '<space>D', '<cmd>lua vim.lsp.buf.type_definition()<CR>', opts)
   buf_set_keymap('n', '<space>rn', '<cmd>lua vim.lsp.buf.rename()<CR>', opts)
+  buf_set_keymap('n', '<space>ca', '<cmd>lua vim.lsp.buf.code_action()<CR>', opts)
   buf_set_keymap('n', 'gr', '<cmd>lua vim.lsp.buf.references()<CR>', opts)
   buf_set_keymap('n', '<space>e', '<cmd>lua vim.lsp.diagnostic.show_line_diagnostics()<CR>', opts)
   buf_set_keymap('n', '[d', '<cmd>lua vim.lsp.diagnostic.goto_prev()<CR>', opts)
@@ -174,8 +196,9 @@ local on_attach = function(client, bufnr)
   -- Set some keybinds conditional on server capabilities
   if client.resolved_capabilities.document_formatting then
     buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.formatting()<CR>", opts)
-  elseif client.resolved_capabilities.document_range_formatting then
-    buf_set_keymap("n", "<space>f", "<cmd>lua vim.lsp.buf.range_formatting()<CR>", opts)
+  end
+  if client.resolved_capabilities.document_range_formatting then
+    buf_set_keymap("v", "<space>f", "<cmd>lua vim.lsp.buf.range_formatting()<CR>", opts)
   end
 
   -- Set autocommands conditional on server_capabilities
@@ -211,13 +234,6 @@ Please see the [wiki](https://github.com/neovim/nvim-lspconfig/wiki) for additio
 
 and more.
 
-## Manually starting (or restarting) language servers
-
-If you would like to manually managing starting language servers, but still have new buffers within a root directory autoattach 
-to running servers, pass `autostart = false` to your `.setup{}` call for a language server and call 
-`:lua require('lspconfig').language_server_name.autostart()`.
-
-This function can also be used to restart a workspace after stopping a language server with `:lua vim.lsp.stop_client(client_id)`.
 
 ## setup() function
 
@@ -266,16 +282,6 @@ lspconfig.SERVER.setup{config}
   {autostart}
     Whether to automatically start a language server when a matching filetype is detected.
     Defaults to true.
-
-  {log_level}
-    controls the level of logs to show from window/logMessage notifications. Defaults to
-    vim.lsp.protocol.MessageType.Warning instead of
-    vim.lsp.protocol.MessageType.Log.
-
-  {message_level}
-    controls the level of messages to show from window/showMessage notifications. Defaults to
-    vim.lsp.protocol.MessageType.Warning instead of
-    vim.lsp.protocol.MessageType.Log.
 
   {settings}
     Map with case-sensitive keys corresponding to `workspace/configuration`
@@ -326,6 +332,20 @@ Attempt to run the language server, and open the log with:
 ```
 Most of the time, the reason for failure is present in the logs.
 
+## Windows
+
+In order for neovim to launch certain executables on Windows, it must append `.cmd` to the command name. A fix is in the works upstream, but until this is mainlined please the following somewhere in your init.vim (lua heredoc) or init.lua:
+
+```lua
+vim.loop.spawn = (function ()
+  local spawn = vim.loop.spawn
+  return function(path, options, on_exit)
+    local full_path = vim.fn.exepath(path)
+    return spawn(full_path, options, on_exit)
+  end
+end)()
+```
+
 ## Contributions
 If you are missing a language server on the list in [CONFIG.md](CONFIG.md), contributing
 a new configuration for it would be appreciated. You can follow these steps:
@@ -337,4 +357,4 @@ a new configuration for it would be appreciated. You can follow these steps:
    - Copy an [existing config](https://github.com/neovim/nvim-lspconfig/blob/master/lua/lspconfig/)
      to get started. Most configs are simple. For an extensive example see
      [texlab.lua](https://github.com/neovim/nvim-lspconfig/blob/master/lua/lspconfig/texlab.lua).
-4. Ask questions in [Neovim Gitter](https://gitter.im/neovim/neovim).
+4. Ask questions on our [Discourse](https://neovim.discourse.group/c/7-category/7) or in [Neovim Gitter](https://gitter.im/neovim/neovim).
