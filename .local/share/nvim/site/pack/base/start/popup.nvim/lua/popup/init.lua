@@ -35,8 +35,10 @@ function popup.create(what, vim_options)
   if type(what) == 'number' then
     bufnr = what
   else
-    bufnr = vim.fn.nvim_create_buf(false, true)
+    bufnr = vim.api.nvim_create_buf(false, true)
     assert(bufnr, "Failed to create buffer")
+
+    vim.api.nvim_buf_set_option(bufnr, "bufhidden", "wipe")
 
     -- TODO: Handle list of lines
     if type(what) == 'string' then
@@ -83,7 +85,7 @@ function popup.create(what, vim_options)
       end
     end
 
-    vim.fn.nvim_buf_set_lines(bufnr, 0, -1, true, what)
+    vim.api.nvim_buf_set_lines(bufnr, 0, -1, true, what)
   end
 
   local option_defaults = {
@@ -190,7 +192,7 @@ function popup.create(what, vim_options)
     if should_enter == nil then
       should_enter = true
     end
-    win_id = vim.fn.nvim_open_win(bufnr, should_enter, win_opts)
+    win_id = vim.api.nvim_open_win(bufnr, should_enter, win_opts)
   end
 
 
@@ -222,11 +224,11 @@ function popup.create(what, vim_options)
 
   -- Buffer Options
   if vim_options.cursorline then
-    vim.fn.nvim_win_set_option(win_id, 'cursorline', true)
+    vim.api.nvim_win_set_option(win_id, 'cursorline', true)
   end
 
   if vim_options.wrap ~= nil then
-    vim.fn.nvim_win_set_option(win_id, 'wrap', vim_options.wrap)
+    vim.api.nvim_win_set_option(win_id, 'wrap', vim_options.wrap)
   end
 
   -- ===== Not Implemented Options =====
