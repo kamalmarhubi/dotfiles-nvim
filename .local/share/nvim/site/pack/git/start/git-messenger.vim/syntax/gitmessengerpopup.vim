@@ -2,10 +2,10 @@ if exists('b:current_syntax')
     finish
 endif
 
-syn match gitmessengerHeader '\_^ \%(History\|Commit\|\%(Author \|Committer \)\=Date\|Author\|Committer\):' display
-syn match gitmessengerHash '\%(\_^ \<Commit: \+\)\@<=[[:xdigit:]]\+' display
-syn match gitmessengerHistory '\%(\_^ \<History: \+\)\@<=#\d\+' display
-syn match gitmessengerEmail '\%(\_^ \<\%(Author\|Committer\): \+.*\)\@<=<.\+>' display
+syn match gitmessengerHeader '^ \=\%(History\|Commit\|\%(Author \|Committer \)\=Date\|Author\|Committer\):' display
+syn match gitmessengerHash '\%(^ \=Commit: \+\)\@<=[[:xdigit:]]\+' display
+syn match gitmessengerHistory '\%(^ \=History: \+\)\@<=#\d\+' display
+syn match gitmessengerEmail '\%(^ \=\%(Author\|Committer\): \+.*\)\@<=<.\+>' display
 
 " Diff included in popup
 " There are two types of diff format; 'none' 'current', 'all', 'current.word', 'all.word'.
@@ -21,25 +21,15 @@ if get(b:, '__gitmessenger_diff', '') =~# '\.word$'
         syn region diffWordsAdded start=/{+/ end=/+}/ oneline
     endif
 else
-    syn match diffRemoved "^ -.*" display
-    syn match diffAdded "^ +.*" display
+    syn match diffRemoved "^ \=-.*" display
+    syn match diffAdded "^ \=+.*" display
 endif
 
-syn match diffSubname "  @@..*"ms=s+3 contained display
-syn match diffLine "^ @.*" contains=diffSubname display
-syn match diffLine "^ \<\d\+\>.*" display
-syn match diffLine "^ \*\*\*\*.*" display
-syn match diffLine "^ ---$" display
-
-" Some versions of diff have lines like "#c#" and "#d#" (where # is a number)
-syn match diffLine "^ \d\+\(,\d\+\)\=[cda]\d\+\>.*" display
-
-syn match diffFile "^ diff --git .*" display
-syn match diffFile "^ +++ .*" display
-syn match diffFile "^ ==== .*" display
-syn match diffOldFile "^ \*\*\* .*" display
-syn match diffNewFile "^ --- .*" display
-syn match diffIndexLine "^ index \x\{7,}\.\.\x\{7,}.*" display
+syn match diffFile "^ \=diff --git .*" display
+syn match diffOldFile "^ \=--- a\>.*" display
+syn match diffNewFile "^ \=+++ b\>.*" display
+syn match diffIndexLine "^ \=index \x\{7,}\.\.\x\{7,}.*" display
+syn match diffLine "^ \=@@ .*" display
 
 hi def link gitmessengerHeader      Identifier
 hi def link gitmessengerHash        Comment
@@ -56,6 +46,5 @@ hi def link diffAdded        Identifier
 hi def link diffWordsRemoved diffRemoved
 hi def link diffWordsAdded   diffAdded
 hi def link diffLine         Statement
-hi def link diffSubname      PreProc
 
 let b:current_syntax = 'gitmessengerpopup'

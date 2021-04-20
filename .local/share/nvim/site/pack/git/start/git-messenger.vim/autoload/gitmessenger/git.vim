@@ -67,6 +67,11 @@ if has('nvim')
         if a:data == ['']
             return
         endif
+        " Output from Git might contain \r for example when the commit
+        " author's text editor uses \r\n for newlines. But Neovim reads output
+        " from the process line by line based on \n. The trailing \r remains
+        " when \r\n is used for newlines. This removes the trailing \r (#75).
+        call map(a:data, 'v:val[len(v:val)-1] ==# "\r" ? v:val[:-2] : v:val')
         let self[a:event][-1] .= a:data[0]
         call extend(self[a:event], a:data[1:])
     endfunction
@@ -104,7 +109,7 @@ else
     let s:git.finalize_vim = funcref('s:git__finalize_vim')
 
     function! s:on_output_vim(event, ch, msg) dict abort
-        call extend(self[a:event], split(a:msg, "\n", 1))
+        call extend(self[a:event], split(a:msg, '\r\=\n', 1))
     endfunction
 
     function! s:on_exit_vim(ch, code) dict abort
