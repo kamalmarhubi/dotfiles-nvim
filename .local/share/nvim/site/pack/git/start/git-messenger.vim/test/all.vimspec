@@ -513,6 +513,95 @@ Describe git-messenger.vim
                     Assert True(found, 'Lines: ' . string(getline(1, '$')) . ' Messages: ' . execute('message'))
                 End
             End
+
+            It reveals word diffs with r and dismisses it with r again
+                GitMessenger
+                Assert IsNotNone(GetPopup())
+                GitMessenger
+                Assert Exists('b:__gitmessenger_popup')
+
+                " Check diff is not shown
+                Assert False(LicenseDiffExists(), string(getline(1, '$')))
+
+                normal r
+
+                let found = WaitUntil(LicenseDiffExists)
+                let lines = getline(1, '$')
+                let msg = 'Got lines: ' . string(lines)
+                Assert True(found, msg)
+                Assert False(ReadmeDiffExists(), lines)
+
+                let add_lines = filter(copy(lines), 'v:val =~# "{+.\\++}"')
+                Assert NotEmpty(add_lines, msg)
+
+                normal r
+
+                let removed = WaitWhile(LicenseDiffExists)
+                Assert True(removed, 'Got lines: ' . string(getline(1, '$')))
+            End
+
+            It reveals all word diffs with R and dismisses it with R again
+                GitMessenger
+                Assert IsNotNone(GetPopup())
+                GitMessenger
+                Assert Exists('b:__gitmessenger_popup')
+
+                " Check diff is not shown
+                Assert False(LicenseDiffExists(), string(getline(1, '$')))
+
+                normal R
+
+                let found = WaitUntil(LicenseDiffExists)
+                let lines = getline(1, '$')
+                let msg = 'Got lines: ' . string(lines)
+                Assert True(found, msg)
+                Assert True(ReadmeDiffExists(), msg)
+
+                let add_lines = filter(copy(lines), 'v:val =~# "{+.\\++}"')
+                Assert NotEmpty(add_lines, msg)
+
+                normal R
+
+                let removed = WaitWhile(LicenseDiffExists)
+                Assert True(removed, 'Got lines: ' . string(getline(1, '$')))
+            End
+
+            It switches between normal diffs and word diffs
+                GitMessenger
+                Assert IsNotNone(GetPopup())
+                GitMessenger
+                Assert Exists('b:__gitmessenger_popup')
+
+                " Check diff is not shown
+                Assert False(LicenseDiffExists(), string(getline(1, '$')))
+
+                let WordDiffMarkerExists = {-> !empty(filter(getline(1, '$'), 'v:val =~# "{+.\\++}"'))}
+
+                " none -> word diff
+                normal r
+
+                let found = WaitUntil(LicenseDiffExists)
+                let msg = 'Got lines: ' . string(getline(1, '$'))
+                Assert True(found, msg)
+                Assert True(LicenseDiffExists(), msg)
+
+                Assert WordDiffMarkerExists()
+
+                " word diff -> diff
+                normal d
+
+                let marker_removed = WaitWhile(WordDiffMarkerExists)
+                let msg = 'Got lines: ' . string(getline(1, '$'))
+                Assert True(marker_removed, msg)
+                Assert True(LicenseDiffExists(), msg)
+
+                " diff -> word diff
+                normal r
+
+                let found = WaitUntil(WordDiffMarkerExists)
+                let msg = 'Got lines: ' . string(getline(1, '$'))
+                Assert True(found, msg)
+            End
         End
 
         It preserves diff hunks after going back to older commit
@@ -574,6 +663,32 @@ Describe git-messenger.vim
                 let found = WaitUntil({-> index(getline(1, '$'), ' diff --git a/README.md b/README.md') !=# -1})
                 let msg = 'Got lines: (' . i . ') ' . string(getline(1, '$'))
                 Assert Equal(found, expected, msg)
+            endfor
+        End
+
+        It preserves word diff hunks after going back to older commit
+            GitMessenger
+            Assert IsNotNone(GetPopup())
+
+            GitMessenger
+            Assert Exists('b:__gitmessenger_popup')
+
+            normal r
+
+            let WordDiffMarkerExists = {-> !empty(filter(getline(1, '$'), 'v:val =~# "{+.\\++}"'))}
+            let found = WaitUntil(WordDiffMarkerExists)
+            Assert True(found, 'Got lines: ' . string(getline(1, '$')))
+
+            for i in range(3)
+                normal o
+                Assert WaitUntil({-> getline(2) =~# '^ History: \+#1$'})
+                Assert False(WordDiffMarkerExists(), string(getline(1, '$')))
+
+                normal O
+                Assert WaitUntil({-> getline(2) =~# '^ History: \+#0$'})
+
+                " Check diff is restored
+                Assert True(WordDiffMarkerExists(), string(getline(1, '$')))
             endfor
         End
 
@@ -1249,25 +1364,27 @@ Describe git-messenger.vim
         End
     End
 
-    if has('nvim')
-        Describe g:git_messenger_floating_win_opts
-            Before all
-                let saved_floating_win_opts = g:git_messenger_floating_win_opts
-            End
-
-            After all
-                let g:git_messenger_floating_win_opts = saved_floating_win_opts
-            End
-
-            It overrides floating window options
-                let g:git_messenger_floating_win_opts = {'height': 10000}
-                GitMessenger
-                let p = GetPopup()
-                let c = nvim_win_get_config(p.win_id)
-                Assert Equal(c.height, 10000)
-            End
+    Describe g:git_messenger_floating_win_opts
+        Before all
+            let saved_floating_win_opts = g:git_messenger_floating_win_opts
         End
-    endif
+
+        After all
+            let g:git_messenger_floating_win_opts = saved_floating_win_opts
+        End
+
+        It overrides floating window options
+            if !has('nvim')
+                Skip g:git_messenger_floating_win_opts is effective only on Neovim
+            endif
+
+            let g:git_messenger_floating_win_opts = {'height': 10000}
+            GitMessenger
+            let p = GetPopup()
+            let c = nvim_win_get_config(p.win_id)
+            Assert Equal(c.height, 10000)
+        End
+    End
 
     Describe gitmessenger#git#new
         It runs Git command at specified directory using -C
