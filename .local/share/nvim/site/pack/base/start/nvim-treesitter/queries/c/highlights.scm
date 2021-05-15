@@ -102,10 +102,11 @@
 
 (string_literal) @string
 (system_lib_string) @string
+(escape_sequence) @string.escape
 
 (null) @constant.builtin
 (number_literal) @number
-(char_literal) @number
+(char_literal) @character
 
 (call_expression
   function: (identifier) @function)

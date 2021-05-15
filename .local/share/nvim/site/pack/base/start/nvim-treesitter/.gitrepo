@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/nvim-treesitter/nvim-treesitter.git
 	branch = master
-	commit = df189e28a498d90dc8813e90944e0999bc936e56
-	parent = 52d15686f35a1bad204de4ea4f43005b5d8562c6
+	commit = efbb1c66d27eb5b4bfbcc1f59d3384e0641c8214
+	parent = 5e2b7c1c2f27d1a4dfd90e1cf8c91dd45b8a6957
 	method = rebase
 	cmdver = 0.4.0
