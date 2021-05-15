@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/blindFS/vim-taskwarrior.git
+	branch = master
+	commit = 8ae6c5ee2ed54d759a58a8d9f67bc76430e3bd25
+	parent = fe424740c5778f476a8ca39b16818d56dd20a907
+	method = rebase
+	cmdver = 0.4.3
