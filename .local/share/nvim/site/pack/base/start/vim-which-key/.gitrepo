@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/liuchengxu/vim-which-key.git
 	branch = master
-	commit = 4c605b1ef91194ff178fdb1d957ab5b655a7089a
-	parent = 6102bd2e351196cdc3f3c13da15a1ac5b4147b10
+	commit = da2934fcd36350b871ed8ccd54c8eae3a0dfc8ae
+	parent = d1de7d760207386fe49f3348945821031ffa3356
 	method = rebase
 	cmdver = 0.4.0
