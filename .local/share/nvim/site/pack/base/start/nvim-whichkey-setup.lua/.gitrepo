@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/AckslD/nvim-whichkey-setup.lua.git
 	branch = main
-	commit = 59aa0a4287adf6c2c9faabf912cdc005230e7c98
-	parent = 0351ec022a96e1f7bbde586c877dc279b8143cce
+	commit = b2df0761b8ba3fca31b7ae1b0afcad2f8a4e89f4
+	parent = ff6dbad936edbc3a189421b14898e7712baef5da
 	method = rebase
 	cmdver = 0.4.3
