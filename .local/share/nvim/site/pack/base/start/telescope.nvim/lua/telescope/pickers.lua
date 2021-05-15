@@ -386,7 +386,7 @@ function Picker:find()
       if not last_line then last_line = 1 end
 
       if first_line > 0 or last_line > 1 then
-        log.debug("ON_LINES: Bad range", first_line, last_line)
+        log.debug("ON_LINES: Bad range", first_line, last_line, self:_get_prompt())
         return
       end
 
@@ -502,7 +502,7 @@ function Picker.close_windows(status)
   local preview_border_win = status.preview_border_win
 
   local function del_win(name, win_id, force, bdelete)
-    if not vim.api.nvim_win_is_valid(win_id) then
+    if win_id == nil or not vim.api.nvim_win_is_valid(win_id) then
       return
     end
 
@@ -618,9 +618,15 @@ function Picker:change_prompt_prefix(new_prefix, hl_group)
   self:_reset_prefix_color(hl_group)
 end
 
-function Picker:reset_prompt()
-  vim.api.nvim_buf_set_lines(self.prompt_bufnr, 0, -1, false, { self.prompt_prefix })
+function Picker:reset_prompt(text)
+  local prompt_text = self.prompt_prefix .. (text or '')
+  vim.api.nvim_buf_set_lines(self.prompt_bufnr, 0, -1, false, { prompt_text })
+
   self:_reset_prefix_color(self._current_prefix_hl_group)
+
+  if text then
+    vim.api.nvim_win_set_cursor(self.prompt_win, {1, #prompt_text})
+  end
 end
 
 --- opts.new_prefix:   Either as string or { new_string, hl_group }
@@ -634,7 +640,10 @@ function Picker:refresh(finder, opts)
   if opts.reset_prompt then self:reset_prompt() end
 
   self.finder:close()
-  if finder then self.finder = finder end
+  if finder then
+      self.finder = finder
+      self._multi = MultiSelect:new()
+  end
 
   self.__on_lines(nil, nil, nil, 0, 1)
 end
@@ -1045,10 +1054,9 @@ function pickers.on_close_prompt(prompt_bufnr)
   picker.close_windows(status)
 end
 
+--- Get the prompt text without the prompt prefix.
 function Picker:_get_prompt()
-  return vim.trim(
-    vim.api.nvim_buf_get_lines(self.prompt_bufnr, 0, 1, false)[1]:sub(#self.prompt_prefix + 1)
-  )
+  return vim.api.nvim_buf_get_lines(self.prompt_bufnr, 0, 1, false)[1]:sub(#self.prompt_prefix + 1)
 end
 
 function Picker:_reset_highlights()

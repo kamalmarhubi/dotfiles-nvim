@@ -251,6 +251,7 @@ internal.oldfiles = function(opts)
 
   if opts.cwd_only then
     local cwd = vim.loop.cwd()
+    cwd = cwd:gsub([[\]],[[\\]])
     results = vim.tbl_filter(function(file)
       return vim.fn.matchstrpos(file, cwd)[2] ~= -1
     end, results)
@@ -288,6 +289,36 @@ internal.command_history = function(opts)
       map('n', '<CR>', actions.set_command_line)
       map('n', '<C-e>', actions.edit_command_line)
       map('i', '<C-e>', actions.edit_command_line)
+
+      -- TODO: Find a way to insert the text... it seems hard.
+      -- map('i', '<C-i>', actions.insert_value, { expr = true })
+
+      return true
+    end,
+  }):find()
+end
+
+internal.search_history = function(opts)
+  local search_string = vim.fn.execute('history search')
+  local search_list = vim.split(search_string, "\n")
+
+  local results = {}
+  for i = #search_list, 3, -1 do
+    local item = search_list[i]
+    local _, finish = string.find(item, "%d+ +")
+    table.insert(results, string.sub(item, finish + 1))
+  end
+
+  pickers.new(opts, {
+    prompt_title = 'Search History',
+    finder = finders.new_table(results),
+    sorter = conf.generic_sorter(opts),
+
+    attach_mappings = function(_, map)
+      map('i', '<CR>', actions.set_search_line)
+      map('n', '<CR>', actions.set_search_line)
+      map('n', '<C-e>', actions.edit_search_line)
+      map('i', '<C-e>', actions.edit_search_line)
 
       -- TODO: Find a way to insert the text... it seems hard.
       -- map('i', '<C-i>', actions.insert_value, { expr = true })
@@ -886,16 +917,37 @@ internal.tagstack = function(opts)
   end
 
   pickers.new(opts, {
-      prompt_title = 'TagStack',
-      finder = finders.new_table {
-        results = tags,
-        entry_maker = make_entry.gen_from_quickfix(opts),
-      },
-      previewer = previewers.vim_buffer_qflist.new(opts),
-      sorter = conf.generic_sorter(opts),
-    }):find()
+    prompt_title = 'TagStack',
+    finder = finders.new_table {
+      results = tags,
+      entry_maker = make_entry.gen_from_quickfix(opts),
+    },
+    previewer = conf.qflist_previewer(opts),
+    sorter = conf.generic_sorter(opts),
+  }):find()
 end
 
+internal.jumplist = function(opts)
+  opts = opts or {}
+  local jumplist = vim.fn.getjumplist()[1]
+
+  -- reverse the list
+  local sorted_jumplist = {}
+  for i = #jumplist, 1, -1 do
+    jumplist[i].text = ''
+    table.insert(sorted_jumplist, jumplist[i])
+  end
+
+  pickers.new(opts, {
+    prompt_title = 'Jumplist',
+    finder = finders.new_table {
+      results = sorted_jumplist,
+      entry_maker = make_entry.gen_from_jumplist(opts),
+    },
+    previewer = conf.qflist_previewer(opts),
+    sorter = conf.generic_sorter(opts),
+  }):find()
+end
 
 local function apply_checks(mod)
   for k, v in pairs(mod) do

@@ -12,7 +12,10 @@ docs.test = function()
     "./lua/telescope/builtin/init.lua",
     "./lua/telescope/pickers/layout_strategies.lua",
     "./lua/telescope/actions/init.lua",
+    "./lua/telescope/actions/state.lua",
+    "./lua/telescope/actions/set.lua",
     "./lua/telescope/previewers/init.lua",
+    "./lua/telescope/themes.lua",
   }
 
   table.sort(input_files, function(a, b)

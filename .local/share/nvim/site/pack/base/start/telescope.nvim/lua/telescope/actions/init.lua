@@ -234,6 +234,19 @@ actions.set_command_line = function(prompt_bufnr)
   vim.cmd(entry.value)
 end
 
+actions.edit_search_line = function(prompt_bufnr)
+  local entry = action_state.get_selected_entry(prompt_bufnr)
+  actions.close(prompt_bufnr)
+  a.nvim_feedkeys(a.nvim_replace_termcodes("/" .. entry.value , true, false, true), "t", true)
+end
+
+actions.set_search_line = function(prompt_bufnr)
+  local entry = action_state.get_selected_entry(prompt_bufnr)
+
+  actions.close(prompt_bufnr)
+  a.nvim_feedkeys(a.nvim_replace_termcodes("/" .. entry.value .. "<CR>", true, false, true), "t", true)
+end
+
 actions.edit_register = function(prompt_bufnr)
   local entry = action_state.get_selected_entry(prompt_bufnr)
   local picker = action_state.get_current_picker(prompt_bufnr)
@@ -327,6 +340,23 @@ actions.git_create_branch = function(prompt_bufnr)
   end
 end
 
+--- Applies an existing git stash
+---@param prompt_bufnr number: The prompt bufnr
+actions.git_apply_stash = function(prompt_bufnr)
+  local selection = action_state.get_selected_entry()
+  actions.close(prompt_bufnr)
+  local _, ret, stderr = utils.get_os_command_output({ 'git', 'stash', 'apply', '--index', selection.value })
+  if ret == 0 then
+    print("applied: " .. selection.value)
+  else
+    print(string.format(
+      'Error when applying: %s. Git returned: "%s"',
+      selection.value,
+      table.concat(stderr, '  ')
+    ))
+  end
+end
+
 --- Checkout an existing git branch
 ---@param prompt_bufnr number: The prompt bufnr
 actions.git_checkout = function(prompt_bufnr)
@@ -339,6 +369,32 @@ actions.git_checkout = function(prompt_bufnr)
   else
     print(string.format(
       'Error when checking out: %s. Git returned: "%s"',
+      selection.value,
+      table.concat(stderr, '  ')
+    ))
+  end
+end
+
+-- TODO: add this function header back once the treesitter max-query bug is resolved
+-- Switch to git branch
+-- If the branch already exists in local, switch to that.
+-- If the branch is only in remote, create new branch tracking remote and switch to new one.
+--@param prompt_bufnr number: The prompt bufnr
+actions.git_switch_branch = function(prompt_bufnr)
+  local cwd = action_state.get_current_picker(prompt_bufnr).cwd
+  local selection = action_state.get_selected_entry()
+  actions.close(prompt_bufnr)
+  local pattern = '^refs/remotes/%w+/'
+  local branch = selection.value
+  if string.match(selection.refname, pattern) then
+    branch = string.gsub(selection.refname, pattern, '')
+  end
+  local _, ret, stderr = utils.get_os_command_output({ 'git', 'switch', branch }, cwd)
+  if ret == 0 then
+    print("Switched to: " .. branch)
+  else
+    print(string.format(
+      'Error when switching to: %s. Git returned: "%s"',
       selection.value,
       table.concat(stderr, '  ')
     ))
@@ -363,8 +419,9 @@ actions.git_track_branch = function(prompt_bufnr)
   end
 end
 
---- Delete the currently selected branch
----@param prompt_bufnr number: The prompt bufnr
+-- TODO: add this function header back once the treesitter max-query bug is resolved
+-- Delete the currently selected branch
+-- @param prompt_bufnr number: The prompt bufnr
 actions.git_delete_branch = function(prompt_bufnr)
   local cwd = action_state.get_current_picker(prompt_bufnr).cwd
   local selection = action_state.get_selected_entry()
@@ -385,8 +442,9 @@ actions.git_delete_branch = function(prompt_bufnr)
   end
 end
 
---- Rebase to selected git branch
----@param prompt_bufnr number: The prompt bufnr
+-- TODO: add this function header back once the treesitter max-query bug is resolved
+-- Rebase to selected git branch
+-- @param prompt_bufnr number: The prompt bufnr
 actions.git_rebase_branch = function(prompt_bufnr)
   local cwd = action_state.get_current_picker(prompt_bufnr).cwd
   local selection = action_state.get_selected_entry()
@@ -407,8 +465,9 @@ actions.git_rebase_branch = function(prompt_bufnr)
   end
 end
 
---- Stage/unstage selected file
----@param prompt_bufnr number: The prompt bufnr
+-- TODO: add this function header back once the treesitter max-query bug is resolved
+-- Stage/unstage selected file
+-- @param prompt_bufnr number: The prompt bufnr
 actions.git_staging_toggle = function(prompt_bufnr)
   local cwd = action_state.get_current_picker(prompt_bufnr).cwd
   local selection = action_state.get_selected_entry()

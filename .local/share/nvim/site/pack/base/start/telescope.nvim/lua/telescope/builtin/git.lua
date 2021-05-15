@@ -15,7 +15,7 @@ git.files = function(opts)
   local show_untracked = utils.get_default(opts.show_untracked, true)
   local recurse_submodules = utils.get_default(opts.recurse_submodules, false)
   if show_untracked and recurse_submodules then
-    error("Git does not suppurt both --others and --recurse-submodules")
+    error("Git does not support both --others and --recurse-submodules")
   end
 
   -- By creating the entry maker after the cwd options,
@@ -57,6 +57,25 @@ git.commits = function(opts)
   }):find()
 end
 
+git.stash = function(opts)
+  local results = utils.get_os_command_output({
+    'git', '--no-pager', 'stash', 'list',
+  }, opts.cwd)
+
+  pickers.new(opts, {
+    prompt_title = 'Git Stash',
+    finder = finders.new_table {
+      results = results,
+      entry_maker = opts.entry_maker or make_entry.gen_from_git_stash(),
+    },
+    previewer = previewers.git_stash_diff.new(opts),
+    sorter = conf.file_sorter(opts),
+    attach_mappings = function()
+      actions.select_default:replace(actions.git_apply_stash)
+      return true
+    end
+  }):find()
+end
 git.bcommits = function(opts)
   local results = utils.get_os_command_output({
     'git', 'log', '--pretty=oneline', '--abbrev-commit', vim.fn.expand('%')
@@ -180,9 +199,11 @@ git.branches = function(opts)
       map('i', '<c-a>', actions.git_create_branch)
       map('n', '<c-a>', actions.git_create_branch)
 
+      map('i', '<c-s>', actions.git_switch_branch)
+      map('n', '<c-s>', actions.git_switch_branch)
+
       map('i', '<c-d>', actions.git_delete_branch)
       map('n', '<c-d>', actions.git_delete_branch)
-
       return true
     end
   }):find()
@@ -244,7 +265,10 @@ local set_opts_cwd = function(opts)
   local use_git_root = utils.get_default(opts.use_git_root, true)
 
   if ret ~= 0 then
-    error(opts.cwd .. ' is not a git directory')
+    local is_worktree = utils.get_os_command_output({ "git", "rev-parse", "--is-inside-work-tree" }, opts.cwd)
+    if is_worktree == "false" then
+        error(opts.cwd .. ' is not a git directory')
+    end
   else
     if use_git_root then
       opts.cwd = git_root[1]
