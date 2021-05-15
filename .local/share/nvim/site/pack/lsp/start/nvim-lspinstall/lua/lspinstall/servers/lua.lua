@@ -1,5 +1,4 @@
-local config = require'lspconfig'.sumneko_lua.document_config
-require'lspconfig/configs'.sumneko_lua = nil -- important, immediately unset the loaded config again
+local config = require"lspinstall/util".extract_config("sumneko_lua")
 config.default_config.cmd = { "./sumneko-lua-language-server" }
 
 return vim.tbl_extend('error', config, {
@@ -15,7 +14,7 @@ return vim.tbl_extend('error', config, {
   ;;
   esac
 
-  wget -O sumneko-lua.vsix $(curl -s https://api.github.com/repos/sumneko/vscode-lua/releases/latest | grep 'browser_' | cut -d\" -f4)
+  curl -L -o sumneko-lua.vsix $(curl -s https://api.github.com/repos/sumneko/vscode-lua/releases/latest | grep 'browser_' | cut -d\" -f4)
   rm -rf sumneko-lua
   unzip sumneko-lua.vsix -d sumneko-lua
   rm sumneko-lua.vsix

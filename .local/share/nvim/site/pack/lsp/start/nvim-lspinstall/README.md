@@ -1,7 +1,10 @@
-# 🪄 nvim-lspinstall
+![logo](/logo.png)
+
+## About
 
 This is a very lightweight companion plugin for [nvim-lspconfig](https://github.com/neovim/nvim-lspconfig).
 It adds the missing `:LspInstall <language>` command to conveniently install language servers.
+
 The language servers are installed *locally* into `stdpath("data")`, you can use `:echo stdpath("data")` to find out which directory that is on your machine.
 
 
@@ -56,15 +59,21 @@ end
 
 | Language    | Language Server                                                             |
 |-------------|-----------------------------------------------------------------------------|
+| angular     | Angular Language Service                                                    |
 | bash        | bash-language-server                                                        |
-| cpp         | clangd                                                                      |
 | cmake       | cmake-language-server                                                       |
+| cpp         | clangd                                                                      |
+| csharp      | OmniSharp                                                                   |
 | css         | css-language-features (pulled directly from the latest VSCode release)      |
 | dockerfile  | docker-langserver                                                           |
+| elixir      | Elixir Language Server (elixir-ls)                                          |
+| elm         | Elm Language Server (elm-ls)                                                |
 | go          | gopls                                                                       |
 | graphql     | GraphQL language service                                                    |
 | html        | html-language-features (pulled directly from the latest VSCode release)     |
+| java        | Eclipse JDTLS with Lombok                                                   |
 | json        | json-language-features (pulled directly from the latest VSCode release)     |
+| kotlin      | kotlin-language-server                                                      |
 | latex       | texlab                                                                      |
 | lua         | (sumneko) lua-language-server                                               |
 | php         | intelephense                                                                |
@@ -73,6 +82,7 @@ end
 | rust        | rust-analyzer                                                               |
 | svelte      | svelte-language-server                                                      |
 | tailwindcss | tailwindcss-intellisense (pulled directly from the latest VSCode extension) |
+| terraform   | Terraform Language Server (terraform-ls)                                    |
 | typescript  | typescript-language-server                                                  |
 | vim         | vim-language-server                                                         |
 | vue         | vls (vetur)                                                                 |
@@ -80,10 +90,10 @@ end
 
 | Name        | Description                                                                 |
 |-------------|-----------------------------------------------------------------------------|
-| deno        | alternative typescript language server                                      |
-| diagnosticls| general purpose                                                             |
-| efm         | general purpose                                                             |
-| rome        | web dev linter                                                              |
+| deno        | https://deno.land/                                                          |
+| diagnosticls| https://github.com/iamcco/diagnostic-languageserver                         |
+| efm         | https://github.com/mattn/efm-langserver                                     |
+| rome        | https://rome.tools/                                                         |
 
 Note: css, json and html language servers are pulled directly from the latest VSCode release, instead of using the outdated versions provided by e.g. `npm install vscode-html-languageserver-bin`.
 
@@ -95,24 +105,23 @@ Here `config` is a LSP config for [nvim-lspconfig](https://github.com/neovim/nvi
 
 The following example provides an installer for `bash-language-server`.
 ```lua
--- 1. get the config for this server from nvim-lspconfig and adjust the cmd path.
---    relative paths are allowed, lspinstall automatically adjusts the cmd and cmd_cwd for us!
-local config = require'lspconfig'.bashls.document_config
-require'lspconfig/configs'.bashls = nil -- important, unset the loaded config again
+-- 1. get the default config from nvim-lspconfig
+local config = require"lspinstall/util".extract_config("bashls")
+-- 2. update the cmd. relative paths are allowed, lspinstall automatically adjusts the cmd and cmd_cwd for us!
 config.default_config.cmd[1] = "./node_modules/.bin/bash-language-server"
 
--- 2. extend the config with an install_script and (optionally) uninstall_script
+-- 3. extend the config with an install_script and (optionally) uninstall_script
 require'lspinstall/servers'.bash = vim.tbl_extend('error', config, {
   -- lspinstall will automatically create/delete the install directory for every server
-  install_script = [=[
-  [[ ! -f package.json ]] && npm init -y --scope=lspinstall || true
+  install_script = [[
+  ! test -f package.json && npm init -y --scope=lspinstall || true
   npm install bash-language-server@latest
-  ]=],
+  ]],
   uninstall_script = nil -- can be omitted
 })
 ```
 
-Do this before you call `require'lspinstall'.setup()`.
+Make sure to do this before you call `require'lspinstall'.setup()`.
 
 Note: **don't** replace the `/` with a `.` in the `require` calls above ([see here if you're interested why](https://github.com/kabouzeid/nvim-lspinstall/issues/14)).
 
@@ -130,3 +139,5 @@ Note: **don't** replace the `/` with a `.` in the `require` calls above ([see he
 * `require'lspinstall'.post_uninstall_hook`
 
 * `require'lspinstall/servers'`
+
+* `require'lspinstall/util'.extract_config(<lspconfig-name>)`

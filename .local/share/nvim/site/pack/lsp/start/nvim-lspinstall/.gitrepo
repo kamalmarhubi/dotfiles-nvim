@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/kabouzeid/nvim-lspinstall.git
 	branch = main
-	commit = 6d0a1f0d7150966b05390e53d3cf49006133bdd1
-	parent = 275a5052df3d5ae53d7798fb05dd997d6ba52d7c
+	commit = 8f7ce91fad7affa08a9a0d47fddfa37923fd3f4e
+	parent = 2baa5b50751b14eb6490f92732cb5809b3f4870f
 	method = rebase
 	cmdver = 0.4.3

@@ -1,10 +1,9 @@
-local config = require'lspconfig'.vimls.document_config
-require'lspconfig/configs'.vimls = nil -- important, immediately unset the loaded config again
+local config = require"lspinstall/util".extract_config("vimls")
 config.default_config.cmd[1] = "./node_modules/.bin/vim-language-server"
 
 return vim.tbl_extend('error', config, {
-  install_script = [=[
-  [[ ! -f package.json ]] && npm init -y --scope=lspinstall || true
+  install_script = [[
+  ! test -f package.json && npm init -y --scope=lspinstall || true
   npm install vim-language-server@latest
-  ]=]
+  ]]
 })
