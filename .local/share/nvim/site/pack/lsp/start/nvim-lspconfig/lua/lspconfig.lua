@@ -1,9 +1,10 @@
 local configs = require 'lspconfig/configs'
-local lspinfo = require 'lspconfig/lspinfo'
 
 local M = {
   util = require 'lspconfig/util';
 }
+
+local script_path = M.util.script_path()
 
 M._root = {}
 
@@ -17,7 +18,7 @@ function M._root._setup()
   M._root.commands = {
     LspInfo = {
       function()
-        lspinfo()
+        require('lspconfig/lspinfo')()
       end;
       "-nargs=0";
       description = '`:LspInfo` Displays attached, active, and configured language servers';
@@ -85,7 +86,9 @@ end
 local mt = {}
 function mt:__index(k)
   if configs[k] == nil then
-    pcall(require, 'lspconfig/'..k)
+    -- dofile is used here as a performance hack to increase the speed of calls to setup({})
+    -- dofile does not cache module lookups, and requires the absolute path to the target file
+    pcall(dofile, script_path .. 'lspconfig/' .. k .. ".lua")
   end
   return configs[k]
 end
