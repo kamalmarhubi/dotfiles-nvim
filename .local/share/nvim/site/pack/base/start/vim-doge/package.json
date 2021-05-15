@@ -1,12 +1,12 @@
 {
   "private": true,
   "name": "vim-doge",
-  "version": "3.9.1",
+  "version": "3.10.0",
   "description": "A Vim polyglot plugin for generating documentation",
   "scripts": {
     "release": "release-it",
     "release:beta": "release-it --preRelease=beta",
-    "prebuild": "rimraf build && rm -f ./bin/vim-doge && ln -s ../build/src/index.js ./bin/vim-doge",
+    "prebuild": "rimraf build && rm -f ./bin/vim-doge; ln -s ../build/src/index.js ./bin/vim-doge",
     "watch": "npm run prebuild && tsc -p tsconfig.json --watch true --sourceMap",
     "build": "tsc -p tsconfig.json",
     "build:binary:unix": "rimraf build && ncc build ./src/index.ts -m -o build && ./scripts/build.sh",
