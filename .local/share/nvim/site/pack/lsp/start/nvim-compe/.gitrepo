@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/hrsh7th/nvim-compe.git
+	branch = master
+	commit = 310488302c6532646adfe8228e40187a80b36ac5
+	parent = 54dcaf2ed63ecaa1b759965d496e73f2a0ac6603
+	method = rebase
+	cmdver = 0.4.3
