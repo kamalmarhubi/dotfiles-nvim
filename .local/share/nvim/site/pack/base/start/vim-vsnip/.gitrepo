@@ -1,0 +1,12 @@
+; DO NOT EDIT (unless you know what you are doing)
+;
+; This subdirectory is a git "subrepo", and this file is maintained by the
+; git-subrepo command. See https://github.com/git-commands/git-subrepo#readme
+;
+[subrepo]
+	remote = https://github.com/hrsh7th/vim-vsnip.git
+	branch = master
+	commit = 552403842b992efde3816a89b20055f7d66d9a0d
+	parent = 88ac243e15eadf59aa07a4bae847af6b0725191f
+	method = rebase
+	cmdver = 0.4.3
