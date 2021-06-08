@@ -28,3 +28,7 @@ vim.g.floaterm_borderchars = { '─', '│', '─', '│', '╭', '╮', '╯', 
 
 -- DoGe documentation generator
 vim.g.doge_doc_standard_python = 'google'
+
+
+-- For nvim-compe
+vim.opt.completeopt = "menuone,noselect"
