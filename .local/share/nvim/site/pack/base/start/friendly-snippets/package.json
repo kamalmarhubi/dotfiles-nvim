@@ -26,6 +26,10 @@
         "path": "./snippets/erb.json"
       },
       {
+      "language": "elixir",
+      "path": "./snippets/elixir.json"
+      },
+      {
         "language": "fortran",
         "path": "./snippets/fortran.json"
       },
@@ -36,6 +40,10 @@
       {
         "language": "go",
         "path": "./snippets/go.json"
+      },
+      {
+          "language": "fennel",
+          "path": "./snippets/fennel.json"
       },
       {
         "language": "php",
