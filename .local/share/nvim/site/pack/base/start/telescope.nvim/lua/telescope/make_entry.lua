@@ -1,6 +1,7 @@
 local entry_display = require('telescope.pickers.entry_display')
 local path = require('telescope.path')
 local utils = require('telescope.utils')
+local strings = require('plenary.strings')
 
 local Path = require('plenary.path')
 
@@ -27,13 +28,6 @@ local lsp_type_highlight = {
   ["Property"] = "TelescopeResultsOperator",
   ["Struct"]   = "TelescopeResultsStruct",
   ["Variable"] = "TelescopeResultsVariable",
-}
-
-local lsp_type_diagnostic = {
-  [1] = "Error",
-  [2] = "Warning",
-  [3] = "Information",
-  [4] = "Hint"
 }
 
 local make_entry = {}
@@ -254,8 +248,7 @@ function make_entry.gen_from_git_stash()
   end
 end
 
-
-function make_entry.gen_from_git_commits()
+function make_entry.gen_from_git_commits(opts)
   local displayer = entry_display.create {
     separator = " ",
     items = {
@@ -287,7 +280,8 @@ function make_entry.gen_from_git_commits()
       value = sha,
       ordinal = sha .. ' ' .. msg,
       msg = msg,
-      display = make_display
+      display = make_display,
+      current_file = opts.current_file
     }
   end
 end
@@ -424,7 +418,7 @@ function make_entry.gen_from_lsp_symbols(opts)
     if not opts.ignore_filename and filename then
       ordinal = filename .. " "
     end
-    ordinal = ordinal ..  symbol_name .. " " .. symbol_type
+    ordinal = ordinal ..  symbol_name .. " " .. (symbol_type or "unknown")
     return {
       valid = true,
 
@@ -451,7 +445,7 @@ function make_entry.gen_from_buffer(opts)
   local icon_width = 0
   if not disable_devicons then
     local icon, _ = utils.get_devicons('fname', disable_devicons)
-    icon_width = utils.strdisplaywidth(icon)
+    icon_width = strings.strdisplaywidth(icon)
   end
 
   local displayer = entry_display.create {
@@ -562,7 +556,7 @@ function make_entry.gen_from_treesitter(opts)
 
       value = entry.node,
       kind = entry.kind,
-      ordinal = node_text .. " " .. entry.kind,
+      ordinal = node_text .. " " .. (entry.kind or "unknown"),
       display = make_display,
 
       node_text = node_text,
@@ -936,18 +930,21 @@ end
 function make_entry.gen_from_lsp_diagnostics(opts)
   opts = opts or {}
   opts.tail_path = utils.get_default(opts.tail_path, true)
+  local lsp_type_diagnostic = vim.lsp.protocol.DiagnosticSeverity
 
   local signs
   if not opts.no_sign then
     signs = {}
-    for _, v in pairs(lsp_type_diagnostic) do
+    for severity, _ in pairs(lsp_type_diagnostic) do
       -- pcall to catch entirely unbound or cleared out sign hl group
-      local status, sign = pcall(
-        function() return vim.trim(vim.fn.sign_getdefined("LspDiagnosticsSign" .. v)[1].text) end)
-      if not status then
-        sign = v:sub(1,1)
+      if type(severity) == 'string' then
+        local status, sign = pcall(
+          function() return vim.trim(vim.fn.sign_getdefined("LspDiagnosticsSign" .. severity)[1].text) end)
+        if not status then
+          sign = severity:sub(1,1)
+        end
+        signs[severity] = sign
       end
-      signs[v] = sign
     end
   end
 

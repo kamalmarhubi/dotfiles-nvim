@@ -563,13 +563,14 @@ internal.buffers = function(opts)
     if 1 ~= vim.fn.buflisted(b) then
         return false
     end
-    if not opts.show_all_buffers and not vim.api.nvim_buf_is_loaded(b) then
+    -- only hide unloaded buffers if opts.show_all_buffers is false, keep them listed if true or nil
+    if opts.show_all_buffers == false and not vim.api.nvim_buf_is_loaded(b) then
       return false
     end
     if opts.ignore_current_buffer and b == vim.api.nvim_get_current_buf() then
       return false
     end
-    if opts.only_cwd and not string.find(vim.api.nvim_buf_get_name(b), vim.loop.cwd()) then
+    if opts.only_cwd and not string.find(vim.api.nvim_buf_get_name(b), vim.loop.cwd(), 1, true) then
       return false
     end
     return true

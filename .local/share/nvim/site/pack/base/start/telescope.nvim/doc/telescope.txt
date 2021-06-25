@@ -19,6 +19,15 @@ telescope.setup({opts})                                    *telescope.setup()*
 
     Valid keys for {opts.defaults}
 
+                                 *telescope.defaults.dynamic_preview_title*
+    dynamic_preview_title: ~
+          Will change the title of the preview window dynamically, where it
+          is supported. Means the preview window will for example show the
+          full filename.
+
+          Default: false
+
+
                                           *telescope.defaults.entry_prefix*
     entry_prefix: ~
         Prefix in front of each result entry. Current selection not included.
@@ -283,6 +292,16 @@ actions.git_checkout({prompt_bufnr})                  *actions.git_checkout()*
         {prompt_bufnr} (number)  The prompt bufnr
 
 
+actions.git_switch_branch({prompt_bufnr})        *actions.git_switch_branch()*
+    Switch to git branch.
+    If the branch already exists in local, switch to that. If the branch is
+    only in remote, create new branch tracking remote and switch to new one.
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
 actions.git_track_branch({prompt_bufnr})          *actions.git_track_branch()*
     Tell git to track the currently selected remote branch in Telescope
 
@@ -291,9 +310,133 @@ actions.git_track_branch({prompt_bufnr})          *actions.git_track_branch()*
         {prompt_bufnr} (number)  The prompt bufnr
 
 
+actions.git_delete_branch({prompt_bufnr})        *actions.git_delete_branch()*
+    Delete the currently selected branch
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
+actions.git_rebase_branch({prompt_bufnr})        *actions.git_rebase_branch()*
+    Rebase to selected git branch
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
+actions.git_checkout_current_buffer({prompt_bufnr})*actions.git_checkout_current_buffer()*
+    Stage/unstage selected file
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
+actions.send_selected_to_qflist()          *actions.send_selected_to_qflist()*
+    Sends the selected entries to the quickfix list, replacing the previous
+    entries.
+
+
+
+actions.add_selected_to_qflist()            *actions.add_selected_to_qflist()*
+    Adds the selected entries to the quickfix list, keeping the previous
+    entries.
+
+
+
+actions.send_to_qflist()                            *actions.send_to_qflist()*
+    Sends all entries to the quickfix list, replacing the previous entries.
+
+
+
+actions.add_to_qflist()                              *actions.add_to_qflist()*
+    Adds all entries to the quickfix list, keeping the previous entries.
+
+
+
+actions.send_selected_to_loclist()        *actions.send_selected_to_loclist()*
+    Sends the selected entries to the location list, replacing the previous
+    entries.
+
+
+
+actions.add_selected_to_loclist()          *actions.add_selected_to_loclist()*
+    Adds the selected entries to the location list, keeping the previous
+    entries.
+
+
+
+actions.send_to_loclist()                          *actions.send_to_loclist()*
+    Sends all entries to the location list, replacing the previous entries.
+
+
+
+actions.add_to_loclist()                            *actions.add_to_loclist()*
+    Adds all entries to the location list, keeping the previous entries.
+
+
+
+actions.smart_send_to_qflist()                *actions.smart_send_to_qflist()*
+    Sends the selected entries to the quickfix list, replacing the previous
+    entries. If no entry was selected, sends all entries.
+
+
+
+actions.smart_add_to_qflist()                  *actions.smart_add_to_qflist()*
+    Adds the selected entries to the quickfix list, keeping the previous
+    entries. If no entry was selected, adds all entries.
+
+
+
+actions.smart_send_to_loclist()              *actions.smart_send_to_loclist()*
+    Sends the selected entries to the location list, replacing the previous
+    entries. If no entry was selected, sends all entries.
+
+
+
+actions.smart_add_to_loclist()                *actions.smart_add_to_loclist()*
+    Adds the selected entries to the location list, keeping the previous
+    entries. If no entry was selected, adds all entries.
+
+
+
 actions.open_qflist()                                  *actions.open_qflist()*
     Open the quickfix list
 
+
+
+actions.open_loclist()                                *actions.open_loclist()*
+    Open the location list
+
+
+
+actions.delete_buffer({prompt_bufnr})                *actions.delete_buffer()*
+    Delete the selected buffer or all the buffers selected using multi
+    selection.
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
+actions.cycle_previewers_next({prompt_bufnr})*actions.cycle_previewers_next()*
+    Cycle to the next previewer if there is one available.
+    This action is not mapped on default.
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
+
+
+actions.cycle_previewers_prev({prompt_bufnr})*actions.cycle_previewers_prev()*
+    Cycle to the previous previewer if there is one available.
+    This action is not mapped on default.
+
+
+    Parameters: ~
+        {prompt_bufnr} (number)  The prompt bufnr
 
 
 
@@ -314,9 +457,37 @@ your desired picker by passing a lua table to the picker with all of the
 options you want to use. Here's an example with the live_grep picker:
 
 :lua require('telescope.builtin').live_grep({
-   prompt_title = 'find string in open buffers...',
-   grep_open_files = true
- })
+  prompt_title = 'find string in open buffers...',
+  grep_open_files = true
+})
+-- or with dropdown theme
+:lua require('telescope.builtin').find_files(require('telescope.themes').get_dropdown{
+  previewer = false
+})
+
+You can also pass default configurations to builtin pickers. These options will
+also be added if the picker is executed with `Telescope find_files`.
+
+require("telescope").setup {
+  pickers = {
+    buffers = {
+      show_all_buffers = true,
+      sort_lastused = true,
+      theme = "dropdown",
+      previewer = false,
+      mappings = {
+        i = {
+          ["<c-d>"] = require("telescope.actions").delete_buffer,
+          -- or right hand side can also be a the name of the action as string
+          ["<c-d>"] = "delete_buffer",
+        },
+        n = {
+          ["<c-d>"] = require("telescope.actions").delete_buffer,
+        }
+      }
+    }
+  }
+}
 
 This will use the default configuration options. Other configuration options
 are still in flux at the moment
@@ -392,11 +563,15 @@ builtin.file_browser({opts})                          *builtin.file_browser()*
         {opts} (table)  options to pass to the picker
 
     Fields: ~
-        {search_dirs} (table)  directory/directories to search in
+        {cwd}   (string)  directory path to browse (default is cwd)
+        {depth} (number)  file tree depth to display (default is 1)
 
 
 builtin.treesitter()                                    *builtin.treesitter()*
     Lists function names, variables, and other symbols from treesitter queries
+    - Default keymaps:
+      - `<C-l>`: show autocompletion menu to prefilter your query by kind of ts
+        node you want to see (i.e. `:var:`)
 
 
     Fields: ~
@@ -469,15 +644,26 @@ builtin.git_commits({opts})                            *builtin.git_commits()*
     Parameters: ~
         {opts} (table)  options to pass to the picker
 
+    Fields: ~
+        {cwd} (string)  specify the path of the repo
+
 
 builtin.git_bcommits({opts})                          *builtin.git_bcommits()*
     Lists commits for current buffer with diff preview
-    - Default keymaps:
+    - Default keymaps or your overriden `select_` keys:
       - `<cr>`: checks out the currently selected commit
+      - `<c-v>`: opens a diff in a vertical split
+      - `<c-x>`: opens a diff in a horizontal split
+      - `<c-t>`: opens a diff in a new tab
 
 
     Parameters: ~
         {opts} (table)  options to pass to the picker
+
+    Fields: ~
+        {cwd}          (string)  specify the path of the repo
+        {current_file} (string)  specify the current file that should be used
+                                 for bcommits (default: current buffer)
 
 
 builtin.git_branches({opts})                          *builtin.git_branches()*
@@ -638,6 +824,20 @@ builtin.buffers({opts})                                    *builtin.buffers()*
     Parameters: ~
         {opts} (table)  options to pass to the picker
 
+    Fields: ~
+        {show_all_buffers}      (boolean)  if true, show all buffers, including
+                                           unloaded buffers (default true)
+        {ignore_current_buffer} (boolean)  if true, don't show the current
+                                           buffer in the list (default false)
+        {only_cwd}              (boolean)  if true, only show buffers in the
+                                           current working directory (default
+                                           false)
+        {sort_lastused}         (boolean)  if true, sort the shown buffers so
+                                           that the last used one is selected
+                                           (default false)
+        {bufnr_width}           (number)   Defines the width of the buffer
+                                           numbers in front of the filenames
+
 
 builtin.colorscheme({opts})                            *builtin.colorscheme()*
     Lists available colorschemes and applies them on `<cr>`
@@ -788,7 +988,8 @@ builtin.lsp_document_symbols({opts})          *builtin.lsp_document_symbols()*
         {opts} (table)  options to pass to the picker
 
     Fields: ~
-        {ignore_filename} (type)  string with file to ignore
+        {ignore_filename} (type)          string with file to ignore
+        {symbols}         (string|table)  filter results by symbol kind(s)
 
 
 builtin.lsp_workspace_symbols({opts})        *builtin.lsp_workspace_symbols()*
@@ -802,12 +1003,14 @@ builtin.lsp_workspace_symbols({opts})        *builtin.lsp_workspace_symbols()*
         {opts} (table)  options to pass to the picker
 
     Fields: ~
-        {shorten_path}    (boolean)  if true, makes file paths shown in picker
-                                     use one letter for folders (default is
-                                     false)
-        {ignore_filename} (string)   file(s) to ignore
-        {hide_filename}   (boolean)  if true, hides the name of the file in the
-                                     current picker (default is false)
+        {shorten_path}    (boolean)       if true, makes file paths shown in
+                                          picker use one letter for folders
+                                          (default is false)
+        {ignore_filename} (string)        file(s) to ignore
+        {hide_filename}   (boolean)       if true, hides the name of the file
+                                          in the current picker (default is
+                                          false)
+        {symbols}         (string|table)  filter results by symbol kind(s)
 
 
 builtin.lsp_dynamic_workspace_symbols({opts})*builtin.lsp_dynamic_workspace_symbols()*
@@ -827,6 +1030,9 @@ builtin.lsp_dynamic_workspace_symbols({opts})*builtin.lsp_dynamic_workspace_symb
 
 builtin.lsp_document_diagnostics({opts})  *builtin.lsp_document_diagnostics()*
     Lists LSP diagnostics for the current buffer
+    - Fields:
+      - `All severity flags can be passed as `string` or `number` as per
+        `:vim.lsp.protocol.DiagnosticSeverity:`
     - Default keymaps:
       - `<C-l>`: show autocompletion menu to prefilter your query with the
         diagnostic you want to see (i.e. `:warning:`)
@@ -836,13 +1042,29 @@ builtin.lsp_document_diagnostics({opts})  *builtin.lsp_document_diagnostics()*
         {opts} (table)  options to pass to the picker
 
     Fields: ~
-        {hide_filename} (boolean)  if true, hides the name of the file in the
-                                   current picker (default is false)
+        {hide_filename}  (boolean)        if true, hides the name of the file
+                                          in the current picker (default is
+                                          false)
+        {severity}       (string|number)  filter diagnostics by severity name
+                                          (string) or id (number)
+        {severity_limit} (string|number)  keep diagnostics equal or more severe
+                                          wrt severity name (string) or id
+                                          (number)
+        {severity_bound} (string|number)  keep diagnostics equal or less severe
+                                          wrt severity name (string) or id
+                                          (number)
+        {no_sign}        (bool)           hide LspDiagnosticSigns from Results
+                                          (default is false)
+        {line_width}     (number)         set length of diagnostic entry text
+                                          in Results
 
 
 builtin.lsp_workspace_diagnostics({opts})*builtin.lsp_workspace_diagnostics()*
     Lists LSP diagnostics for the current workspace if supported, otherwise
     searches in all open buffers
+    - Fields:
+      - `All severity flags can be passed as `string` or `number` as per
+        `:vim.lsp.protocol.DiagnosticSeverity:`
     - Default keymaps:
       - `<C-l>`: show autocompletion menu to prefilter your query with the
         diagnostic you want to see (i.e. `:warning:`)
@@ -852,8 +1074,21 @@ builtin.lsp_workspace_diagnostics({opts})*builtin.lsp_workspace_diagnostics()*
         {opts} (table)  options to pass to the picker
 
     Fields: ~
-        {hide_filename} (boolean)  if true, hides the name of the file in the
-                                   current picker (default is false)
+        {hide_filename}  (boolean)        if true, hides the name of the file
+                                          in the current picker (default is
+                                          false)
+        {severity}       (string|number)  filter diagnostics by severity name
+                                          (string) or id (number)
+        {severity_limit} (string|number)  keep diagnostics equal or more severe
+                                          wrt severity name (string) or id
+                                          (number)
+        {severity_bound} (string|number)  keep diagnostics equal or less severe
+                                          wrt severity name (string) or id
+                                          (number)
+        {no_sign}        (bool)           hide LspDiagnosticSigns from Results
+                                          (default is false)
+        {line_width}     (number)         set length of diagnostic entry text
+                                          in Results
 
 
 
@@ -931,6 +1166,10 @@ previewers.Previewer()                                *previewers.Previewer()*
       - `teardown` function(self): Will be called on cleanup.
       - `preview_fn` function(self, entry, status): Will be called each time a
         new entry was selected.
+      - `title` function(self): Will return the static title of the previewer.
+      - `dynamic_title` function(self, entry): Will return the dynamic title of
+        the previewer. Will only be called when config value
+        dynamic_preview_title is true.
       - `send_input` function(self, input): This is meant for 
         `termopen_previewer` and it can be used to send input to the terminal 
         application, like less.
@@ -954,6 +1193,11 @@ previewers.new_termopen_previewer()      *previewers.new_termopen_previewer()*
       get_command = function(entry, status)
         return { 'bat', entry.path }
       end
+
+    Additionally you can define:
+    - `title` a static title for example "File Preview"
+    - `dyn_title(self, entry)` a dynamic title function which gets called when
+      config value `dynamic_preview_title = true`
 
     It's an easy way to get your first previewer going and it integrates well
     with `bat` and `less`. Providing out of the box scrolling if the command
@@ -1046,6 +1290,9 @@ previewers.new_buffer_previewer()          *previewers.new_buffer_previewer()*
         one file but multiple entries. This happens for grep and lsp builtins.
         So to make the cache work only load content if `self.state.bufname ~=
         entry.your_unique_key`
+      - `title` a static title for example "File Preview"
+      - `dyn_title(self, entry)` a dynamic title function which gets called 
+        when config value `dynamic_preview_title = true`
 
     `self.state` table:
       - `self.state.bufnr` Is the current buffer number, in which you have to
@@ -1138,6 +1385,51 @@ previewers.vim_buffer_qflist()                *previewers.vim_buffer_qflist()*
     `require('telescope.config').values.qflist_previewer` This will respect
     user configuration and will use `termopen_previewer` in case it's
     configured that way.
+
+
+
+previewers.git_branch_log()                      *previewers.git_branch_log()*
+    A previewer that shows a log of a branch as graph
+
+
+
+previewers.git_stash_diff()                      *previewers.git_stash_diff()*
+    A previewer that shows a diff of a stash
+
+
+
+previewers.git_commit_diff_to_parent()*previewers.git_commit_diff_to_parent()*
+    A previewer that shows a diff of a commit to a parent commit.
+    The run command is `git --no-pager diff SHA^! -- $CURRENT_FILE`
+
+    The current file part is optional. So is only uses it with bcommits.
+
+
+
+previewers.git_commit_diff_to_head()    *previewers.git_commit_diff_to_head()*
+    A previewer that shows a diff of a commit to head.
+    The run command is `git --no-pager diff --cached $SHA -- $CURRENT_FILE`
+
+    The current file part is optional. So is only uses it with bcommits.
+
+
+
+previewers.git_commit_diff_as_was()      *previewers.git_commit_diff_as_was()*
+    A previewer that shows a diff of a commit as it was.
+    The run command is `git --no-pager show $SHA:$CURRENT_FILE` or `git
+    --no-pager show $SHA`
+
+
+
+previewers.git_commit_message()              *previewers.git_commit_message()*
+    A previewer that shows the commit message of a diff.
+    The run command is `git --no-pager log -n 1 $SHA`
+
+
+
+previewers.git_file_diff()                        *previewers.git_file_diff()*
+    A previewer that shows the current diff of a file. Used in git_status.
+    The run command is `git --no-pager diff $FILE`
 
 
 
