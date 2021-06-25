@@ -128,66 +128,69 @@ Source.trigger = function(self, context, callback)
   if characters then
     self.is_triggered_by_character = Character.is_symbol(string.byte(context.before_char))
   end
-  if incomplete then
-    if not (manual or characters) then
-      -- Skip for incomplete completion.
-      if self.status == 'processing' or (vim.loop.now() - self.request_time) < Config.get().incomplete_delay then
-        return
+
+  local delay = (function()
+    if incomplete then
+      if not (manual or characters) then
+        return Config.get().incomplete_delay - (vim.loop.now() - self.request_time)
       end
     end
-  end
+    return -1
+  end)()
 
-  self.status = 'processing'
-  self.request_id = self.request_id + 1
-  self.request_time = vim.loop.now()
-  self.request_state = state
+  Async.debounce(self.id, delay, function()
+    self.status = 'processing'
+    self.request_id = self.request_id + 1
+    self.request_time = vim.loop.now()
+    self.request_state = state
 
-  local request_id = self.request_id
+    local request_id = self.request_id
 
-  -- Completion
-  self.source:complete({
-    context = self.context;
-    input = self.context:get_input(state.keyword_pattern_offset);
-    keyword_pattern_offset = state.keyword_pattern_offset;
-    trigger_character_offset = state.trigger_character_offset;
-    incomplete = self.incomplete;
-    callback = vim.schedule_wrap(function(result)
-      if self.request_id ~= request_id then
-        return
-      end
+    -- Completion
+    self.source:complete({
+      context = self.context;
+      input = self.context:get_input(state.keyword_pattern_offset);
+      keyword_pattern_offset = state.keyword_pattern_offset;
+      trigger_character_offset = state.trigger_character_offset;
+      incomplete = self.incomplete;
+      callback = vim.schedule_wrap(function(result)
+        if self.request_id ~= request_id then
+          return
+        end
 
-      -- Continue current completion
-      if count > 0 and #result.items == 0 then
+        -- Continue current completion
+        if count > 0 and #result.items == 0 then
+          self.status = 'completed'
+          return callback()
+        end
+
+        result = result or {}
+
+        self.revision = self.revision + 1
         self.status = 'completed'
-        return callback()
-      end
+        self.incomplete = result.incomplete or false
+        self.keyword_pattern_offset = result.keyword_pattern_offset or state.keyword_pattern_offset
+        self.trigger_character_offset = state.trigger_character_offset
+        self.items = self:_normalize_items(context, result.items or {})
 
-      result = result or {}
+        if #self.items == 0 then
+          self:clear()
+        end
 
-      self.revision = self.revision + 1
-      self.status = 'completed'
-      self.incomplete = result.incomplete or false
-      self.keyword_pattern_offset = result.keyword_pattern_offset or state.keyword_pattern_offset
-      self.trigger_character_offset = state.trigger_character_offset
-      self.items = self:_normalize_items(context, result.items or {})
-
-      if #self.items == 0 then
+        callback()
+      end);
+      abort = function()
         self:clear()
-      end
-
-      callback()
-    end);
-    abort = function()
-      self:clear()
-      vim.schedule(callback)
-    end;
-  })
+        vim.schedule(callback)
+      end;
+    })
+  end)
   return true
 end
 
 --- resolve
 Source.resolve = function(self, args)
-  local callback = Async.once(args.callback)
+  local callback = Async.guard('Source.resolve', args.callback)
 
   if self.resolved_items[args.completed_item.item_id] then
     return callback(self.resolved_items[args.completed_item.item_id])
@@ -197,13 +200,6 @@ Source.resolve = function(self, args)
     self.resolved_items[args.completed_item.item_id] = args.completed_item
     return callback(self.resolved_items[args.completed_item.item_id])
   end
-
-  Async.set_timeout(function()
-    if not self.resolved_items[args.completed_item.item_id] then
-      self.resolved_items[args.completed_item.item_id] = args.completed_item
-      callback(self.resolved_items[args.completed_item.item_id])
-    end
-  end, 200)
 
   self.source:resolve({
     completed_item = args.completed_item,
@@ -254,7 +250,7 @@ Source.confirm = function(self, completed_item)
         resolved = true
       end
     })
-    vim.wait(200, function() return resolved end, 1)
+    vim.wait(Config.get().resolve_timeout, function() return resolved end, 1)
   end
 end
 
@@ -338,6 +334,8 @@ Source._normalize_items = function(self, _, items)
   for i, item in ipairs(items) do
     self.item_id = self.item_id + 1
 
+    local item_id = self.revision .. '.' .. self.item_id
+
     -- string to completed_item
     if type(item) == 'string' then
       item = {
@@ -361,7 +359,7 @@ Source._normalize_items = function(self, _, items)
     item.preselect = item.preselect or false
 
     -- internal properties
-    item.item_id = self.item_id
+    item.item_id = item_id
     item.source_id = self.id
     item.priority = metadata.priority or 0
     item.sort = Boolean.get(metadata.sort, true)

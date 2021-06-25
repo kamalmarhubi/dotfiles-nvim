@@ -2,7 +2,6 @@ local Async = require'compe.utils.async'
 local Cache = require'compe.utils.cache'
 local Callback = require'compe.utils.callback'
 local Config = require'compe.config'
-local Helper = require'compe.helper'
 local Context = require'compe.context'
 local Matcher = require'compe.matcher'
 
@@ -10,6 +9,8 @@ local VALID_COMPLETE_MODE = {
   [''] = true;
   ['eval'] = true;
 }
+
+local Completion = {}
 
 --- guard
 local guard = function(callback)
@@ -19,13 +20,12 @@ local guard = function(callback)
     invalid = invalid or vim.call('getbufvar', '%', '&buftype') == 'prompt'
     invalid = invalid or string.sub(vim.call('mode'), 1, 1) ~= 'i'
     invalid = invalid or not VALID_COMPLETE_MODE[vim.fn.complete_info({ 'mode' }).mode]
+    invalid = invalid or Completion._is_confirming
     if not invalid then
       callback(...)
     end
   end
 end
-
-local Completion = {}
 
 Completion._get_sources_cache_key = 0
 Completion._sources = {}
@@ -34,6 +34,8 @@ Completion._current_offset = 0
 Completion._current_items = {}
 Completion._selected_item = nil
 Completion._selected_manually = false
+Completion._is_confirming = false
+Completion._confirm_item = nil
 Completion._history = {}
 
 --- register_source
@@ -106,17 +108,23 @@ Completion.select = function(args)
   end
 end
 
-Completion.info = function()
+--- confirm_pre
+Completion.confirm_pre = function(index)
+  if not VALID_COMPLETE_MODE[vim.fn.complete_info({ 'mode' }).mode] then
+    return nil
+  end
+  Completion._confirm_item = Completion._current_items[index]
+  Completion._is_confirming = true
   return {
     offset = Completion._current_offset,
-    item = Completion._selected_item or Completion._current_items[1],
+    item = Completion._confirm_item
   }
 end
 
 --- confirm
 Completion.confirm = function()
-  local completed_item = Completion._selected_item or Completion._current_items[1]
-  if completed_item then
+  if Completion._confirm_item then
+    local completed_item = Completion._confirm_item
     Completion._history[completed_item.abbr] = Completion._history[completed_item.abbr] or 0
     Completion._history[completed_item.abbr] = Completion._history[completed_item.abbr] + 1
 
@@ -128,6 +136,7 @@ Completion.confirm = function()
     end
   end
 
+  Completion._is_confirming = false
   vim.cmd([[doautocmd <nomodeline> User CompeConfirmDone]])
 
   Completion.close()

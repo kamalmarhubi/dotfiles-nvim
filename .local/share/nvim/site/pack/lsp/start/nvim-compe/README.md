@@ -96,6 +96,7 @@ let g:compe.min_length = 1
 let g:compe.preselect = 'enable'
 let g:compe.throttle_time = 80
 let g:compe.source_timeout = 200
+let g:compe.resolve_timeout = 800
 let g:compe.incomplete_delay = 400
 let g:compe.max_abbr_width = 100
 let g:compe.max_kind_width = 100
@@ -123,6 +124,7 @@ require'compe'.setup {
   preselect = 'enable';
   throttle_time = 80;
   source_timeout = 200;
+  resolve_timeout = 800;
   incomplete_delay = 400;
   max_abbr_width = 100;
   max_kind_width = 100;
@@ -228,6 +230,13 @@ If you are enabling the `omni` source, please try to disable it.
 
 If you are enabling the `treesitter` source, please try to disable it.
 
+### Does not work function signature window.
+
+The signature help is out of scope of compe.
+It should be another plugin e.g. [lsp_signature.nvim](https://github.com/ray-x/lsp_signature.nvim)
+
+If you are enabling the `treesitter` source, please try to disable it.
+
 ### How to remove `Pattern not found`?
 
 You can set `set shortmess+=c` in your vimrc.
@@ -326,6 +335,30 @@ vim.api.nvim_set_keymap("s", "<S-Tab>", "v:lua.s_tab_complete()", {expr = true})
 ### How to expand snippets from completion menu?
 
 Use `compe#confirm()` mapping, as described in section [Mappings](#mappings).
+
+
+### ESC does not close the completion menu
+
+Another plugin might be interfering with it. [`vim-autoclose`](https://github.com/Townk/vim-autoclose)
+does this. You can check the mapping of `<ESC>` by running
+
+```
+imap <ESC>
+```
+
+`vim-autoclose`'s function looks similar to this:
+
+```
+<Esc> *@pumvisible() ? '<C-E>' : '<C-R>=<SNR>110_FlushBuffer()<CR><Esc>'
+```
+
+In the particular case of `vim-autoclose`, the problem can be fixed by adding this setting:
+
+```
+let g:AutoClosePumvisible = {"ENTER": "<C-Y>", "ESC": "<ESC>"}
+```
+
+Other plugins might need other custom settings.
 
 ## Demo
 
