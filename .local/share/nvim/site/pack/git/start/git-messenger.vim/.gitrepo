@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/rhysd/git-messenger.vim.git
 	branch = master
-	commit = 2a26734c6322449a56d02c25a2947e9b7519ca49
-	parent = 3bfc9824ee08127c87b30806c24703a39dab7efb
+	commit = f17e40e9995bbb21e0e9b7fd29278637a69fcc02
+	parent = 11f47e4c54486e0a356d2c6ba46adffdc0e7881d
 	method = rebase
 	cmdver = 0.4.0
