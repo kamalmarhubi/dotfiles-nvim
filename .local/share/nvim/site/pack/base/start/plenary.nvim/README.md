@@ -24,6 +24,7 @@ Plug 'nvim-lua/plenary.nvim'
 - `plenary.context_manager`
 - `plenary.test_harness`
 - `plenary.filetype`
+- `plenary.strings`
 
 ### plenary.job
 
@@ -179,6 +180,19 @@ return {
 }
 ```
 
+### plenary.strings
+
+Re-implement VimL funcs to use them in Lua loop.
+
+* `strings.strdisplaywidth`
+* `strings.strcharpart`
+
+And some other funcs are here to deal with common problems.
+
+* `strings.truncate`
+* `strings.align_str`
+* `strings.dedent`
+
 ### plenary.popup
 
 `popup_*` clone of Vim's commands. If it gets good enough, will submit PR to Neovim and write C wrappers
@@ -189,6 +203,23 @@ Status: WIP
 ### plenary.window
 
 Window helper functions to wrap some of the more difficult cases. Particularly for floating windows.
+
+Status: WIP
+
+### plenary.collections
+
+Contains pure lua implementations for various standard collections.
+
+```lua
+local List = require 'plenary.collections.py_list'
+
+local myList = List { 9, 14, 32, 5 }
+
+for i, v in myList:iter() do
+    print(i, v)
+end
+
+```
 
 Status: WIP
 
@@ -205,4 +236,3 @@ This will enable debuggin for the plugin.
 ### plenary.neorocks
 
 DELETED: Please use packer.nvim or other lua-rocks wrapper instead. This no longer exists.
-

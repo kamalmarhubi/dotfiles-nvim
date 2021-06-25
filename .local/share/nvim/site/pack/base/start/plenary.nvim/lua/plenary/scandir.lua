@@ -80,9 +80,11 @@ local process_item = function(opts, name, typ, current_dir, next_dir, bp, data, 
         table.insert(next_dir, entry)
       end
       if opts.add_dirs then
-        if not msp or msp(entry) then
-          table.insert(data, entry)
-          if opts.on_insert then opts.on_insert(entry, typ) end
+        if not giti or interpret_gitignore(giti, bp, entry .. "/") then
+          if not msp or msp(entry) then
+            table.insert(data, entry)
+            if opts.on_insert then opts.on_insert(entry, typ) end
+          end
         end
       end
     else
@@ -293,7 +295,13 @@ local get_username = (function()
 
     return function(tbl, id)
       if tbl[id] then return tbl[id] end
-      local name = ffi.string(ffi.C.getpwuid(id).pw_name)
+      local struct = ffi.C.getpwuid(id)
+      local name
+      if struct == nil then
+        name = tostring(id)
+      else
+        name = ffi.string(struct.pw_name)
+      end
       tbl[id] = name
       return name
     end
@@ -325,7 +333,13 @@ local get_groupname = (function()
 
     return function(tbl, id)
       if tbl[id] then return tbl[id] end
-      local name = ffi.string(ffi.C.getgrgid(id).gr_name)
+      local struct = ffi.C.getgrgid(id)
+      local name
+      if struct == nil then
+        name = tostring(id)
+      else
+        name = ffi.string(struct.gr_name)
+      end
       tbl[id] = name
       return name
     end
