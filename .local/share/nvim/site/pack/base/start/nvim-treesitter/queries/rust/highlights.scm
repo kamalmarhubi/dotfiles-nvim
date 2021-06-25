@@ -5,15 +5,19 @@
 ; Identifier conventions
 
 (identifier) @variable
+(const_item
+  name: (identifier) @constant)
 ; Assume all-caps names are constants
 ((identifier) @constant
- (#vim-match? @constant "^[A-Z][A-Z\\d_]+$'"))
+ (#match? @constant "^[A-Z][A-Z\\d_]+$'"))
 
 ; Other identifiers
 
 (type_identifier) @type
 (primitive_type) @type.builtin
 (field_identifier) @field
+(shorthand_field_initializer
+  (identifier) @field)
 (mod_item
  name: (identifier) @namespace)
 
@@ -77,9 +81,9 @@
 
 ;; Assume that all `#[derive]` arguments are types
 (meta_item
-  (identifier) @type
+  (identifier) @_name
   arguments: (meta_arguments (meta_item (identifier) @type))
-  (#eq? @type "derive"))
+  (#eq? @_name "derive"))
 
 (macro_invocation
   macro: (identifier) @function.macro)
@@ -88,6 +92,9 @@
            (identifier) @function.macro .))
 
 (metavariable) @function.macro
+(meta_item (identifier) @function.macro)
+(meta_item (scoped_identifier (identifier) @function.macro .)) 
+
 
 "$" @function.macro
 
@@ -122,7 +129,10 @@
 "."
 ";"
 ","
- ] @punctuation.delimiter
+] @punctuation.delimiter
+
+(attribute_item "#" @punctuation.special)
+(inner_attribute_item ["#" "!"] @punctuation.special)
 
 (parameter (identifier) @parameter)
 (closure_parameters (_) @parameter)
@@ -162,10 +172,7 @@
 "where"
 (mutable_specifier)
 (super)
-; TODO(vigoux): attribute items should have some kind of injections
-(attribute_item)
-(inner_attribute_item)
- ] @keyword
+] @keyword
 
 "fn" @keyword.function
 
