@@ -12,6 +12,7 @@ that config.
 - [clojure_lsp](#clojure_lsp)
 - [cmake](#cmake)
 - [codeqlls](#codeqlls)
+- [crystalline](#crystalline)
 - [cssls](#cssls)
 - [dartls](#dartls)
 - [denols](#denols)
@@ -36,11 +37,13 @@ that config.
 - [hls](#hls)
 - [html](#html)
 - [intelephense](#intelephense)
+- [java_language_server](#java_language_server)
 - [jdtls](#jdtls)
 - [jedi_language_server](#jedi_language_server)
 - [jsonls](#jsonls)
 - [julials](#julials)
 - [kotlin_language_server](#kotlin_language_server)
+- [lean3ls](#lean3ls)
 - [leanls](#leanls)
 - [metals](#metals)
 - [nimls](#nimls)
@@ -50,12 +53,15 @@ that config.
 - [perlls](#perlls)
 - [phpactor](#phpactor)
 - [powershell_es](#powershell_es)
+- [prismals](#prismals)
 - [purescriptls](#purescriptls)
 - [pyls](#pyls)
 - [pyls_ms](#pyls_ms)
+- [pylsp](#pylsp)
 - [pyright](#pyright)
 - [r_language_server](#r_language_server)
 - [racket_langserver](#racket_langserver)
+- [rescriptls](#rescriptls)
 - [rls](#rls)
 - [rnix](#rnix)
 - [rome](#rome)
@@ -70,6 +76,7 @@ that config.
 - [sumneko_lua](#sumneko_lua)
 - [svelte](#svelte)
 - [svls](#svls)
+- [tailwindcss](#tailwindcss)
 - [terraformls](#terraformls)
 - [texlab](#texlab)
 - [tflint](#tflint)
@@ -79,6 +86,7 @@ that config.
 - [vls](#vls)
 - [vuels](#vuels)
 - [yamlls](#yamlls)
+- [zeta_note](#zeta_note)
 - [zls](#zls)
 
 ## als
@@ -102,9 +110,14 @@ require('lspconfig').als.setup{
 
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.als.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -112,6 +125,7 @@ require'lspconfig'.als.setup{}
     filetypes = { "ada" }
     root_dir = util.root_pattern("Makefile", ".git")
 ```
+
 
 ## angularls
 
@@ -134,9 +148,14 @@ require'lspconfig'.angularls.setup{
 ```
     
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.angularls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -145,6 +164,7 @@ require'lspconfig'.angularls.setup{}
     root_dir = root_pattern("angular.json", ".git")
 ```
 
+
 ## bashls
 
 https://github.com/mads-hartmann/bash-language-server
@@ -152,9 +172,14 @@ https://github.com/mads-hartmann/bash-language-server
 Language server for bash, written using tree sitter in typescript.
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.bashls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -166,6 +191,7 @@ require'lspconfig'.bashls.setup{}
     root_dir = vim's starting directory
 ```
 
+
 ## beancount
 
 https://github.com/polarmutex/beancount-language-server#installation
@@ -173,9 +199,14 @@ https://github.com/polarmutex/beancount-language-server#installation
 See https://github.com/polarmutex/beancount-language-server#configuration for configuration options
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.beancount.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -187,6 +218,7 @@ require'lspconfig'.beancount.setup{}
     }
     root_dir = root_pattern("elm.json")
 ```
+
 
 ## ccls
 
@@ -202,7 +234,7 @@ Customization options are passed to ccls at initialization time via init_options
 local lspconfig = require'lspconfig'
 lspconfig.ccls.setup {
   init_options = {
-	  compilationDatabaseDirectory = "build";
+    compilationDatabaseDirectory = "build";
     index = {
       threads = 0;
     };
@@ -216,9 +248,14 @@ lspconfig.ccls.setup {
 
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.ccls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -226,6 +263,7 @@ require'lspconfig'.ccls.setup{}
     filetypes = { "c", "cpp", "objc", "objcpp" }
     root_dir = root_pattern("compile_commands.json", "compile_flags.txt", ".git") or dirname
 ```
+
 
 ## clangd
 
@@ -238,9 +276,14 @@ as compile_commands.json or, for simpler projects, a compile_flags.txt.
 For details on how to automatically generate one using CMake look [here](https://cmake.org/cmake/help/latest/variable/CMAKE_EXPORT_COMPILE_COMMANDS.html).
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.clangd.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   - ClangdSwitchSourceHeader: Switch between source/header
   
@@ -252,6 +295,7 @@ require'lspconfig'.clangd.setup{}
     root_dir = root_pattern("compile_commands.json", "compile_flags.txt", ".git") or dirname
 ```
 
+
 ## clojure_lsp
 
 https://github.com/snoe/clojure-lsp
@@ -259,9 +303,14 @@ https://github.com/snoe/clojure-lsp
 Clojure Language Server
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.clojure_lsp.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -270,6 +319,7 @@ require'lspconfig'.clojure_lsp.setup{}
     root_dir = root_pattern("project.clj", "deps.edn", ".git")
 ```
 
+
 ## cmake
 
 https://github.com/regen100/cmake-language-server
@@ -277,9 +327,14 @@ https://github.com/regen100/cmake-language-server
 CMake LSP Implementation
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.cmake.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -291,6 +346,7 @@ require'lspconfig'.cmake.setup{}
     root_dir = root_pattern(".git", "compile_commands.json", "build") or dirname
 ```
 
+
 ## codeqlls
 
 Reference:
@@ -299,98 +355,19 @@ https://help.semmle.com/codeql/codeql-cli.html
 Binaries:
 https://github.com/github/codeql-cli-binaries
         
-This server accepts configuration via the `settings` key.
-<details><summary>Available settings:</summary>
 
-- **`codeQL.cli.executablePath`**: `string`
 
-  Default: `""`
-  
-  Path to the CodeQL executable that should be used by the CodeQL extension\. The executable is named \`codeql\` on Linux\/Mac and \`codeql\.exe\` on Windows\. If empty\, the extension will look for a CodeQL executable on your shell PATH\, or if CodeQL is not on your PATH\, download and manage its own CodeQL executable\.
-
-- **`codeQL.queryHistory.format`**: `string`
-
-  Default: `"%q on %d - %s, %r result count [%t]"`
-  
-  Default string for how to label query history items\. \%t is the time of the query\, \%q is the query name\, \%d is the database name\, \%r is the number of results\, and \%s is a status string\.
-
-- **`codeQL.resultsDisplay.pageSize`**: `integer`
-
-  Default: `200`
-  
-  Max number of query results to display per page in the results view\.
-
-- **`codeQL.runningQueries.autoSave`**: `boolean`
-
-  Enable automatically saving a modified query file when running a query\.
-
-- **`codeQL.runningQueries.cacheSize`**: `integer|null`
-
-  Default: `vim.NIL`
-  
-  Maximum size of the disk cache \(in MB\)\. Leave blank to allow the evaluator to automatically adjust the size of the disk cache based on the size of the codebase and the complexity of the queries being executed\.
-
-- **`codeQL.runningQueries.debug`**: `boolean`
-
-  Enable debug logging and tuple counting when running CodeQL queries\. This information is useful for debugging query performance\.
-
-- **`codeQL.runningQueries.maxQueries`**: `integer`
-
-  Default: `20`
-  
-  Max number of simultaneous queries to run using the \'CodeQL\: Run Queries\' command\.
-
-- **`codeQL.runningQueries.memory`**: `integer|null`
-
-  Default: `vim.NIL`
-  
-  Memory \(in MB\) to use for running queries\. Leave blank for CodeQL to choose a suitable value based on your system\'s available memory\.
-
-- **`codeQL.runningQueries.numberOfThreads`**: `integer`
-
-  Default: `1`
-  
-  Number of threads for running queries\.
-
-- **`codeQL.runningQueries.saveCache`**: `boolean`
-
-  Aggressively save intermediate results to the disk cache\. This may speed up subsequent queries if they are similar\. Be aware that using this option will greatly increase disk usage and initial evaluation time\.
-
-- **`codeQL.runningQueries.timeout`**: `integer|null`
-
-  Default: `vim.NIL`
-  
-  Timeout \(in seconds\) for running queries\. Leave blank or set to zero for no timeout\.
-
-- **`codeQL.runningTests.additionalTestArguments`**: `array`
-
-  Default: `{}`
-  
-  null
-
-- **`codeQL.runningTests.numberOfThreads`**: `integer`
-
-  Default: `1`
-  
-  Number of threads for running CodeQL tests\.
-
-- **`codeQL.telemetry.enableTelemetry`**: `boolean`
-
-  null
-
-- **`codeQL.telemetry.logTelemetry`**: `boolean`
-
-  Specifies whether or not to write telemetry events to the extension log\.
-
-</details>
-
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.codeqlls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
-    before_init = function(initialize_params, config)
+    before_init = function(initialize_params)
                 initialize_params['workspaceFolders'] = {{
                     name = 'workspace',
                     uri = initialize_params['rootUri']
@@ -400,24 +377,50 @@ require'lspconfig'.codeqlls.setup{}
     filetypes = { "ql" }
     log_level = 2
     root_dir = function(fname)
-                return root_pattern("qlpack.yml") or util.path.dirname(fname)
+                return root_pattern(fname) or util.path.dirname(fname)
             end;
     settings = {
       search_path = "list containing all search paths, eg: '~/codeql-home/codeql-repo'"
     }
 ```
 
-## cssls
 
-https://github.com/vscode-langservers/vscode-css-languageserver-bin
+## crystalline
 
-`css-languageserver` can be installed via `npm`:
-```sh
-npm install -g vscode-css-languageserver-bin
+https://github.com/elbywan/crystalline
+
+Crystal language server.
+
+
+
+**Snippet to enable the language server:**
+```lua
+require'lspconfig'.crystalline.setup{}
 ```
 
-Neovim does not currently include built-in snippets. `vscode-css-languageserver` only provides completions when snippet support is enabled.
-To enable completion, install a snippet plugin and add the following override to your language client capabilities during setup.
+**Commands and default values:**
+```lua
+  Commands:
+  
+  Default Values:
+    cmd = { "crystalline" }
+    filetypes = { "crystal" }
+    root_dir = root_pattern('shard.yml', '.git') or dirname
+```
+
+
+## cssls
+
+
+https://github.com/hrsh7th/vscode-langservers-extracted
+
+`css-languageserver` can be installed via `npm`:
+
+```sh
+npm i -g vscode-langservers-extracted
+```
+
+Neovim does not currently include built-in snippets. `vscode-css-language-server` only provides completions when snippet support is enabled. To enable completion, install a snippet plugin and add the following override to your language client capabilities during setup.
 
 ```lua
 --Enable (broadcasting) snippet capability for completion
@@ -430,13 +433,18 @@ require'lspconfig'.cssls.setup {
 ```
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.cssls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
-    cmd = { "css-languageserver", "--stdio" }
+    cmd = { "vscode-css-language-server", "--stdio" }
     filetypes = { "css", "scss", "less" }
     root_dir = root_pattern("package.json")
     settings = {
@@ -451,6 +459,7 @@ require'lspconfig'.cssls.setup{}
       }
     }
 ```
+
 
 ## dartls
 
@@ -570,6 +579,12 @@ This server accepts configuration via the `settings` key.
   
   Whether to check you are using the latest version of the Dart SDK at startup\.
 
+- **`dart.cliConsole`**: `enum { "debugConsole", "terminal" }`
+
+  Default: `"debugConsole"`
+  
+  Whether to run Dart CLI apps in the Debug Console or the VS Code integrated terminal\. The Debug Console has more functionality because the process is controlled by the debug adapter\, but is unable to accept input from the user via stdin\.
+
 - **`dart.closingLabels`**: `boolean`
 
   Default: `true`
@@ -650,6 +665,10 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`dart.enableServerSnippets`**: `boolean`
+
+  null
+
 - **`dart.enableSnippets`**: `boolean`
 
   Default: `true`
@@ -726,7 +745,7 @@ This server accepts configuration via the `settings` key.
 
   Default: `{}`
   
-  Array items: `{properties = {args = {items = {type = "string"},type = "array"},executable = {type = "string"},id = {type = "string"},name = {type = "string"}},type = "object"}`
+  Array items: `{properties = {args = {items = {type = "string"},type = "array"},env = vim.empty_dict(),executable = {type = "string"},id = {type = "string"},name = {type = "string"}},type = "object"}`
   
   Custom emulators to show in the emulator list for easier launching\. If IDs match existing emulators returned by Flutter\, the custom emulators will override them\.
 
@@ -799,6 +818,12 @@ This server accepts configuration via the `settings` key.
   Default: `true`
   
   Whether to set newly connected devices as the current device in Flutter projects\.
+
+- **`dart.flutterShowEmulators`**: `enum { "local", "always" }`
+
+  Default: `"local"`
+  
+  null
 
 - **`dart.flutterShowWebServerDevice`**: `enum { "remote", "always" }`
 
@@ -902,7 +927,7 @@ This server accepts configuration via the `settings` key.
 
 - **`dart.previewFlutterUiGuidesCustomTracking`**: `boolean`
 
-  Whether to enable custom tracking of Flutter UI guidelines \(to hide some latency of waiting for the next Flutter Outline\)\.
+  EXPERIMENTAL\: Whether to enable custom tracking of Flutter UI guidelines \(to hide some latency of waiting for the next Flutter Outline\)\.
 
 - **`dart.previewHotReloadOnSaveWatcher`**: `boolean`
 
@@ -1070,9 +1095,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.dartls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1088,6 +1118,7 @@ require'lspconfig'.dartls.setup{}
     root_dir = root_pattern("pubspec.yaml")
 ```
 
+
 ## denols
 
 https://github.com/denoland/deno
@@ -1095,9 +1126,14 @@ https://github.com/denoland/deno
 Deno's built-in language server
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.denols.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   - DenolsCache: Cache a module and all of its dependencies.
   - DenolsDefinition: Jump to definition. This handle deno:/ schema in deno:// buffer.
@@ -1118,12 +1154,18 @@ require'lspconfig'.denols.setup{}
     root_dir = root_pattern("package.json", "tsconfig.json", ".git")
 ```
 
+
 ## dhall_lsp_server
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.dhall_lsp_server.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1140,6 +1182,7 @@ require'lspconfig'.dhall_lsp_server.setup{}
       end
 ```
 
+
 ## diagnosticls
 
 https://github.com/iamcco/diagnostic-languageserver
@@ -1147,9 +1190,14 @@ https://github.com/iamcco/diagnostic-languageserver
 Diagnostic language server integrate with linters.
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.diagnosticls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1157,6 +1205,7 @@ require'lspconfig'.diagnosticls.setup{}
     filetypes = Empty by default, override to add filetypes
     root_dir = Vim's starting directory
 ```
+
 
 ## dockerls
 
@@ -1168,9 +1217,14 @@ npm install -g dockerfile-language-server-nodejs
 ```
     
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.dockerls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1178,6 +1232,7 @@ require'lspconfig'.dockerls.setup{}
     filetypes = { "Dockerfile", "dockerfile" }
     root_dir = root_pattern("Dockerfile")
 ```
+
 
 ## dotls
 
@@ -1189,9 +1244,14 @@ npm install -g dot-language-server
 ```
     
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.dotls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1203,6 +1263,7 @@ require'lspconfig'.dotls.setup{}
         end;
 ```
 
+
 ## efm
 
 https://github.com/mattn/efm-langserver
@@ -1210,15 +1271,21 @@ https://github.com/mattn/efm-langserver
 General purpose Language Server that can use specified error message format generated from specified command.
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.efm.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
     cmd = { "efm-langserver" }
-    root_dir = root_pattern(".git")
+    root_dir = util.root_pattern(".git")(fname) or util.path.dirname(fname)
 ```
+
 
 ## elixirls
 
@@ -1292,15 +1359,21 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.elixirls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
     filetypes = { "elixir", "eelixir" }
     root_dir = root_pattern("mix.exs", ".git") or vim.loop.os_homedir()
 ```
+
 
 ## elmls
 
@@ -1330,11 +1403,27 @@ This server accepts configuration via the `settings` key.
   
   The path to your elm executable\. Should be empty by default\, in that case it will assume the name and try to first get it from a local npm installation or a global one\. If you set it manually it will not try to load from the npm folder\.
 
+- **`elmLS.elmReviewDiagnostics`**: `enum { "off", "warning", "error" }`
+
+  Default: `"off"`
+  
+  Set severity or disable linting diagnostics for elm\-review\.
+
+- **`elmLS.elmReviewPath`**: `string`
+
+  Default: `""`
+  
+  The path to your elm\-review executable\. Should be empty by default\, in that case it will assume the name and try to first get it from a local npm installation or a global one\. If you set it manually it will not try to load from the npm folder\.
+
 - **`elmLS.elmTestPath`**: `string`
 
   Default: `""`
   
   The path to your elm\-test executable\. Should be empty by default\, in that case it will assume the name and try to first get it from a local npm installation or a global one\. If you set it manually it will not try to load from the npm folder\.
+
+- **`elmLS.elmTestRunner.showElmTestOutput`**: `boolean`
+
+  Show output of elm\-test as terminal task
 
 - **`elmLS.onlyUpdateDiagnosticsOnSave`**: `boolean`
 
@@ -1352,9 +1441,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.elmls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1368,6 +1462,7 @@ require'lspconfig'.elmls.setup{}
     }
     root_dir = root_pattern("elm.json")
 ```
+
 
 ## erlangls
 
@@ -1385,9 +1480,14 @@ Installation requirements:
     - [rebar3 3.9.1+](https://github.com/erlang/rebar3)
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.erlangls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1395,6 +1495,7 @@ require'lspconfig'.erlangls.setup{}
     filetypes = { "erlang" }
     root_dir = root_pattern('rebar.config', 'erlang.mk', '.git') or util.path.dirname(fname)
 ```
+
 
 ## flow
 
@@ -1503,15 +1604,18 @@ This server accepts configuration via the `settings` key.
 
 - **`flow.useNPMPackagedFlow`**: `boolean`
 
-  Default: `true`
-  
   Support using flow through your node\_modules folder\, WARNING\: Checking this box is a security risk\. When you open a project we will immediately run code contained within it\.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.flow.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1519,6 +1623,7 @@ require'lspconfig'.flow.setup{}
     filetypes = { "javascript", "javascriptreact", "javascript.jsx" }
     root_dir = root_pattern(".flowconfig")
 ```
+
 
 ## fortls
 
@@ -1601,9 +1706,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.fortls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1615,38 +1725,39 @@ require'lspconfig'.fortls.setup{}
     }
 ```
 
+
 ## fsautocomplete
 
 https://github.com/fsharp/FsAutoComplete
 
-Language Server for F# provded by FsAutoComplete (FSAC).
-
-Download a release of FsAutoComplete from [here](https://github.com/fsharp/FsAutoComplete/releases).
-Instructions to compile from source are found on the main repository.
+Language Server for F# provided by FsAutoComplete (FSAC).
 
 FsAutoComplete requires the [dotnet-sdk](https://dotnet.microsoft.com/download) to be installed.
+
+The prefered way to install FsAutoComplete is with `dotnet tool install --global fsautocomplete`.
+
+Instructions to compile from source are found on the main [repository](https://github.com/fsharp/FsAutoComplete).
 
 You may also need to configure the filetype as Vim defaults to Forth for `*.fs` files:
 
 `autocmd BufNewFile,BufRead *.fs,*.fsx,*.fsi set filetype=fsharp`
 
-This is automatically done by plugins such as [vim-polyglot](https://github.com/sheerun/vim-polyglot), [PhilT/vim-fsharp](https://github.com/PhilT/vim-fsharp) or [fsharp/vim-fsharp](https://github.com/fsharp/vim-fsharp).
+This is automatically done by plugins such as [PhilT/vim-fsharp](https://github.com/PhilT/vim-fsharp), [fsharp/vim-fsharp](https://github.com/fsharp/vim-fsharp), and [adelarsq/neofsharp.vim](https://github.com/adelarsq/neofsharp.vim).
 
-**By default, this config doesn't have a `cmd` set.** This is because nvim-lspconfig does not make assumptions about your path. You must add the following to your init.vim or init.lua to set `cmd` to the absolute path ($HOME and ~ are not expanded) of your unzipped and compiled fsautocomplete.dll.
-
-```lua
-require'lspconfig'.fsautocomplete.setup{
-  cmd = {'dotnet', 'path/to/fsautocomplete.dll', '--background-service-enabled'}
-}
-```
     
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.fsautocomplete.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
+    cmd = { "dotnet", "fsautocomplete", "--background-service-enabled" }
     filetypes = { "fsharp" }
     init_options = {
       AutomaticWorkspaceInit = true
@@ -1656,6 +1767,7 @@ require'lspconfig'.fsautocomplete.setup{}
       end
 ```
 
+
 ## gdscript
 
 https://github.com/godotengine/godot
@@ -1663,9 +1775,14 @@ https://github.com/godotengine/godot
 Language server for GDScript, used by Godot Engine.
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.gdscript.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1673,6 +1790,7 @@ require'lspconfig'.gdscript.setup{}
     filetypes = { "gd", "gdscript", "gdscript3" }
     root_dir = util.root_pattern("project.godot", ".git")
 ```
+
 
 ## ghcide
 
@@ -1682,9 +1800,14 @@ A library for building Haskell IDE tooling.
 "ghcide" isn't for end users now. Use "haskell-language-server" instead of "ghcide".
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.ghcide.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1693,6 +1816,7 @@ require'lspconfig'.ghcide.setup{}
     root_dir = root_pattern("stack.yaml", "hie-bios", "BUILD.bazel", "cabal.config", "package.yaml")
 ```
 
+
 ## gopls
 
 https://github.com/golang/tools/tree/master/gopls
@@ -1700,9 +1824,14 @@ https://github.com/golang/tools/tree/master/gopls
 Google's lsp server for golang.
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.gopls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1710,6 +1839,7 @@ require'lspconfig'.gopls.setup{}
     filetypes = { "go", "gomod" }
     root_dir = root_pattern("go.mod", ".git")
 ```
+
 
 ## graphql
 
@@ -1722,9 +1852,14 @@ npm install -g graphql-language-service-cli
 ```
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.graphql.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1732,6 +1867,7 @@ require'lspconfig'.graphql.setup{}
     filetypes = { "graphql" }
     root_dir = root_pattern('.git', '.graphqlrc')
 ```
+
 
 ## groovyls
 
@@ -1754,9 +1890,14 @@ require'lspconfig'.groovyls.setup{
 ```
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.groovyls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1764,6 +1905,7 @@ require'lspconfig'.groovyls.setup{}
     filetypes = { "groovy" }
     root_dir = root_pattern(".git") or vim.loop.os_homedir()
 ```
+
 
 ## haxe_language_server
 
@@ -1792,9 +1934,14 @@ your project's root directory. If your file is named something different,
 specify it using the `init_options.displayArguments` setting.
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.haxe_language_server.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -1810,6 +1957,7 @@ require'lspconfig'.haxe_language_server.setup{}
       }
     }
 ```
+
 
 ## hie
 
@@ -1880,6 +2028,18 @@ This server accepts configuration via the `settings` key.
   Default: `true`
   
   Enables eval plugin
+
+- **`haskell.plugin.ghcide-completions.config.autoExtendOn`**: `boolean`
+
+  Default: `true`
+  
+  null
+
+- **`haskell.plugin.ghcide-completions.config.snippetsOn`**: `boolean`
+
+  Default: `true`
+  
+  null
 
 - **`haskell.plugin.ghcide-type-lenses.config.mode`**: `enum { "always", "exported", "diagnostics" }`
 
@@ -1961,7 +2121,7 @@ This server accepts configuration via the `settings` key.
 
 - **`haskell.plugin.tactic.config.max_use_ctor_actions`**: `integer`
 
-  Default: `true`
+  Default: `5`
   
   null
 
@@ -1970,6 +2130,18 @@ This server accepts configuration via the `settings` key.
   Default: `true`
   
   Enables wingman \(tactic\) plugin
+
+- **`haskell.plugin.tactics.config.hole_severity`**: `enum { 1, 2, 3, 4, vim.NIL }`
+
+  Default: `vim.NIL`
+  
+  The severity to use when showing hole diagnostics\.
+
+- **`haskell.plugin.tactics.config.timeout_duration`**: `integer`
+
+  Default: `2`
+  
+  null
 
 - **`haskell.releasesURL`**: `string`
 
@@ -1981,7 +2153,7 @@ This server accepts configuration via the `settings` key.
 
   Default: `""`
   
-  Manually set a language server executable\. Can be something on the \$PATH or a path to an executable itself\. Works with ~\, \$\{HOME\} and \$\{workspaceFolder\}\.
+  null
 
 - **`haskell.trace.server`**: `enum { "off", "messages" }`
 
@@ -1997,9 +2169,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.hie.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -2008,6 +2185,7 @@ require'lspconfig'.hie.setup{}
     root_dir = root_pattern("stack.yaml", "package.yaml", ".git")
 ```
 
+
 ## hls
 
 https://github.com/haskell/haskell-language-server
@@ -2015,9 +2193,14 @@ https://github.com/haskell/haskell-language-server
 Haskell Language Server
         
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.hls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -2038,16 +2221,17 @@ require'lspconfig'.hls.setup{}
     }
 ```
 
+
 ## html
 
-https://github.com/vscode-langservers/vscode-html-languageserver-bin
+https://github.com/hrsh7th/vscode-langservers-extracted
 
-`vscode-html-languageserver` can be installed via `npm`:
+`vscode-html-language-server` can be installed via `npm`:
 ```sh
-npm install -g vscode-html-languageserver-bin
+npm i -g vscode-langservers-extracted
 ```
 
-Neovim does not currently include built-in snippets. `vscode-html-languageserver` only provides completions when snippet support is enabled.
+Neovim does not currently include built-in snippets. `vscode-html-language-server` only provides completions when snippet support is enabled.
 To enable completion, install a snippet plugin and add the following override to your language client capabilities during setup.
 
 ```lua
@@ -2061,13 +2245,18 @@ require'lspconfig'.html.setup {
 ```
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.html.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
-    cmd = { "html-languageserver", "--stdio" }
+    cmd = { "vscode-html-language-server", "--stdio" }
     filetypes = { "html" }
     init_options = {
       configurationSection = { "html", "css", "javascript" },
@@ -2082,6 +2271,7 @@ require'lspconfig'.html.setup{}
     settings = {}
 ```
 
+
 ## intelephense
 
 https://intelephense.com/
@@ -2092,9 +2282,14 @@ npm install -g intelephense
 ```
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.intelephense.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -2102,6 +2297,36 @@ require'lspconfig'.intelephense.setup{}
     filetypes = { "php" }
     root_dir = root_pattern("composer.json", ".git")
 ```
+
+
+## java_language_server
+
+https://github.com/georgewfraser/java-language-server
+
+Java language server
+
+Point `cmd` to `lang_server_linux.sh` or the equivalent script for macOS/Windows provided by java-language-server
+
+
+
+**Snippet to enable the language server:**
+```lua
+require'lspconfig'.java_language_server.setup{}
+```
+
+**Commands and default values:**
+```lua
+  Commands:
+  
+  Default Values:
+    cmd = {}
+    filetypes = { "java" }
+    root_dir = function(startpath)
+        return M.search_ancestors(startpath, matcher)
+      end
+    settings = {}
+```
+
 
 ## jdtls
 
@@ -2118,21 +2343,454 @@ inferred. Please set the following environmental variables to match your install
 ```bash
 export JAR=/path/to/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/plugins/org.eclipse.equinox.launcher_1.6.0.v20200915-1508.jar
 export GRADLE_HOME=$HOME/gradle
-export JAVA_HOME=/usr/lib/jvm/java-11-openjdk-11.0.9.11-9.fc33.x86_64/
+export JAVA_HOME=$(readlink -f /usr/bin/java | sed "s:/bin/java::")
 export JDTLS_CONFIG=/path/to/eclipse.jdt.ls/org.eclipse.jdt.ls.product/target/repository/config_linux
 export WORKSPACE=$HOME/workspace
 ```
     
+This server accepts configuration via the `settings` key.
+<details><summary>Available settings:</summary>
 
+- **`java.autobuild.enabled`**: `boolean`
+
+  Default: `true`
+  
+  Enable\/disable the \'auto build\'
+
+- **`java.codeGeneration.generateComments`**: `boolean`
+
+  Generate method comments when generating the methods\.
+
+- **`java.codeGeneration.hashCodeEquals.useInstanceof`**: `boolean`
+
+  Use \'instanceof\' to compare types when generating the hashCode and equals methods\.
+
+- **`java.codeGeneration.hashCodeEquals.useJava7Objects`**: `boolean`
+
+  Use Objects\.hash and Objects\.equals when generating the hashCode and equals methods\. This setting only applies to Java 7 and higher\.
+
+- **`java.codeGeneration.insertionLocation`**: `enum { "afterCursor", "beforeCursor", "lastMember" }`
+
+  Default: `"afterCursor"`
+  
+  Specifies the insertion location of the code generated by source actions\.
+
+- **`java.codeGeneration.toString.codeStyle`**: `enum { "STRING_CONCATENATION", "STRING_BUILDER", "STRING_BUILDER_CHAINED", "STRING_FORMAT" }`
+
+  Default: `"STRING_CONCATENATION"`
+  
+  The code style for generating the toString method\.
+
+- **`java.codeGeneration.toString.limitElements`**: `integer`
+
+  Default: `0`
+  
+  Limit number of items in arrays\/collections\/maps to list\, if 0 then list all\.
+
+- **`java.codeGeneration.toString.listArrayContents`**: `boolean`
+
+  Default: `true`
+  
+  List contents of arrays instead of using native toString\(\)\.
+
+- **`java.codeGeneration.toString.skipNullValues`**: `boolean`
+
+  Skip null values when generating the toString method\.
+
+- **`java.codeGeneration.toString.template`**: `string`
+
+  Default: `"${object.className} [${member.name()}=${member.value}, ${otherMembers}]"`
+  
+  The template for generating the toString method\.
+
+- **`java.codeGeneration.useBlocks`**: `boolean`
+
+  Use blocks in \'if\' statements when generating the methods\.
+
+- **`java.completion.enabled`**: `boolean`
+
+  Default: `true`
+  
+  Enable\/disable code completion support
+
+- **`java.completion.favoriteStaticMembers`**: `array`
+
+  Default: `{ "org.junit.Assert.*", "org.junit.Assume.*", "org.junit.jupiter.api.Assertions.*", "org.junit.jupiter.api.Assumptions.*", "org.junit.jupiter.api.DynamicContainer.*", "org.junit.jupiter.api.DynamicTest.*", "org.mockito.Mockito.*", "org.mockito.ArgumentMatchers.*", "org.mockito.Answers.*" }`
+  
+  Defines a list of static members or types with static members\. Content assist will propose those static members even if the import is missing\.
+
+- **`java.completion.filteredTypes`**: `array`
+
+  Default: `{ "java.awt.*", "com.sun.*", "sun.*" }`
+  
+  Defines the type filters\. All types whose fully qualified name matches the selected filter strings will be ignored in content assist or quick fix proposals and when organizing imports\. For example \'java\.awt\.\*\' will hide all types from the awt packages\.
+
+- **`java.completion.guessMethodArguments`**: `boolean`
+
+  When set to true\, method arguments are guessed when a method is selected from as list of code assist proposals\.
+
+- **`java.completion.importOrder`**: `array`
+
+  Default: `{ "java", "javax", "com", "org" }`
+  
+  Defines the sorting order of import statements\. A package or type name prefix \(e\.g\. \'org\.eclipse\'\) is a valid entry\. An import is always added to the most specific group\.
+
+- **`java.completion.maxResults`**: `integer`
+
+  Default: `0`
+  
+  null
+
+- **`java.completion.overwrite`**: `boolean`
+
+  Default: `true`
+  
+  When set to true\, code completion overwrites the current text\. When set to false\, code is simply added instead\.
+
+- **`java.configuration.checkProjectSettingsExclusions`**: `boolean`
+
+  Default: `true`
+  
+  Controls whether to exclude extension\-generated project settings files \(\.project\, \.classpath\, \.factorypath\, \.settings\/\) from the file explorer\.
+
+- **`java.configuration.maven.globalSettings`**: `string`
+
+  Default: `vim.NIL`
+  
+  Path to Maven\'s global settings\.xml
+
+- **`java.configuration.maven.userSettings`**: `string`
+
+  Default: `vim.NIL`
+  
+  Path to Maven\'s user settings\.xml
+
+- **`java.configuration.runtimes`**: `array`
+
+  Default: `{}`
+  
+  Array items: `{additionalProperties = false,default = vim.empty_dict(),properties = {default = {description = "Is default runtime? Only one runtime can be default.",type = "boolean"},javadoc = {description = "JDK javadoc path.",type = "string"},name = {description = "Java Execution Environment name. Must be unique.",enum = { "J2SE-1.5", "JavaSE-1.6", "JavaSE-1.7", "JavaSE-1.8", "JavaSE-9", "JavaSE-10", "JavaSE-11", "JavaSE-12", "JavaSE-13", "JavaSE-14", "JavaSE-15", "JavaSE-16" },type = "string"},path = {description = 'JDK home path. Should be the JDK installation directory, not the Java bin path.\n On Windows, backslashes must be escaped, i.e.\n"path":"C:\\\\Program Files\\\\Java\\\\jdk1.8.0_161".',pattern = ".*(?<!\\/bin|\\/bin\\/|\\\\bin|\\\\bin\\\\)$",type = "string"},sources = {description = "JDK sources path.",type = "string"}},required = { "path", "name" },type = "object"}`
+  
+  Map Java Execution Environments to local JDKs\.
+
+- **`java.configuration.updateBuildConfiguration`**: `enum { "disabled", "interactive", "automatic" }`
+
+  Default: `"interactive"`
+  
+  Specifies how modifications on build files update the Java classpath\/configuration
+
+- **`java.contentProvider.preferred`**: `string`
+
+  Default: `vim.NIL`
+  
+  Preferred content provider \(a 3rd party decompiler id\, usually\)
+
+- **`java.eclipse.downloadSources`**: `boolean`
+
+  Enable\/disable download of Maven source artifacts for Eclipse projects\.
+
+- **`java.errors.incompleteClasspath.severity`**: `enum { "ignore", "info", "warning", "error" }`
+
+  Default: `"warning"`
+  
+  Specifies the severity of the message when the classpath is incomplete for a Java file
+
+- **`java.foldingRange.enabled`**: `boolean`
+
+  Default: `true`
+  
+  Enable\/disable smart folding range support\. If disabled\, it will use the default indentation\-based folding range provided by VS Code\.
+
+- **`java.format.comments.enabled`**: `boolean`
+
+  Default: `true`
+  
+  Includes the comments during code formatting\.
+
+- **`java.format.enabled`**: `boolean`
+
+  Default: `true`
+  
+  Enable\/disable default Java formatter
+
+- **`java.format.onType.enabled`**: `boolean`
+
+  Default: `true`
+  
+  Enable\/disable automatic block formatting when typing \`\;\`\, \`\<enter\>\` or \`\}\`
+
+- **`java.format.settings.profile`**: `string`
+
+  Default: `vim.NIL`
+  
+  Optional formatter profile name from the Eclipse formatter settings\.
+
+- **`java.format.settings.url`**: `string`
+
+  Default: `vim.NIL`
+  
+  null
+
+- **`java.home`**: `string|null`
+
+  Default: `vim.NIL`
+  
+  Specifies the folder path to the JDK \(11 or more recent\) used to launch the Java Language Server\.
+  On Windows\, backslashes must be escaped\, i\.e\.
+  \"java\.home\"\:\"C\:\\\\Program Files\\\\Java\\\\jdk11\.0\_8\"
+
+- **`java.implementationsCodeLens.enabled`**: `boolean`
+
+  Enable\/disable the implementations code lens\.
+
+- **`java.import.exclusions`**: `array`
+
+  Default: `{ "**/node_modules/**", "**/.metadata/**", "**/archetype-resources/**", "**/META-INF/maven/**" }`
+  
+  Configure glob patterns for excluding folders\. Use \`\!\` to negate patterns to allow subfolders imports\. You have to include a parent directory\. The order is important\.
+
+- **`java.import.gradle.arguments`**: `string`
+
+  Default: `vim.NIL`
+  
+  Arguments to pass to Gradle\.
+
+- **`java.import.gradle.enabled`**: `boolean`
+
+  Default: `true`
+  
+  Enable\/disable the Gradle importer\.
+
+- **`java.import.gradle.home`**: `string`
+
+  Default: `vim.NIL`
+  
+  Use Gradle from the specified local installation directory or GRADLE\_HOME if the Gradle wrapper is missing or disabled and no \'java\.import\.gradle\.version\' is specified\.
+
+- **`java.import.gradle.java.home`**: `string`
+
+  Default: `vim.NIL`
+  
+  The location to the JVM used to run the Gradle daemon\.
+
+- **`java.import.gradle.jvmArguments`**: `string`
+
+  Default: `vim.NIL`
+  
+  JVM arguments to pass to Gradle\.
+
+- **`java.import.gradle.offline.enabled`**: `boolean`
+
+  Enable\/disable the Gradle offline mode\.
+
+- **`java.import.gradle.user.home`**: `string`
+
+  Default: `vim.NIL`
+  
+  Setting for GRADLE\_USER\_HOME\.
+
+- **`java.import.gradle.version`**: `string`
+
+  Default: `vim.NIL`
+  
+  Use Gradle from the specific version if the Gradle wrapper is missing or disabled\.
+
+- **`java.import.gradle.wrapper.enabled`**: `boolean`
+
+  Default: `true`
+  
+  Use Gradle from the \'gradle\-wrapper\.properties\' file\.
+
+- **`java.import.maven.enabled`**: `boolean`
+
+  Default: `true`
+  
+  Enable\/disable the Maven importer\.
+
+- **`java.imports.gradle.wrapper.checksums`**: `array`
+
+  Default: `{}`
+  
+  Array items: `{additionalProperties = false,default = vim.empty_dict(),properties = {allowed = {default = true,label = "Is allowed?",type = "boolean"},sha256 = {label = "SHA-256 checksum.",type = "string"}},required = { "sha256" },type = "object",uniqueItems = true}`
+  
+  Defines allowed\/disallowed SHA\-256 checksums of Gradle Wrappers
+
+- **`java.jdt.ls.vmargs`**: `string|null`
+
+  Default: `"-XX:+UseParallelGC -XX:GCTimeRatio=4 -XX:AdaptiveSizePolicyWeight=90 -Dsun.zip.disableMemoryMapping=true -Xmx1G -Xms100m"`
+  
+  Specifies extra VM arguments used to launch the Java Language Server\. Eg\. use \`\-XX\:+UseParallelGC \-XX\:GCTimeRatio\=4 \-XX\:AdaptiveSizePolicyWeight\=90 \-Dsun\.zip\.disableMemoryMapping\=true \-Xmx1G \-Xms100m \` to optimize memory usage with the parallel garbage collector
+
+- **`java.maven.downloadSources`**: `boolean`
+
+  Enable\/disable download of Maven source artifacts as part of importing Maven projects\.
+
+- **`java.maven.updateSnapshots`**: `boolean`
+
+  Force update of Snapshots\/Releases\.
+
+- **`java.maxConcurrentBuilds`**: `integer`
+
+  Default: `1`
+  
+  Max simultaneous project builds
+
+- **`java.progressReports.enabled`**: `boolean`
+
+  Default: `true`
+  
+  \[Experimental\] Enable\/disable progress reports from background processes on the server\.
+
+- **`java.project.importHint`**: `boolean`
+
+  Default: `true`
+  
+  Enable\/disable the server\-mode switch information\, when Java projects import is skipped on startup\.
+
+- **`java.project.importOnFirstTimeStartup`**: `enum { "disabled", "interactive", "automatic" }`
+
+  Default: `"interactive"`
+  
+  Specifies whether to import the Java projects\, when opening the folder in Hybrid mode for the first time\.
+
+- **`java.project.outputPath`**: `string|null`
+
+  Default: `""`
+  
+  null
+
+- **`java.project.referencedLibraries`**: `array|object`
+
+  Default: `{ "lib/**/*.jar" }`
+  
+  Configure glob patterns for referencing local libraries to a Java project\.
+
+- **`java.project.resourceFilters`**: `array`
+
+  Default: `{ "node_modules", ".git" }`
+  
+  Excludes files and folders from being refreshed by the Java Language Server\, which can improve the overall performance\. For example\, \[\"node\_modules\"\,\"\.git\"\] will exclude all files and folders named \'node\_modules\' or \'\.git\'\. Defaults to \[\"node\_modules\"\,\"\.git\"\]\.
+
+- **`java.project.sourcePaths`**: `array`
+
+  Default: `{}`
+  
+  Array items: `{type = "string"}`
+  
+  null
+
+- **`java.recommendations.dependency.analytics.show`**: `boolean`
+
+  Default: `true`
+  
+  Show the recommended Dependency Analytics extension\.
+
+- **`java.references.includeAccessors`**: `boolean`
+
+  Default: `true`
+  
+  Include getter\, setter and builder\/constructor when finding references\.
+
+- **`java.references.includeDecompiledSources`**: `boolean`
+
+  Default: `true`
+  
+  Include the decompiled sources when finding references\.
+
+- **`java.referencesCodeLens.enabled`**: `boolean`
+
+  Enable\/disable the references code lens\.
+
+- **`java.saveActions.organizeImports`**: `boolean`
+
+  Enable\/disable auto organize imports on save action
+
+- **`java.selectionRange.enabled`**: `boolean`
+
+  Default: `true`
+  
+  Enable\/disable Smart Selection support for Java\. Disabling this option will not affect the VS Code built\-in word\-based and bracket\-based smart selection\.
+
+- **`java.semanticHighlighting.enabled`**: `boolean`
+
+  Default: `true`
+  
+  Enable\/disable the semantic highlighting\.
+
+- **`java.server.launchMode`**: `enum { "Standard", "LightWeight", "Hybrid" }`
+
+  Default: `"Hybrid"`
+  
+  The launch mode for the Java extension
+
+- **`java.settings.url`**: `string`
+
+  Default: `vim.NIL`
+  
+  null
+
+- **`java.showBuildStatusOnStart.enabled`**: `boolean`
+
+  Automatically show build status on startup\.
+
+- **`java.signatureHelp.enabled`**: `boolean`
+
+  Enable\/disable the signature help\.
+
+- **`java.sources.organizeImports.starThreshold`**: `integer`
+
+  Default: `99`
+  
+  Specifies the number of imports added before a star\-import declaration is used\.
+
+- **`java.sources.organizeImports.staticStarThreshold`**: `integer`
+
+  Default: `99`
+  
+  Specifies the number of static imports added before a star\-import declaration is used\.
+
+- **`java.symbols.includeSourceMethodDeclarations`**: `boolean`
+
+  null
+
+- **`java.templates.fileHeader`**: `array`
+
+  Default: `{}`
+  
+  null
+
+- **`java.templates.typeComment`**: `array`
+
+  Default: `{}`
+  
+  null
+
+- **`java.trace.server`**: `enum { "off", "messages", "verbose" }`
+
+  Default: `"off"`
+  
+  Traces the communication between VS Code and the Java language server\.
+
+- **`java.typeHierarchy.lazyLoad`**: `boolean`
+
+  Enable\/disable lazy loading the content in type hierarchy\. Lazy loading could save a lot of loading time but every type should be expanded manually to load its content\.
+
+</details>
+
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.jdtls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
     cmd = { "/usr/lib/jvm/adoptopenjdk-11-hotspot-amd64/bin/java", "-Declipse.application=org.eclipse.jdt.ls.core.id1", "-Dosgi.bundles.defaultStartLevel=4", "-Declipse.product=org.eclipse.jdt.ls.core.product", "-Dlog.protocol=true", "-Dlog.level=ALL", "-Xms1g", "-Xmx2G", "-jar", "vim.NIL", "-configuration", "vim.NIL", "-data", "vim.NIL", "--add-modules=ALL-SYSTEM", "--add-opens java.base/java.util=ALL-UNNAMED", "--add-opens java.base/java.lang=ALL-UNNAMED" }
     cmd_env = {
-      GRADLE_HOME = "/usr/share/gradle",
+      GRADLE_HOME = "/usr/share/gradle-7.0.2",
       JAR = vim.NIL
     }
     filetypes = { "java" }
@@ -2149,6 +2807,7 @@ require'lspconfig'.jdtls.setup{}
     root_dir = root_pattern(".git")
 ```
 
+
 ## jedi_language_server
 
 https://github.com/pappasam/jedi-language-server
@@ -2156,9 +2815,14 @@ https://github.com/pappasam/jedi-language-server
 `jedi-language-server`, a language server for Python, built on top of jedi
     
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.jedi_language_server.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -2167,18 +2831,19 @@ require'lspconfig'.jedi_language_server.setup{}
     root_dir = vim's starting directory
 ```
 
+
 ## jsonls
 
-https://github.com/vscode-langservers/vscode-json-languageserver
+https://github.com/hrsh7th/vscode-langservers-extracted
 
-vscode-json-languageserver, a language server for JSON and JSON schema
+vscode-json-language-server, a language server for JSON and JSON schema
 
-`vscode-json-languageserver` can be installed via `npm`:
+`vscode-json-language-server` can be installed via `npm`:
 ```sh
-npm install -g vscode-json-languageserver
+npm i -g vscode-langservers-extracted
 ```
 
-vscode-json-languageserver only provides range formatting. You can map a command that applies range formatting to the entire document:
+vscode-json-language-server only provides range formatting. You can map a command that applies range formatting to the entire document:
 
 ```lua
 require'lspconfig'.jsonls.setup {
@@ -2233,19 +2898,25 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.jsonls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
-    cmd = { "vscode-json-languageserver", "--stdio" }
+    cmd = { "vscode-json-language-server", "--stdio" }
     filetypes = { "json" }
     init_options = {
       provideFormatter = true
     }
     root_dir = root_pattern(".git", vim.fn.getcwd())
 ```
+
 
 ## julials
 
@@ -2309,6 +2980,24 @@ This server accepts configuration via the `settings` key.
   
   Additional Julia arguments\.
 
+- **`julia.completionmode`**: `enum { "exportedonly", "import", "qualify" }`
+
+  Default: `"import"`
+  
+  Sets the mode for completions\.
+
+- **`julia.debuggerDefaultCompiled`**: `array`
+
+  Default: `{ "Base.", "-Base.!", "-Base.all", "-Base.all!", "-Base.any", "-Base.any!", "-Base.cd", "-Base.iterate", "-Base.collect", "-Base.collect_similar", "-Base._collect", "-Base.collect_to!", "-Base.collect_to_with_first!", "-Base.filter", "-Base.filter!", "-Base.foreach", "-Base.findall", "-Base.findfirst", "-Base.findlast", "-Base.findnext", "-Base.findprev", "-Base.Generator", "-Base.map", "-Base.map!", "-Base.maximum!", "-Base.minimum!", "-Base.mktemp", "-Base.mktempdir", "-Base.open", "-Base.prod!", "-Base.redirect_stderr", "-Base.redirect_stdin", "-Base.redirect_stdout", "-Base.reenable_sigint", "-Base.setindex!", "-Base.setprecision", "-Base.setrounding", "-Base.show", "-Base.sprint", "-Base.sum", "-Base.sum!", "-Base.task_local_storage", "-Base.timedwait", "-Base.withenv", "Core", "Core.Compiler.", "Core.IR", "Core.Intrinsics", "DelimitedFiles", "Distributed", "LinearAlgebra.", "Serialization", "Statistics", "-Statistics.mean", "SparseArrays", "Mmap" }`
+  
+  Functions or modules that are set to compiled mode when setting the defaults\.
+
+- **`julia.deleteJuliaCovFiles`**: `boolean`
+
+  Default: `"true"`
+  
+  Delete Julia \.cov files when running tests with coverage\, leaving only a \.lcov file behind\.
+
 - **`julia.editor`**: `string|null`
 
   Default: `vim.NIL`
@@ -2349,11 +3038,15 @@ This server accepts configuration via the `settings` key.
   
   null
 
-- **`julia.execution.resultType`**: `enum { "REPL", "inline", "both" }`
+- **`julia.execution.resultType`**: `enum { "REPL", "inline", "inline, errors in REPL", "both" }`
 
   Default: `"REPL"`
   
   Specifies how to show inline execution results
+
+- **`julia.focusPlotNavigator`**: `boolean`
+
+  Whether to automatically show the plot navigator when plotting\.
 
 - **`julia.format.calls`**: `boolean`
 
@@ -2509,7 +3202,29 @@ This server accepts configuration via the `settings` key.
 
   Default: `""`
   
-  Julia package server\. Set\'s the \`JULIA\_PKG\_SERVER\` environment variable \*before\* starting a Julia process\. Leave this empty to use the systemwide default\. Requires a restart of the Julia process\.
+  null
+
+- **`julia.persistentSession.enabled`**: `boolean`
+
+  null
+
+- **`julia.persistentSession.shell`**: `string`
+
+  Default: `"/bin/sh"`
+  
+  Shell used to start the persistent session\.
+
+- **`julia.persistentSession.shellExecutionArgument`**: `string`
+
+  Default: `"-c"`
+  
+  null
+
+- **`julia.persistentSession.tmuxSessionName`**: `string`
+
+  Default: `"julia_vscode"`
+  
+  null
 
 - **`julia.trace.server`**: `enum { "off", "messages", "verbose" }`
 
@@ -2541,9 +3256,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.julials.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -2559,6 +3279,7 @@ require'lspconfig'.julials.setup{}
           return util.find_git_ancestor(fname) or vim.fn.getcwd()
         end;
 ```
+
 
 ## kotlin_language_server
 
@@ -2679,9 +3400,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.kotlin_language_server.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -2690,149 +3416,76 @@ require'lspconfig'.kotlin_language_server.setup{}
     root_dir = root_pattern("settings.gradle")
 ```
 
-## leanls
+
+## lean3ls
 
 https://github.com/leanprover/lean-client-js/tree/master/lean-language-server
 
-Lean language server.
+Lean installation instructions can be found
+[here](https://leanprover-community.github.io/get_started.html#regular-install).
+
+Once Lean is installed, you can install the Lean 3 language server by running
+```sh
+npm install -g lean-language-server
+```
     
-This server accepts configuration via the `settings` key.
-<details><summary>Available settings:</summary>
 
-- **`lean.executablePath`**: `string`
 
-  Default: `"lean"`
-  
-  null
-
-- **`lean.extraOptions`**: `array`
-
-  Default: `{}`
-  
-  Array items: `{description = "a single command-line argument",type = "string"}`
-  
-  null
-
-- **`lean.infoViewAllErrorsOnLine`**: `boolean`
-
-  null
-
-- **`lean.infoViewAutoOpen`**: `boolean`
-
-  Default: `true`
-  
-  null
-
-- **`lean.infoViewAutoOpenShowGoal`**: `boolean`
-
-  Default: `true`
-  
-  null
-
-- **`lean.infoViewFilterIndex`**: `number`
-
-  Default: `-1`
-  
-  null
-
-- **`lean.infoViewStyle`**: `string`
-
-  Default: `""`
-  
-  null
-
-- **`lean.infoViewTacticStateFilters`**: `array`
-
-  Default: `{ {flags = "",match = false,regex = "^_"}, {flags = "",match = true,name = "goals only",regex = "^(⊢|\\d+ goals|case|$)"} }`
-  
-  Array items: `{description = "an object with required properties 'regex': string, 'match': boolean, and 'flags': string, and optional property 'name': string",properties = {flags = {description = "additional flags passed to the RegExp constructor, e.g. 'i' for ignore case",type = "string"},match = {description = "whether tactic state lines matching the value of 'regex' should be included (true) or excluded (false)",type = "boolean"},name = {description = "name displayed in the dropdown",type = "string"},regex = {description = "a properly-escaped regex string, e.g. '^_' matches any string beginning with an underscore",type = "string"}},required = { "regex", "match", "flags" },type = "object"}`
-  
-  null
-
-- **`lean.input.customTranslations`**: `object`
-
-  Default: `vim.empty_dict()`
-  
-  Array items: `{description = "Unicode character to translate to",type = "string"}`
-  
-  null
-
-- **`lean.input.eagerReplacementEnabled`**: `boolean`
-
-  Default: `true`
-  
-  null
-
-- **`lean.input.enabled`**: `boolean`
-
-  Default: `true`
-  
-  null
-
-- **`lean.input.languages`**: `array`
-
-  Default: `{ "lean" }`
-  
-  Array items: `{description = "the name of a language, e.g. 'lean', 'markdown'",type = "string"}`
-  
-  null
-
-- **`lean.input.leader`**: `string`
-
-  Default: `"\\"`
-  
-  null
-
-- **`lean.leanpkgPath`**: `string`
-
-  Default: `"leanpkg"`
-  
-  null
-
-- **`lean.memoryLimit`**: `number`
-
-  Default: `4096`
-  
-  null
-
-- **`lean.progressMessages`**: `boolean`
-
-  null
-
-- **`lean.roiModeDefault`**: `string`
-
-  Default: `"visible"`
-  
-  null
-
-- **`lean.timeLimit`**: `number`
-
-  Default: `100000`
-  
-  null
-
-- **`lean.typeInStatusBar`**: `boolean`
-
-  Default: `true`
-  
-  null
-
-- **`lean.typesInCompletionList`**: `boolean`
-
-  null
-
-</details>
-
+**Snippet to enable the language server:**
 ```lua
-require'lspconfig'.leanls.setup{}
+require'lspconfig'.lean3ls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
     cmd = { "lean-language-server", "--stdio" }
-    filetypes = { "lean" }
-    root_dir = root_pattern(".git") or os_homedir
+    filetypes = { "lean3" }
+    on_new_config = function(config, root)
+          if not util.path.is_file(root .. "/leanpkg.toml") then return end
+          if not config.cmd_cwd then
+            config.cmd_cwd = root
+          end
+        end;
+    root_dir = root_pattern("leanpkg.toml") or root_pattern(".git") or path.dirname
 ```
+
+
+## leanls
+
+https://github.com/leanprover/lean4
+
+Lean installation instructions can be found
+[here](https://leanprover-community.github.io/get_started.html#regular-install).
+
+The Lean 4 language server is built-in with a Lean 4 install
+(and can be manually run with, e.g., `lean --server`).
+    
+
+
+**Snippet to enable the language server:**
+```lua
+require'lspconfig'.leanls.setup{}
+```
+
+**Commands and default values:**
+```lua
+  Commands:
+  
+  Default Values:
+    cmd = { "lean", "--server" }
+    filetypes = { "lean" }
+    on_new_config = function(config, root)
+          if not util.path.is_file(root .. "/leanpkg.toml") then return end
+          if not config.cmd_cwd then
+            config.cmd_cwd = root
+          end
+        end;
+    root_dir = root_pattern("leanpkg.toml") or root_pattern(".git") or path.dirname
+```
+
 
 ## metals
 
@@ -2859,9 +3512,14 @@ cs bootstrap \
 ```
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.metals.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -2877,6 +3535,7 @@ require'lspconfig'.metals.setup{}
     message_level = 4
     root_dir = util.root_pattern("build.sbt", "build.sc", "build.gradle", "pom.xml")
 ```
+
 
 ## nimls
 
@@ -2968,9 +3627,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.nimls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -2978,6 +3642,7 @@ require'lspconfig'.nimls.setup{}
     filetypes = { "nim" }
     root_dir = root_pattern(".git") or os_homedir
 ```
+
 
 ## ocamlls
 
@@ -2989,9 +3654,14 @@ npm install -g ocaml-langauge-server
 ```
     
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.ocamlls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -2999,6 +3669,7 @@ require'lspconfig'.ocamlls.setup{}
     filetypes = { "ocaml", "reason" }
     root_dir = root_pattern("*.opam", "esy.json", "package.json")
 ```
+
 
 ## ocamllsp
 
@@ -3013,16 +3684,23 @@ opam install ocaml-lsp-server
 ```
     
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.ocamllsp.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
     cmd = { "ocamllsp" }
-    filetypes = { "ocaml", "reason" }
+    filetypes = { "ocamlinterface", "ocaml", "ocamllex", "reason", "menhir" }
+    get_language_id = function (_, ftype) return language_id_of[ftype] end
     root_dir = root_pattern("*.opam", "esy.json", "package.json", ".git")
 ```
+
 
 ## omnisharp
 
@@ -3054,9 +3732,14 @@ find /path/to/omnisharp-osx | xargs xattr -r -d com.apple.quarantine
 ```
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.omnisharp.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -3064,6 +3747,7 @@ require'lspconfig'.omnisharp.setup{}
     init_options = {}
     root_dir = root_pattern(".csproj", ".sln")
 ```
+
 
 ## perlls
 
@@ -3176,9 +3860,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.perlls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -3195,6 +3884,7 @@ require'lspconfig'.perlls.setup{}
     }
 ```
 
+
 ## phpactor
 
 https://github.com/phpactor/phpactor
@@ -3202,9 +3892,14 @@ https://github.com/phpactor/phpactor
 Installation: https://phpactor.readthedocs.io/en/master/usage/standalone.html#global-installation
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.phpactor.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -3212,6 +3907,7 @@ require'lspconfig'.phpactor.setup{}
     filetypes = { "php" }
     root_dir = root_pattern("composer.json", ".git")
 ```
+
 
 ## powershell_es
 
@@ -3243,9 +3939,14 @@ require'lspconfig'.powershell_es.setup{
 ```
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.powershell_es.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -3256,6 +3957,36 @@ require'lspconfig'.powershell_es.setup{}
         end,
     root_dir = git root or current directory
 ```
+
+
+## prismals
+
+npm install -g @prisma/language-server
+
+'prismals, a language server for the prisma javascript and typescript orm'
+
+
+
+**Snippet to enable the language server:**
+```lua
+require'lspconfig'.prismals.setup{}
+```
+
+**Commands and default values:**
+```lua
+  Commands:
+  
+  Default Values:
+    cmd = { "prisma-language-server", "--stdio" }
+    filetypes = { "prisma" }
+    root_dir = root_pattern(".git", "package.json")
+    settings = {
+      prisma = {
+        prismaFmtBinPath = ""
+      }
+    }
+```
+
 
 ## purescriptls
 
@@ -3334,10 +4065,6 @@ This server accepts configuration via the `settings` key.
   
   List of codegen targets to pass to the compiler for rebuild\. e\.g\. js\, corefn\. If not specified \(rather than empty array\) this will not be passed and the compiler will default to js\. Requires 0\.12\.1+
 
-- **`purescript.editorMode`**: `boolean`
-
-  \(DEPRECATED \- ignored from purs 0\.13\.8\) Whether to set the editor\-mode flag on the IDE server
-
 - **`purescript.fastRebuild`**: `boolean`
 
   Default: `true`
@@ -3363,10 +4090,6 @@ This server accepts configuration via the `settings` key.
   Default: `""`
   
   Path to installed packages\. Will be used to control globs passed to IDE server for source locations\.  Change requires IDE server restart\.
-
-- **`purescript.polling`**: `boolean`
-
-  \(DEPRECATED \- ignored from purs 0\.13\.8\) Whether to set the polling flag on the IDE server
 
 - **`purescript.preludeModule`**: `string`
 
@@ -3406,9 +4129,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.purescriptls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -3417,11 +4145,15 @@ require'lspconfig'.purescriptls.setup{}
     root_dir = root_pattern("spago.dhall, bower.json")
 ```
 
+
 ## pyls
 
 https://github.com/palantir/python-language-server
 
 `python-language-server`, a language server for Python.
+
+The language server can be installed via `pipx install 'python-language-server[all]'`.
+
     
 This server accepts configuration via the `settings` key.
 <details><summary>Available settings:</summary>
@@ -3710,9 +4442,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.pyls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -3720,6 +4457,7 @@ require'lspconfig'.pyls.setup{}
     filetypes = { "python" }
     root_dir = vim's starting directory
 ```
+
 
 ## pyls_ms
 
@@ -3752,9 +4490,14 @@ This server accepts configuration via the `settings` key.
 
     
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.pyls_ms.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -3781,6 +4524,47 @@ require'lspconfig'.pyls_ms.setup{}
       }
     }
 ```
+
+
+## pylsp
+
+https://github.com/python-lsp/python-lsp-server
+
+A Python 3.6+ implementation of the Language Server Protocol.
+
+The language server can be installed via `pipx install 'python-lsp-server[all]'`.
+Further instructions can be found in the [project's README](https://github.com/python-lsp/python-lsp-server).
+
+Note: This is a community fork of `pyls`.
+    
+
+
+**Snippet to enable the language server:**
+```lua
+require'lspconfig'.pylsp.setup{}
+```
+
+**Commands and default values:**
+```lua
+  Commands:
+  
+  Default Values:
+    cmd = { "pylsp" }
+    filetypes = { "python" }
+    root_dir = function(fname)
+          local root_files = {
+            "pyproject.toml",
+            "setup.py",
+            "setup.cfg",
+            "requirements.txt",
+            "Pipfile"
+          }
+          return util.root_pattern(unpack(root_files))(fname) or
+                  util.find_git_ancestor(fname) or
+                  util.path.dirname(fname)
+        end;
+```
+
 
 ## pyright
 
@@ -3875,9 +4659,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.pyright.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   - PyrightOrganizeImports: Organize Imports
   
@@ -3892,11 +4681,13 @@ require'lspconfig'.pyright.setup{}
       python = {
         analysis = {
           autoSearchPaths = true,
+          diagnosticMode = "workspace",
           useLibraryCodeForTypes = true
         }
       }
     }
 ```
+
 
 ## r_language_server
 
@@ -3965,9 +4756,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.r_language_server.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -3976,6 +4772,7 @@ require'lspconfig'.r_language_server.setup{}
     log_level = 2
     root_dir = root_pattern(".git") or os_homedir
 ```
+
 
 ## racket_langserver
 
@@ -3988,9 +4785,14 @@ functionality that mimics DrRacket's code tools as closely as possible.
 Install via `raco`: `raco pkg install racket-langserver`
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.racket_langserver.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -4001,6 +4803,59 @@ require'lspconfig'.racket_langserver.setup{}
             util.path.dirname(filename)
           end
 ```
+
+
+## rescriptls
+
+https://github.com/rescript-lang/rescript-vscode
+
+ReScript language server
+
+**By default, rescriptls doesn't have a `cmd` set.** This is because nvim-lspconfig does not make assumptions about your path.
+You have to install the language server manually.
+
+You can use the bundled language server inside the [vim-rescript](https://github.com/rescript-lang/vim-rescript) repo.
+
+Clone the vim-rescript repo and point `cmd` to `server.js` inside `server/out` directory:
+
+```lua
+cmd = {'node', '<path_to_repo>/server/out/server.js', '--stdio'}
+
+```
+
+If you have vim-rescript installed you can also use that installation. for example if you're using packer.nvim you can set cmd to something like this:
+
+```lua
+cmd = {
+  'node',
+  '/home/username/.local/share/nvim/site/pack/packer/start/vim-rescript/server/out/server.js',
+  '--stdio'
+}
+```
+
+Another option is to use vscode extension [release](https://github.com/rescript-lang/rescript-vscode/releases).
+Take a look at [here](https://github.com/rescript-lang/rescript-vscode#use-with-other-editors) for instructions.
+
+
+
+**Snippet to enable the language server:**
+```lua
+require'lspconfig'.rescriptls.setup{}
+```
+
+**Commands and default values:**
+```lua
+  Commands:
+  
+  Default Values:
+    cmd = {}
+    filetypes = { "rescript" }
+    root_dir = function(startpath)
+        return M.search_ancestors(startpath, matcher)
+      end
+    settings = {}
+```
+
 
 ## rls
 
@@ -4032,9 +4887,14 @@ cmd = {"rustup", "run", "nightly", "rls"}
 ```
     
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.rls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -4042,6 +4902,7 @@ require'lspconfig'.rls.setup{}
     filetypes = { "rust" }
     root_dir = root_pattern("Cargo.toml")
 ```
+
 
 ## rnix
 
@@ -4055,9 +4916,14 @@ This server accepts configuration via the `settings` key.
 
     
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.rnix.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -4068,9 +4934,10 @@ require'lspconfig'.rnix.setup{}
     settings = {}
 ```
 
+
 ## rome
 
-https://romefrontend.dev
+https://rome.tools
 
 Language server for the Rome Frontend Toolchain.
 
@@ -4079,9 +4946,14 @@ npm install [-g] rome
 ```
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.rome.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -4089,6 +4961,7 @@ require'lspconfig'.rome.setup{}
     filetypes = { "javascript", "javascriptreact", "json", "typescript", "typescript.tsx", "typescriptreact" }
     root_dir = root_pattern('package.json', 'node_modules', '.git') or dirname
 ```
+
 
 ## rust_analyzer
 
@@ -4101,19 +4974,37 @@ See [docs](https://github.com/rust-analyzer/rust-analyzer/tree/master/docs/user#
 This server accepts configuration via the `settings` key.
 <details><summary>Available settings:</summary>
 
+- **`$generated-end`**
+
+  null
+
+- **`$generated-start`**
+
+  null
+
+- **`rust-analyzer.assist.allowMergingIntoGlobImports`**: `boolean`
+
+  Default: `true`
+  
+  null
+
+- **`rust-analyzer.assist.importEnforceGranularity`**: `boolean`
+
+  null
+
+- **`rust-analyzer.assist.importGranularity`**: `enum { "preserve", "crate", "module", "item" }`
+
+  Default: `"crate"`
+  
+  null
+
 - **`rust-analyzer.assist.importGroup`**: `boolean`
 
   Default: `true`
   
   null
 
-- **`rust-analyzer.assist.importMergeBehavior`**: `enum { "none", "full", "last" }`
-
-  Default: `"full"`
-  
-  null
-
-- **`rust-analyzer.assist.importPrefix`**: `enum { "plain", "by_self", "by_crate" }`
+- **`rust-analyzer.assist.importPrefix`**: `enum { "plain", "self", "crate" }`
 
   Default: `"plain"`
   
@@ -4253,6 +5144,12 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`rust-analyzer.completion.autoself.enable`**: `boolean`
+
+  Default: `true`
+  
+  null
+
 - **`rust-analyzer.completion.postfix.enable`**: `boolean`
 
   Default: `true`
@@ -4275,7 +5172,7 @@ This server accepts configuration via the `settings` key.
 
   null
 
-- **`rust-analyzer.debug.sourceFileMap`**: `object`
+- **`rust-analyzer.debug.sourceFileMap`**: `object|string`
 
   Default: `{["/rustc/<id>"] = "${env:USERPROFILE}/.rustup/toolchains/<toolchain-id>/lib/rustlib/src/rust"}`
   
@@ -4301,6 +5198,12 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`rust-analyzer.diagnostics.remapPrefix`**: `object`
+
+  Default: `vim.empty_dict()`
+  
+  null
+
 - **`rust-analyzer.diagnostics.warningsAsHint`**: `array`
 
   Default: `{}`
@@ -4317,6 +5220,10 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`rust-analyzer.experimental.procAttrMacros`**: `boolean`
+
+  null
+
 - **`rust-analyzer.files.excludeDirs`**: `array`
 
   Default: `{}`
@@ -4328,6 +5235,12 @@ This server accepts configuration via the `settings` key.
 - **`rust-analyzer.files.watcher`**: `string`
 
   Default: `"client"`
+  
+  null
+
+- **`rust-analyzer.highlighting.strings`**: `boolean`
+
+  Default: `true`
   
   null
 
@@ -4361,6 +5274,10 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`rust-analyzer.hoverActions.references`**: `boolean`
+
+  null
+
 - **`rust-analyzer.hoverActions.run`**: `boolean`
 
   Default: `true`
@@ -4390,6 +5307,12 @@ This server accepts configuration via the `settings` key.
   Default: `true`
   
   null
+
+- **`rust-analyzer.inlayHints.smallerHints`**: `boolean`
+
+  Default: `true`
+  
+  Whether inlay hints font size should be smaller than editor\'s font size\.
 
 - **`rust-analyzer.inlayHints.typeHints`**: `boolean`
 
@@ -4487,6 +5410,10 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`rust-analyzer.rustfmt.enableRangeFormatting`**: `boolean`
+
+  null
+
 - **`rust-analyzer.rustfmt.extraArgs`**: `array`
 
   Default: `{}`
@@ -4527,8 +5454,6 @@ This server accepts configuration via the `settings` key.
 
 - **`rust-analyzer.updates.askBeforeDownload`**: `boolean`
 
-  Default: `true`
-  
   Whether to ask for permission before downloading any files from the Internet\.
 
 - **`rust-analyzer.updates.channel`**: `enum { "stable", "nightly" }`
@@ -4537,11 +5462,28 @@ This server accepts configuration via the `settings` key.
   
   null
 
+- **`rust-analyzer.workspace.symbol.search.kind`**: `enum { "only_types", "all_symbols" }`
+
+  Default: `"only_types"`
+  
+  null
+
+- **`rust-analyzer.workspace.symbol.search.scope`**: `enum { "workspace", "workspace_and_dependencies" }`
+
+  Default: `"workspace"`
+  
+  null
+
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.rust_analyzer.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   - CargoReload: Reload current cargo workspace
   
@@ -4554,6 +5496,7 @@ require'lspconfig'.rust_analyzer.setup{}
     }
 ```
 
+
 ## scry
 
 https://github.com/crystal-lang-tools/scry
@@ -4561,9 +5504,14 @@ https://github.com/crystal-lang-tools/scry
 Crystal language server.
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.scry.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -4571,6 +5519,7 @@ require'lspconfig'.scry.setup{}
     filetypes = { "crystal" }
     root_dir = root_pattern('shard.yml', '.git') or dirname
 ```
+
 
 ## solargraph
 
@@ -4683,9 +5632,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.solargraph.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -4698,6 +5652,7 @@ require'lspconfig'.solargraph.setup{}
       }
     }
 ```
+
 
 ## sorbet
 
@@ -4713,9 +5668,14 @@ gem install sorbet
 ```
     
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.sorbet.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -4723,6 +5683,7 @@ require'lspconfig'.sorbet.setup{}
     filetypes = { "ruby" }
     root_dir = root_pattern("Gemfile", ".git")
 ```
+
 
 ## sourcekit
 
@@ -4761,9 +5722,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.sourcekit.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -4771,6 +5737,7 @@ require'lspconfig'.sourcekit.setup{}
     filetypes = { "swift", "c", "cpp", "objective-c", "objective-cpp" }
     root_dir = root_pattern("Package.swift", ".git")
 ```
+
 
 ## sqlls
 
@@ -4789,9 +5756,14 @@ This LSP can be installed via  `npm`. Find further instructions on manual instal
 <br>
     
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.sqlls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -4801,6 +5773,7 @@ require'lspconfig'.sqlls.setup{}
         end;
     settings = {}
 ```
+
 
 ## sqls
 
@@ -4816,9 +5789,14 @@ Sqls can be installed via `go get github.com/lighttiger2505/sqls`. Instructions 
 
     
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.sqls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -4829,6 +5807,7 @@ require'lspconfig'.sqls.setup{}
         end;
     settings = {}
 ```
+
 
 ## stylelint_lsp
 
@@ -4917,9 +5896,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.stylelint_lsp.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -4928,6 +5912,7 @@ require'lspconfig'.stylelint_lsp.setup{}
     root_dir =  root_pattern('.stylelintrc', 'package.json') 
     settings = {}
 ```
+
 
 ## sumneko_lua
 
@@ -4955,6 +5940,10 @@ end
 local sumneko_root_path = vim.fn.stdpath('cache')..'/lspconfig/sumneko_lua/lua-language-server'
 local sumneko_binary = sumneko_root_path.."/bin/"..system_name.."/lua-language-server"
 
+local runtime_path = vim.split(package.path, ';')
+table.insert(runtime_path, "lua/?.lua")
+table.insert(runtime_path, "lua/?/init.lua")
+
 require'lspconfig'.sumneko_lua.setup {
   cmd = {sumneko_binary, "-E", sumneko_root_path .. "/main.lua"};
   settings = {
@@ -4963,7 +5952,7 @@ require'lspconfig'.sumneko_lua.setup {
         -- Tell the language server which version of Lua you're using (most likely LuaJIT in the case of Neovim)
         version = 'LuaJIT',
         -- Setup your lua path
-        path = vim.split(package.path, ';'),
+        path = runtime_path,
       },
       diagnostics = {
         -- Get the language server to recognize the `vim` global
@@ -4971,10 +5960,7 @@ require'lspconfig'.sumneko_lua.setup {
       },
       workspace = {
         -- Make the server aware of Neovim runtime files
-        library = {
-          [vim.fn.expand('$VIMRUNTIME/lua')] = true,
-          [vim.fn.expand('$VIMRUNTIME/lua/vim/lsp')] = true,
-        },
+        library = vim.api.nvim_get_runtime_file("", true),
       },
       -- Do not send telemetry data containing a randomized but unique identifier
       telemetry = {
@@ -4991,6 +5977,12 @@ This server accepts configuration via the `settings` key.
 - **`Lua.color.mode`**: `enum { "Grammar", "Semantic" }`
 
   Default: `"Semantic"`
+  
+  null
+
+- **`Lua.completion.autoRequire`**: `boolean`
+
+  Default: `true`
   
   null
 
@@ -5015,6 +6007,12 @@ This server accepts configuration via the `settings` key.
 - **`Lua.completion.keywordSnippet`**: `enum { "Disable", "Both", "Replace" }`
 
   Default: `"Replace"`
+  
+  null
+
+- **`Lua.completion.showParams`**: `boolean`
+
+  Default: `true`
   
   null
 
@@ -5102,15 +6100,15 @@ This server accepts configuration via the `settings` key.
   
   null
 
-- **`Lua.hover.fieldInfer`**: `integer`
+- **`Lua.hover.enumsLimit`**: `integer`
 
-  Default: `3000`
+  Default: `5`
   
   null
 
 - **`Lua.hover.previewFields`**: `integer`
 
-  Default: `100`
+  Default: `20`
   
   null
 
@@ -5170,7 +6168,7 @@ This server accepts configuration via the `settings` key.
 
 - **`Lua.runtime.plugin`**: `string`
 
-  Default: `".vscode/lua/plugin.lua"`
+  Default: `""`
   
   null
 
@@ -5252,9 +6250,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.sumneko_lua.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -5270,6 +6273,7 @@ require'lspconfig'.sumneko_lua.setup{}
     }
 ```
 
+
 ## svelte
 
 https://github.com/sveltejs/language-tools/tree/master/packages/language-server
@@ -5280,9 +6284,14 @@ npm install -g svelte-language-server
 ```
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.svelte.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -5291,15 +6300,21 @@ require'lspconfig'.svelte.setup{}
     root_dir = root_pattern("package.json", ".git")
 ```
 
+
 ## svls
 
       https://github.com/dalance/svls
       Language server for verilog and SystemVerilog
     
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.svls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -5309,6 +6324,75 @@ require'lspconfig'.svls.setup{}
         return M.search_ancestors(startpath, matcher)
       end
 ```
+
+
+## tailwindcss
+
+https://github.com/tailwindlabs/tailwindcss-intellisense
+
+Tailwind CSS Language Server
+
+**NOTE:** The current tailwindcss-language-server npm package is a different project.
+
+Until the standalone server is published to npm, you can extract the server from the VS Code package:
+
+```bash
+curl -L -o tailwindcss-intellisense.vsix https://github.com/tailwindlabs/tailwindcss-intellisense/releases/download/v0.6.8/vscode-tailwindcss-0.6.8.vsix
+unzip tailwindcss-intellisense.vsix -d tailwindcss-intellisense
+echo "#\!/usr/bin/env node\n$(cat tailwindcss-intellisense/extension/dist/server/tailwindServer.js)" > tailwindcss-language-server
+chmod +x tailwindcss-language-server
+```
+
+Copy or symlink tailwindcss-language-server to somewhere in your $PATH.
+
+Alternatively, it might be packaged for your operating system, eg.:
+https://aur.archlinux.org/packages/tailwindcss-language-server/
+
+
+
+**Snippet to enable the language server:**
+```lua
+require'lspconfig'.tailwindcss.setup{}
+```
+
+**Commands and default values:**
+```lua
+  Commands:
+  
+  Default Values:
+    cmd = { "tailwindcss-language-server", "--stdio" }
+    filetypes = { "aspnetcorerazor", "astro", "astro-markdown", "blade", "django-html", "edge", "eelixir", "ejs", "erb", "eruby", "gohtml", "haml", "handlebars", "hbs", "html", "html-eex", "jade", "leaf", "liquid", "markdown", "mdx", "mustache", "njk", "nunjucks", "php", "razor", "slim", "twig", "css", "less", "postcss", "sass", "scss", "stylus", "sugarss", "javascript", "javascriptreact", "reason", "rescript", "typescript", "typescriptreact", "vue", "svelte" }
+    init_options = {
+      userLanguages = {
+        eelixir = "html-eex",
+        eruby = "erb"
+      }
+    }
+    on_new_config = function(new_config)
+          if not new_config.settings then new_config.settings = {} end
+          if not new_config.settings.editor then new_config.settings.editor = {} end
+          if not new_config.settings.editor.tabSize then
+            -- set tab size for hover
+            new_config.settings.editor.tabSize = vim.lsp.util.get_effective_tabstop()
+          end
+        end,
+    root_dir = root_pattern('tailwind.config.js', 'tailwind.config.ts', 'postcss.config.js', 'postcss.config.ts', 'package.json', 'node_modules', '.git')
+    settings = {
+      tailwindCSS = {
+        lint = {
+          cssConflict = "warning",
+          invalidApply = "error",
+          invalidConfigPath = "error",
+          invalidScreen = "error",
+          invalidTailwindDirective = "error",
+          invalidVariant = "error",
+          recommendedVariantOrder = "warning"
+        },
+        validate = true
+      }
+    }
+```
+
 
 ## terraformls
 
@@ -5348,9 +6432,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.terraformls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -5359,18 +6448,24 @@ require'lspconfig'.terraformls.setup{}
     root_dir = root_pattern(".terraform", ".git")
 ```
 
+
 ## texlab
 
-https://texlab.netlify.com/
+https://github.com/latex-lsp/texlab
 
 A completion engine built from scratch for (La)TeX.
 
-See https://texlab.netlify.com/docs/reference/configuration for configuration options.
+See https://github.com/latex-lsp/texlab/blob/master/docs/options.md for configuration options.
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.texlab.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   - TexlabBuild: Build the current buffer
   - TexlabForward: Forward search from current position
@@ -5380,27 +6475,27 @@ require'lspconfig'.texlab.setup{}
     filetypes = { "tex", "bib" }
     root_dir = vim's starting directory
     settings = {
-      bibtex = {
-        formatting = {
-          lineLength = 120
-        }
-      },
-      latex = {
+      texlab = {
+        auxDirectory = ".",
+        bibtexFormatter = "texlab",
         build = {
           args = { "-pdf", "-interaction=nonstopmode", "-synctex=1", "%f" },
           executable = "latexmk",
-          onSave = false
+          isContinuous = false
         },
+        chktex = {
+          onEdit = false,
+          onOpenAndSave = false
+        },
+        diagnosticsDelay = 300,
+        formatterLineLength = 80,
         forwardSearch = {
-          args = {},
-          onSave = false
-        },
-        lint = {
-          onChange = false
+          args = {}
         }
       }
     }
 ```
+
 
 ## tflint
 
@@ -5410,9 +6505,14 @@ A pluggable Terraform linter that can act as lsp server.
 Installation instructions can be found in https://github.com/terraform-linters/tflint#installation.
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.tflint.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -5420,6 +6520,7 @@ require'lspconfig'.tflint.setup{}
     filetypes = { "terraform" }
     root_dir = root_pattern(".terraform", ".git", ".tflint.hcl")
 ```
+
 
 ## tsserver
 
@@ -5431,9 +6532,14 @@ npm install -g typescript typescript-language-server
 ```
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.tsserver.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -5442,13 +6548,19 @@ require'lspconfig'.tsserver.setup{}
     root_dir = root_pattern("package.json", "tsconfig.json", "jsconfig.json", ".git")
 ```
 
+
 ## vala_ls
 
 https://github.com/benwaffle/vala-language-server
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.vala_ls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -5456,6 +6568,7 @@ require'lspconfig'.vala_ls.setup{}
     filetypes = { "vala", "genie" }
     root_dir = root_pattern("meson.build", ".git")
 ```
+
 
 ## vimls
 
@@ -5467,9 +6580,14 @@ npm install -g vim-language-server
 ```
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.vimls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -5498,6 +6616,7 @@ require'lspconfig'.vimls.setup{}
         end,
 ```
 
+
 ## vls
 
 https://github.com/vlang/vls
@@ -5519,15 +6638,21 @@ require'lspconfig'.vls.setup {
 ```
 
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.vls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
     filetypes = { "vlang" }
     root_dir = root_pattern("v.mod", ".git")
 ```
+
 
 ## vuels
 
@@ -5732,6 +6857,12 @@ This server accepts configuration via the `settings` key.
   
   Traces the communication between VS Code and Vue Language Server\.
 
+- **`vetur.underline.refValue`**: `boolean`
+
+  Default: `true`
+  
+  Enable underline \`\.value\` when using composition API\.
+
 - **`vetur.useWorkspaceDependencies`**: `boolean`
 
   Use dependencies from workspace\. Currently only for TypeScript\.
@@ -5766,9 +6897,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.vuels.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -5815,6 +6951,7 @@ require'lspconfig'.vuels.setup{}
     root_dir = root_pattern("package.json", "vue.config.js")
 ```
 
+
 ## yamlls
 
 https://github.com/redhat-developer/yaml-language-server
@@ -5827,6 +6964,12 @@ npm install -g yaml-language-server
 This server accepts configuration via the `settings` key.
 <details><summary>Available settings:</summary>
 
+- **`redhat.telemetry.enabled`**: `boolean`
+
+  Default: `vim.NIL`
+  
+  null
+
 - **`yaml.completion`**: `boolean`
 
   Default: `true`
@@ -5838,6 +6981,10 @@ This server accepts configuration via the `settings` key.
   Default: `{}`
   
   Custom tags for the parser to use
+
+- **`yaml.disableAdditionalProperties`**: `boolean`
+
+  Globally set additionalProperties to false for all objects\. So if its true\, no extra properties are allowed inside yaml\.
 
 - **`yaml.format.bracketSpacing`**: `boolean`
 
@@ -5873,11 +7020,23 @@ This server accepts configuration via the `settings` key.
   
   Enable\/disable hover feature
 
+- **`yaml.maxItemsComputed`**: `integer`
+
+  Default: `5000`
+  
+  The maximum number of outline symbols and folding regions computed \(limited for performance reasons\)\.
+
 - **`yaml.schemaStore.enable`**: `boolean`
 
   Default: `true`
   
   Automatically pull available YAML schemas from JSON Schema Store
+
+- **`yaml.schemaStore.url`**: `string`
+
+  Default: `"https://www.schemastore.org/api/json/catalog.json"`
+  
+  URL of schema store catalog to use
 
 - **`yaml.schemas`**: `object`
 
@@ -5899,9 +7058,14 @@ This server accepts configuration via the `settings` key.
 
 </details>
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.yamlls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -5910,6 +7074,59 @@ require'lspconfig'.yamlls.setup{}
     root_dir = root_pattern(".git", vim.fn.getcwd())
 ```
 
+
+## zeta_note
+
+https://github.com/artempyanykh/zeta-note
+
+Markdown LSP server for easy note-taking with cross-references and diagnostics.
+
+Binaries can be downloaded from https://github.com/artempyanykh/zeta-note/releases
+
+**By default, zeta-note doesn't have a `cmd` set.** This is because nvim-lspconfig does not make assumptions about your path. You must add the following to your init.vim or init.lua to set `cmd` to the absolute path ($HOME and ~ are not expanded) of your zeta-note binary.
+
+```lua
+require'lspconfig'.zeta_note.setup{
+  cmd = {'path/to/zeta-note'}
+}
+```
+
+This server accepts configuration via the `settings` key.
+<details><summary>Available settings:</summary>
+
+- **`zetaNote.customCommand`**: `string`
+
+  When set use this command to run the language server\.
+  The command is split on spaces\: first part is the command name\, the rest is the arguments\.
+
+- **`zetaNote.customCommandDir`**: `string`
+
+  null
+
+- **`zetaNote.trace.server`**: `enum { "off", "messages", "verbose" }`
+
+  Default: `"verbose"`
+  
+  Level of verbosity in communicating with the server
+
+</details>
+
+
+**Snippet to enable the language server:**
+```lua
+require'lspconfig'.zeta_note.setup{}
+```
+
+**Commands and default values:**
+```lua
+  Commands:
+  
+  Default Values:
+    filetypes = { "markdown" }
+    root_dir = root_pattern(".zeta.toml")
+```
+
+
 ## zls
 
            https://github.com/zigtools/zls
@@ -5917,9 +7134,14 @@ require'lspconfig'.yamlls.setup{}
            `Zig LSP implementation + Zig Language Server`.
         
 
+
+**Snippet to enable the language server:**
 ```lua
 require'lspconfig'.zls.setup{}
+```
 
+**Commands and default values:**
+```lua
   Commands:
   
   Default Values:
@@ -5927,4 +7149,5 @@ require'lspconfig'.zls.setup{}
     filetypes = { "zig", "zir" }
     root_dir = util.root_pattern("zls.json", ".git") or current_file_dirname
 ```
+
 
