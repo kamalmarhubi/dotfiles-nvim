@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/nvim-treesitter/nvim-treesitter-textobjects.git
 	branch = master
-	commit = 4f1ace57fbeed1f4e5613ea8c9b414ff0833eade
-	parent = d64d177ff44afce2e953f27429f46f0cf8df0963
+	commit = 2271ffecd5fad9c74fb12c125f39a21ffb5a7673
+	parent = 38f869dfac36ee4f67cb68b892f1d1f0ae2848a9
 	method = rebase
 	cmdver = 0.4.0
