@@ -15,12 +15,13 @@ Depending on which part of the plugin you want to contribute to, please read the
 ## Style Checks and Tests
 
 We haven't implemented any functional tests yet. Feel free to contribute.
-However, we check code style with `luacheck`!
+However, we check code style with `luacheck` and `stylua`!
 Please install luacheck and activate our `pre-push` hook to automatically check style before
 every push:
 
 ```bash
 luarocks install luacheck
+cargo install stylua
 ln -s ../../scripts/pre-push .git/hooks/pre-push
 ```
 
@@ -130,14 +131,15 @@ effect on highlighting. We will work on improving highlighting in the near futur
 #### Keywords
 
 ```
-@conditional
-@repeat
+@conditional (e.g. `if`, `else`)
+@repeat (e.g. `for`, `while`)
 @label for C/Lua-like labels
 @keyword
-@keyword.function
+@keyword.function (keyword to define a function, e.g. `func` in Go, `def` in Python)
 @keyword.operator (for operators that are English words, e.g. `and`, `or`)
+@keyword.return
 @operator (for symbolic operators, e.g. `+`, `*`)
-@exception
+@exception (e.g. `throw`, `catch`)
 @include keywords for including modules (e.g. import/from in Python)
 
 @type
@@ -183,6 +185,7 @@ Used for xml-like tags
 
 ```
 @tag
+@tag.attribute
 @tag.delimiter
 ```
 

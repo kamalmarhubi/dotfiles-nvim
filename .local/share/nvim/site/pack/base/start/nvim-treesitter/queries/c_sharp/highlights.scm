@@ -1,9 +1,19 @@
 (identifier) @variable
 
+((identifier) @keyword
+  (#eq? @keyword "value")
+  (#has-ancestor? @keyword accessor_declaration))
+
 (method_declaration
   name: (identifier) @method)
 
+(local_function_statement
+  name: (identifier) @method)
+
 (method_declaration
+  type: (identifier) @type)
+
+(local_function_statement
   type: (identifier) @type)
 
 (interpolation) @none
@@ -85,18 +95,52 @@
   name: (identifier) @type)
 (class_declaration
   name: (identifier) @type)
+(record_declaration
+  name: (identifier) @type)
 (enum_declaration
   name: (identifier) @type)
 (constructor_declaration
   name: (identifier) @constructor)
+(constructor_initializer [
+  "base" @constructor
+])
 
 (variable_declaration
   (identifier) @type)
 (object_creation_expression
   (identifier) @type)
 
-(generic_name
+; Generic Types.
+(type_of_expression
+  (generic_name
+    (identifier) @type))
+
+(type_argument_list
+  (generic_name
+    (identifier) @type))
+
+(base_list
+  (generic_name
+    (identifier) @type))
+
+(type_constraint
+  (generic_name
+    (identifier) @type))
+
+(object_creation_expression
+  (generic_name
+   (identifier) @type))
+
+(property_declaration
+  (generic_name
+    (identifier) @type))
+
+type: (generic_name
   (identifier) @type)
+
+; Generic Method invocation with generic type
+(invocation_expression
+  function: (generic_name) @method)
 
 (invocation_expression
   (member_access_expression
@@ -120,6 +164,23 @@
 
 (for_each_statement
   type: (identifier) @type)
+
+(tuple_element
+  type: (identifier) @type)
+
+(tuple_expression
+  (argument
+    (declaration_expression
+      type: (identifier) @type)))
+
+(as_expression
+  right: (identifier) @type)
+
+(type_of_expression
+  (identifier) @type)
+
+(name_colon
+  (identifier) @parameter)
 
 (warning_directive) @text.warning
 (error_directive) @exception
@@ -167,7 +228,6 @@
  "for"
  "do"
  "continue"
- "in"
  "goto"
  "foreach"
 ] @repeat
@@ -245,14 +305,24 @@
  "using"
 ] @include
 
+(alias_qualified_name
+  (identifier "global") @include)
+
 [
  "with"
  "new"
  "typeof"
+ "nameof"
  "sizeof"
- "ref"
  "is"
  "as"
+ "and"
+ "or"
+ "not"
+ "stackalloc"
+ "in"
+ "out"
+ "ref"
 ] @keyword.operator
 
 [
@@ -260,16 +330,18 @@
  "params"
  "operator"
  "default"
- "yield"
- "return"
  "abstract"
  "const"
  "extern"
+ "implicit"
+ "explicit"
  "internal"
  "override"
  "private"
  "protected"
  "public"
+ "internal"
+ "partial"
  "readonly"
  "sealed"
  "static"
@@ -285,6 +357,33 @@
  "struct"
  "get"
  "set"
+ "init"
  "where"
+ "record"
+ "event"
+ "add"
+ "remove"
+ "checked"
+ "unchecked"
+ "fixed"
 ] @keyword
 
+(parameter_modifier "this" @keyword)
+
+(query_expression
+  (_ [
+    "from"
+    "orderby"
+    "select"
+    "group"
+    "by"
+    "ascending"
+    "descending"
+    "equals"
+    "let"
+  ] @keyword))
+
+[
+  "return"
+  "yield"
+] @keyword.return

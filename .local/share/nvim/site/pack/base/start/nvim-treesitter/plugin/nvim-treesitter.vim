@@ -37,6 +37,7 @@ highlight default link TSConstMacro Define
 highlight default link TSString String
 highlight default link TSStringRegex String
 highlight default link TSStringEscape SpecialChar
+highlight default link TSStringSpecial SpecialChar
 highlight default link TSCharacter Character
 highlight default link TSNumber Number
 highlight default link TSBoolean Boolean
@@ -63,6 +64,7 @@ highlight default link TSOperator Operator
 highlight default link TSKeyword Keyword
 highlight default link TSKeywordFunction Keyword
 highlight default link TSKeywordOperator TSOperator
+highlight default link TSKeywordReturn TSKeyword
 highlight default link TSException Exception
 
 highlight default link TSType Type
@@ -91,3 +93,4 @@ highlight default link TSDanger WarningMsg
 
 highlight default link TSTag Label
 highlight default link TSTagDelimiter Delimiter
+highlight default link TSTagAttribute TSProperty

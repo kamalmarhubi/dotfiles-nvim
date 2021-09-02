@@ -34,6 +34,9 @@
 (function_definition
   name: (name) @function)
 
+(nullsafe_member_call_expression
+    name: (name) @method)
+
 ; Member
 
 (property_element
@@ -76,9 +79,17 @@
 ; Keywords
 
 [
+ "as"
+] @keyword.operator
+
+[
+ "fn"
+ "function"
+] @keyword.function
+
+[
  "$"
  "abstract"
- "as"
  "break"
  "class"
  "const"
@@ -89,20 +100,21 @@
  "enddeclare"
  "extends"
  "final"
- "function"
  "global"
  "implements"
  "insteadof"
+ "instanceof"
  "interface"
  "namespace"
  "new"
  "private"
  "protected"
  "public"
- "return"
  "static"
  "trait"
  ] @keyword
+
+"return" @keyword.return
 
 [
  "case"
@@ -112,6 +124,7 @@
  "endswitch"
  "if"
  "switch"
+ "match"
  ] @conditional
 
 [
@@ -172,6 +185,9 @@
   ">>"
 
   "->"
+  "?->"
+
+  "=>"
 
   "<"
   "<="

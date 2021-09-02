@@ -127,12 +127,13 @@
 
 [
   "const"
-  "return"
   "macro"
   "struct"
   "primitive"
   "type"
 ] @keyword
+
+"return" @keyword.return
 
 ((identifier) @keyword (#any-of? @keyword "global" "local"))
 

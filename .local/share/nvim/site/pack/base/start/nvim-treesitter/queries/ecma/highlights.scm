@@ -98,7 +98,10 @@
 (true) @boolean
 (false) @boolean
 (null) @constant.builtin
-(comment) @comment
+[
+(comment)
+(hash_bang_line)
+] @comment
 (string) @string
 (regex) @punctuation.delimiter
 (regex_pattern) @string.regex
@@ -107,10 +110,6 @@
 
 ; Punctuation
 ;------------
-
-(template_substitution
-  "${" @punctuation.special
-  "}" @punctuation.special) @none
 
 "..." @punctuation.special
 
@@ -176,6 +175,10 @@
 "{" @punctuation.bracket
 "}" @punctuation.bracket
 
+(template_substitution
+  "${" @punctuation.special
+  "}" @punctuation.special) @none
+
 ; Keywords
 ;----------
 
@@ -214,7 +217,6 @@
 "in"
 "instanceof"
 "let"
-"return"
 "set"
 "static"
 "switch"
@@ -223,8 +225,12 @@
 "var"
 "void"
 "with"
-"yield"
 ] @keyword
+
+[
+"return"
+"yield"
+] @keyword.return
 
 [
  "function"

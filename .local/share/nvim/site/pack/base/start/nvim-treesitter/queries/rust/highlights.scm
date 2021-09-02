@@ -79,24 +79,28 @@
     name: (identifier) @constant)
   (#match? @constant "^[A-Z]"))
 
-;; Assume that all `#[derive]` arguments are types
+;; Macro definitions
+"$" @function.macro
+(metavariable) @function.macro
+
+;; Attribute macros
+(meta_item (identifier) @function.macro)
+(meta_item (scoped_identifier (identifier) @function.macro .))
+
+;; Derive macros (assume all arguments are types)
 (meta_item
   (identifier) @_name
   arguments: (meta_arguments (meta_item (identifier) @type))
   (#eq? @_name "derive"))
 
+;; Function-like macros
 (macro_invocation
   macro: (identifier) @function.macro)
 (macro_invocation
   macro: (scoped_identifier
            (identifier) @function.macro .))
 
-(metavariable) @function.macro
-(meta_item (identifier) @function.macro)
-(meta_item (scoped_identifier (identifier) @function.macro .)) 
 
-
-"$" @function.macro
 
 ; Function definitions
 
@@ -160,7 +164,6 @@
 "move"
 "pub"
 "ref"
-"return"
 "static"
 "struct"
 "trait"
@@ -173,6 +176,8 @@
 (mutable_specifier)
 (super)
 ] @keyword
+
+"return" @keyword.return
 
 "fn" @keyword.function
 
