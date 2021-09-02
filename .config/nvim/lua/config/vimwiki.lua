@@ -9,7 +9,7 @@ vim.g.vimwiki_list = {{
 local DIARY_TEMPLATE_SNIPPET = [[
 # {date}
 
-## Today's TODOs | sched:{date} or +OVERDUE | sched:{date}
+## Today's TODOs | sched:{date} or +OVERDUE or (+COMPLETED and modified:{date}) | sched:{date}
 
 ## New TODOs
 ]]
