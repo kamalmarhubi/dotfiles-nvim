@@ -161,7 +161,7 @@ call vsnip#variable#register('BLOCK_COMMENT_END', function('s:BLOCK_COMMENT_END'
 
 function! s:LINE_COMMENT(context) abort
   let l:chars = split(&commentstring, '%s')
-  let l:comment = &commentstring =~ '^/\*' ? '//' : substitute(&commentstring, '%s', '', 'g')
+  let l:comment = &commentstring =~# '^/\*' ? '//' : substitute(&commentstring, '%s', '', 'g')
   return trim(l:comment)
 endfunction
 call vsnip#variable#register('LINE_COMMENT', function('s:LINE_COMMENT'))
@@ -175,4 +175,10 @@ function! s:VIM(context) abort
   return v:null
 endfunction
 call vsnip#variable#register('VIM', function('s:VIM'))
+
+function! s:VSNIP_CAMELCASE_FILENAME(context) abort
+  let l:basename = substitute(expand('%:p:t'), '^\@<!\..*$', '', '')
+  return substitute(l:basename, '\(\%(\<\l\+\)\%(_\)\@=\)\|_\(\l\)', '\u\1\2', 'g')
+endfunction
+call vsnip#variable#register('VSNIP_CAMELCASE_FILENAME', function('s:VSNIP_CAMELCASE_FILENAME'))
 
