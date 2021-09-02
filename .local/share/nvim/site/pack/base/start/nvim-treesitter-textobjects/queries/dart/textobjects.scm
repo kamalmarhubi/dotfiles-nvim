@@ -21,16 +21,33 @@
 (type_alias (function_type)? @function.inner) @function.outer
 
 ; parameter
-([
+[
   (formal_parameter)
   (normal_parameter_type)
   (type_parameter)
- ] @parameter.inner . ","? @_end 
- (#make-range! "parameter.outer" @parameter.inner @_end))
+] @parameter.inner
+(
+"," @_start . [
+  (formal_parameter)
+  (normal_parameter_type)
+  (type_parameter)
+ ] @_par
+ (#make-range! "parameter.outer" @_start @_par))
+(
+ [
+  (formal_parameter)
+  (normal_parameter_type)
+  (type_parameter)
+ ] @_par . "," @_end 
+ (#make-range! "parameter.outer" @_par @_end))
+
 ;; TODO: (_)* not supported yet -> for now this works correctly only with simple arguments 
 ((arguments
-  (_) @parameter.inner . ","? @_end)
+  . (_) @parameter.inner . ","? @_end)
  (#make-range! "parameter.outer" @parameter.inner @_end))
+((arguments
+  "," @_start . (_) @parameter.inner)
+ (#make-range! "parameter.outer" @_start @parameter.inner))
 
 ; call
 (expression_statement
