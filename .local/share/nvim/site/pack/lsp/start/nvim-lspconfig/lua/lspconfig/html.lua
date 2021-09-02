@@ -1,25 +1,22 @@
 local configs = require 'lspconfig/configs'
 local util = require 'lspconfig/util'
 
-local server_name = "html"
-local bin_name = "vscode-html-language-server"
-
-local root_pattern = util.root_pattern("package.json")
+local server_name = 'html'
+local bin_name = 'vscode-html-language-server'
 
 configs[server_name] = {
   default_config = {
-    cmd = {bin_name, "--stdio"};
-    filetypes = {"html"};
+    cmd = { bin_name, '--stdio' },
+    filetypes = { 'html' },
     root_dir = function(fname)
-      return root_pattern(fname) or vim.loop.os_homedir()
-    end;
-    settings = {};
+      return util.root_pattern('package.json', '.git')(fname) or util.path.dirname(fname)
+    end,
+    settings = {},
     init_options = {
-      embeddedLanguages = { css= true, javascript= true },
+      embeddedLanguages = { css = true, javascript = true },
       configurationSection = { 'html', 'css', 'javascript' },
-    }
-
-  };
+    },
+  },
   docs = {
     description = [[
 https://github.com/hrsh7th/vscode-langservers-extracted
@@ -41,8 +38,6 @@ require'lspconfig'.html.setup {
   capabilities = capabilities,
 }
 ```
-]];
-  };
+]],
+  },
 }
-
--- vim:et ts=2 sw=2
