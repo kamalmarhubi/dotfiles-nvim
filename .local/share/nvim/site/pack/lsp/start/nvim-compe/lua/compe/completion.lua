@@ -4,6 +4,7 @@ local Callback = require'compe.utils.callback'
 local Config = require'compe.config'
 local Context = require'compe.context'
 local Matcher = require'compe.matcher'
+local Float = require'compe.float'
 
 local VALID_COMPLETE_MODE = {
   [''] = true;
@@ -103,18 +104,37 @@ Completion.select = function(args)
     end
   else
     vim.schedule(Async.guard('documentation', function()
-      vim.call('compe#documentation#close')
+      Float.close()
     end))
   end
 end
 
 --- confirm_pre
 Completion.confirm_pre = function(index)
-  if not VALID_COMPLETE_MODE[vim.fn.complete_info({ 'mode' }).mode] then
+  local info = vim.fn.complete_info({ 'mode', 'items', 'selected' })
+  if not VALID_COMPLETE_MODE[info.mode] then
     return nil
   end
-  Completion._confirm_item = Completion._current_items[index]
+
+  local confirm_item = Completion._current_items[index]
+  if not confirm_item then
+    return nil
+  end
+
+  local selected_item = info.items[info.selected + 1]
+  if selected_item then
+    local same = true
+    same = same and selected_item.abbr == confirm_item.abbr
+    same = same and selected_item.word == confirm_item.word
+    same = same and selected_item.menu == confirm_item.menu
+    same = same and selected_item.kind == confirm_item.kind
+    if not same then
+      return nil
+    end
+  end
+
   Completion._is_confirming = true
+  Completion._confirm_item = confirm_item
   return {
     offset = Completion._current_offset,
     item = Completion._confirm_item
@@ -152,7 +172,7 @@ Completion.close = function()
   if string.sub(vim.api.nvim_get_mode().mode, 1, 1) == 'i' then
     vim.call('complete', 1, {})
   end
-  vim.call('compe#documentation#close')
+  Float.close()
   Callback.clear()
   Completion._new_context({})
   Completion._current_items = {}
@@ -173,7 +193,7 @@ Completion.complete = guard(function(option)
 
   -- Trigger
   local triggered = false
-  if is_manual_completing or is_completing_backspace or context:should_auto_complete() then
+  if (context:changed() and (is_manual_completing or is_completing_backspace)) or context:should_auto_complete() then
     triggered = Completion._trigger(context)
   end
 
@@ -264,17 +284,19 @@ Completion._show = Async.guard('Completion._show', guard(function(start_offset, 
     should_preselect = should_preselect or (Config.get().preselect == 'always')
   end
 
-  local completeopt = vim.o.completeopt
-  if should_preselect then
-    vim.cmd('set completeopt=menuone,noinsert')
-  else
-    vim.cmd('set completeopt=menuone,noselect')
+  if #items > 0 or vim.fn.pumvisible() == 1 then
+    local completeopt = vim.o.completeopt
+    if should_preselect then
+      vim.cmd('set completeopt=menuone,noinsert')
+    else
+      vim.cmd('set completeopt=menuone,noselect')
+    end
+    vim.call('complete', math.max(1, start_offset), items) -- start_offset=0 should close pum with `complete(1, [])`
+    vim.cmd('set completeopt=' .. completeopt)
   end
-  vim.call('complete', math.max(1, start_offset), items) -- start_offset=0 should close pum with `complete(1, [])`
-  vim.cmd('set completeopt=' .. completeopt)
 
   if #items == 0 then
-    vim.call('compe#documentation#close')
+    Float.close()
   end
 end))
 

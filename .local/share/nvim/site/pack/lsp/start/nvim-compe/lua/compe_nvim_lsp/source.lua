@@ -31,6 +31,9 @@ function Source.complete(self, args)
   if vim.lsp.client_is_stopped(self.client.id) then
     return args.abort()
   end
+  if not self:_get_paths(self.client.server_capabilities, { 'completionProvider' }) then
+    return args.abort()
+  end
 
   local request = vim.lsp.util.make_position_params()
   request.context = {}
@@ -96,22 +99,33 @@ function Source.documentation(self, args)
 end
 
 --- _create_document
-function Source._create_document(self, filetype, completion_item)
-  local document = {}
-  if completion_item.detail and completion_item.detail ~= '' then
-    table.insert(document, '```' .. filetype)
-    table.insert(document, completion_item.detail)
-    table.insert(document, '```')
-  end
-  if completion_item.documentation then
-    if completion_item.detail then
-      table.insert(document, ' ')
+function Source._create_document(_, filetype, completion_item)
+  local detail = (function()
+    if completion_item.detail and completion_item.detail ~= '' then
+      return string.format("```%s\n%s\n```", filetype, completion_item.detail)
     end
-    for _, line in ipairs(util.convert_input_to_markdown_lines(completion_item.documentation)) do
-      table.insert(document, line)
+  end)()
+  local doc = (function()
+    local doc = completion_item.documentation or {}
+    if type(doc) == "string" then
+      if doc == "" then
+        doc = nil
+      else
+        doc = string.format("```%s\n%s\n```", filetype, doc)
+      end
+    else
+      doc = vim.tbl_deep_extend('force', {}, doc)
     end
+    return doc
+  end)()
+  local items = {}
+  if detail then
+    table.insert(items, detail)
   end
-  return document
+  if doc then
+    table.insert(items, doc)
+  end
+  return util.convert_input_to_markdown_lines(items) or {}
 end
 
 --- _get_paths

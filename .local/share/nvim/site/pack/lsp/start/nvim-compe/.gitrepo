@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/hrsh7th/nvim-compe.git
 	branch = master
-	commit = f176c41f1e67bffe2dbd28f371fa55c172cf1c56
-	parent = f76adb48e576f7c4005d3d24b7f94a7d989e6dc2
+	commit = efd9f425383ec57756a74c60a6e85d190b110ed7
+	parent = 0b830e3ad9a0f3090b2086a4f21e0935d8d06a06
 	method = rebase
 	cmdver = 0.4.3

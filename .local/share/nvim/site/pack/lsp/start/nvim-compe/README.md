@@ -1,3 +1,9 @@
+# Warning
+
+nvim-compe is now deprecated. Please use [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) the successor of nvim-compe.
+
+nvim-compe still works but new feature and bugfixes will be stopped.
+
 # nvim-compe
 
 Auto completion plugin for nvim.
@@ -17,11 +23,13 @@ Auto completion plugin for nvim.
   - [Neovim-specific](#neovim-specific)
   - [External-plugin](#external-plugin)
 - [External sources](#external-sources)
+- [Known issues](#known-issues)
 - [FAQ](#faq)
   - [Can't get sorting to work correctly](#cant-get-sorting-to-work-correctly)
   - [How to use LSP snippet?](#how-to-use-lsp-snippet)
   - [How to use tab to navigate completion menu?](#how-to-use-tab-to-navigate-completion-menu)
   - [How to expand snippets from completion menu?](#how-to-expand-snippets-from-completion-menu)
+  - [How to automatically select the first match?](#how-to-automatically-select-the-first-match)
 - [Demo](#demo)
   - [Auto Import](#auto-import)
   - [LSP + Magic Completion](#lsp--rust_analyzers-magic-completion)
@@ -66,7 +74,7 @@ Detailed docs in [here](./doc/compe.txt) or `:help compe`.
 
 ### Prerequisite
 
-Neovim version 0.5.0 or above (not released yet, use nightlies or build from source).
+Neovim version 0.5.0 or above.
 
 You must set `completeopt` to `menuone,noselect` which can be easily done
 as follows.
@@ -111,6 +119,8 @@ let g:compe.source.nvim_lsp = v:true
 let g:compe.source.nvim_lua = v:true
 let g:compe.source.vsnip = v:true
 let g:compe.source.ultisnips = v:true
+let g:compe.source.luasnip = v:true
+let g:compe.source.emoji = v:true
 ```
 
 #### Lua Config
@@ -129,7 +139,14 @@ require'compe'.setup {
   max_abbr_width = 100;
   max_kind_width = 100;
   max_menu_width = 100;
-  documentation = true;
+  documentation = {
+    border = { '', '' ,'', ' ', '', '', '', ' ' }, -- the border option is the same as `|help nvim_open_win|`
+    winhighlight = "NormalFloat:CompeDocumentation,FloatBorder:CompeDocumentationBorder",
+    max_width = 120,
+    min_width = 60,
+    max_height = math.floor(vim.o.lines * 0.3),
+    min_height = 1,
+  };
 
   source = {
     path = true;
@@ -139,6 +156,7 @@ require'compe'.setup {
     nvim_lua = true;
     vsnip = true;
     ultisnips = true;
+    luasnip = true;
   };
 }
 ```
@@ -171,6 +189,16 @@ If you use [Raimondi/delimitMate](https://github.com/Raimondi/delimitMate)
 ```viml
 inoremap <silent><expr> <C-Space> compe#complete()
 inoremap <silent><expr> <CR>      compe#confirm({ 'keys': "\<Plug>delimitMateCR", 'mode': '' })
+inoremap <silent><expr> <C-e>     compe#close('<C-e>')
+inoremap <silent><expr> <C-f>     compe#scroll({ 'delta': +4 })
+inoremap <silent><expr> <C-d>     compe#scroll({ 'delta': -4 })
+```
+
+If you use [windwp/nvim-autopairs](https://github.com/windwp/nvim-autopairs)
+
+```viml
+inoremap <silent><expr> <C-Space> compe#complete()
+inoremap <silent><expr> <CR>      compe#confirm(luaeval("require 'nvim-autopairs'.autopairs_cr()"))
 inoremap <silent><expr> <C-e>     compe#close('<C-e>')
 inoremap <silent><expr> <C-f>     compe#scroll({ 'delta': +4 })
 inoremap <silent><expr> <C-d>     compe#scroll({ 'delta': -4 })
@@ -219,6 +247,19 @@ highlight link CompeDocumentation NormalFloat
 - [dadbod](https://github.com/kristijanhusak/vim-dadbod-completion)
 - [latex-symbols](https://github.com/GoldsteinE/compe-latex-symbols)
 - [tmux](https://github.com/andersevenrud/compe-tmux)
+- [vCard](https://github.com/cbarrete/completion-vcard)
+- [lbdb](https://github.com/codybuell/compe-lbdb)
+
+## Known issues
+
+You can see the known issues in here.
+
+- [OS related](https://github.com/hrsh7th/nvim-compe/issues?q=+label%3Aos-related+)
+- [Server related](https://github.com/hrsh7th/nvim-compe/issues?q=+label%3Aserver-related+)
+- [Upstream issue](https://github.com/hrsh7th/nvim-compe/issues?q=+label%3Aupstream-issue+)
+- [Next version](https://github.com/hrsh7th/nvim-compe/issues?q=+label%3Anext-version+)
+
+Note: The next-version means [nvim-cmp](https://github.com/hrsh7th/nvim-cmp) now.
 
 ## FAQ
 
@@ -280,6 +321,12 @@ You can set `set shortmess+=c` in your vimrc.
    Plug 'SirVer/ultisnips'
    ```
 
+   or `LuaSnip`
+
+   ```viml
+   Plug 'L3MON4D3/LuaSnip'
+   ```
+
 ### How to use tab to navigate completion menu?
 
 `Tab` and `S-Tab` keys need to be mapped to `<C-n>` and `<C-p>` when completion
@@ -294,11 +341,7 @@ end
 
 local check_back_space = function()
     local col = vim.fn.col('.') - 1
-    if col == 0 or vim.fn.getline('.'):sub(col, col):match('%s') then
-        return true
-    else
-        return false
-    end
+    return col == 0 or vim.fn.getline('.'):sub(col, col):match('%s') ~= nil
 end
 
 -- Use (s-)tab to:
@@ -307,7 +350,7 @@ end
 _G.tab_complete = function()
   if vim.fn.pumvisible() == 1 then
     return t "<C-n>"
-  elseif vim.fn.call("vsnip#available", {1}) == 1 then
+  elseif vim.fn['vsnip#available'](1) == 1 then
     return t "<Plug>(vsnip-expand-or-jump)"
   elseif check_back_space() then
     return t "<Tab>"
@@ -318,7 +361,7 @@ end
 _G.s_tab_complete = function()
   if vim.fn.pumvisible() == 1 then
     return t "<C-p>"
-  elseif vim.fn.call("vsnip#jumpable", {-1}) == 1 then
+  elseif vim.fn['vsnip#jumpable'](-1) == 1 then
     return t "<Plug>(vsnip-jump-prev)"
   else
     -- If <S-Tab> is not working in your terminal, change it to <C-h>
@@ -335,6 +378,14 @@ vim.api.nvim_set_keymap("s", "<S-Tab>", "v:lua.s_tab_complete()", {expr = true})
 ### How to expand snippets from completion menu?
 
 Use `compe#confirm()` mapping, as described in section [Mappings](#mappings).
+
+### How to automatically select the first match?
+
+`compe#confirm()` with the select option set to true will select the first item when none has been manually selected. For example:
+
+```lua
+vim.api.nvim_set_keymap("i", "<CR>", "compe#confirm({ 'keys': '<CR>', 'select': v:true })", { expr = true })
+```
 
 
 ### ESC does not close the completion menu

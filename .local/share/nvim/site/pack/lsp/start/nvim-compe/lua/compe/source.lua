@@ -6,6 +6,7 @@ local Character = require'compe.utils.character'
 local Config = require'compe.config'
 local Matcher = require'compe.matcher'
 local Context = require'compe.context'
+local Float = require'compe.float'
 
 local Source =  {}
 
@@ -148,6 +149,7 @@ Source.trigger = function(self, context, callback)
 
     -- Completion
     self.source:complete({
+      metadata = self.metadata;
       context = self.context;
       input = self.context:get_input(state.keyword_pattern_offset);
       keyword_pattern_offset = state.keyword_pattern_offset;
@@ -211,6 +213,10 @@ Source.resolve = function(self, args)
 end
 
 --- documentation
+Source.documentation_close = function()
+  Float.close()
+end
+
 Source.documentation = function(self, completed_item)
   if self.source.documentation then
     self:resolve({
@@ -220,20 +226,16 @@ Source.documentation = function(self, completed_item)
           completed_item = resolved_completed_item;
           context = Context.new({}, {});
           callback = Async.guard('Source.documentation#callback', vim.schedule_wrap(function(document)
-            if document and #document ~= 0 then
-              vim.call('compe#documentation#open', document)
-            else
-              vim.call('compe#documentation#close')
-            end
+            Float.show(document)
           end));
           abort = Async.guard('Source.documentation#abort', vim.schedule_wrap(function()
-            vim.call('compe#documentation#close')
+            Float.close()
           end));
         })
       end
     })
   else
-    vim.call('compe#documentation#close')
+    Float.close()
   end
 end
 
