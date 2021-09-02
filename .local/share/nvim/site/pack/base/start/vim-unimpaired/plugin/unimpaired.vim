@@ -81,7 +81,7 @@ function! s:entries(path) abort
   let filter_suffixes = substitute(escape(&suffixes, '~.*$^'), ',', '$\\|', 'g') .'$'
   call filter(files, 'v:val !~# filter_suffixes')
 
-  return files
+  return sort(files)
 endfunction
 
 function! s:FileByOffset(num) abort
@@ -93,9 +93,9 @@ function! s:FileByOffset(num) abort
   while num
     let files = s:entries(fnamemodify(file,':h'))
     if a:num < 0
-      call reverse(sort(filter(files,'v:val <# file')))
+      call reverse(filter(files,'v:val <# file'))
     else
-      call sort(filter(files,'v:val ># file'))
+      call filter(files,'v:val ># file')
     endif
     let temp = get(files,0,'')
     if empty(temp)
@@ -125,8 +125,40 @@ function! s:fnameescape(file) abort
   endif
 endfunction
 
-nnoremap <silent> <Plug>unimpairedDirectoryNext     :<C-U>edit <C-R>=<SID>fnameescape(fnamemodify(<SID>FileByOffset(v:count1), ':.'))<CR><CR>
-nnoremap <silent> <Plug>unimpairedDirectoryPrevious :<C-U>edit <C-R>=<SID>fnameescape(fnamemodify(<SID>FileByOffset(-v:count1), ':.'))<CR><CR>
+function! s:GetWindow() abort
+  if exists('*getwininfo') && exists('*win_getid')
+    return get(getwininfo(win_getid()), 0, {})
+  else
+    return {}
+  endif
+endfunction
+
+function! s:PreviousFileEntry(count) abort
+  let window = s:GetWindow()
+
+  if get(window, 'quickfix')
+    return 'colder ' . a:count
+  elseif get(window, 'loclist')
+    return 'lolder ' . a:count
+  else
+    return 'edit ' . s:fnameescape(fnamemodify(s:FileByOffset(-v:count1), ':.'))
+  endif
+endfunction
+
+function! s:NextFileEntry(count) abort
+  let window = s:GetWindow()
+
+  if get(window, 'quickfix')
+    return 'cnewer ' . a:count
+  elseif get(window, 'loclist')
+    return 'lnewer ' . a:count
+  else
+    return 'edit ' . s:fnameescape(fnamemodify(s:FileByOffset(v:count1), ':.'))
+  endif
+endfunction
+
+nnoremap <silent> <Plug>unimpairedDirectoryNext     :<C-U>execute <SID>NextFileEntry(v:count1)<CR>
+nnoremap <silent> <Plug>unimpairedDirectoryPrevious :<C-U>execute <SID>PreviousFileEntry(v:count1)<CR>
 call s:map('n', ']f', '<Plug>unimpairedDirectoryNext')
 call s:map('n', '[f', '<Plug>unimpairedDirectoryPrevious')
 
@@ -182,20 +214,24 @@ endfunction
 
 " Section: Line operations
 
-function! s:BlankUp(count) abort
-  put!=repeat(nr2char(10), a:count)
-  ']+1
-  silent! call repeat#set("\<Plug>unimpairedBlankUp", a:count)
+function! s:BlankUp() abort
+  let cmd = 'put!=repeat(nr2char(10), v:count1)|silent '']+'
+  if &modifiable
+    let cmd .= '|silent! call repeat#set("\<Plug>unimpairedBlankUp", v:count1)'
+  endif
+  return cmd
 endfunction
 
-function! s:BlankDown(count) abort
-  put =repeat(nr2char(10), a:count)
-  '[-1
-  silent! call repeat#set("\<Plug>unimpairedBlankDown", a:count)
+function! s:BlankDown() abort
+  let cmd = 'put =repeat(nr2char(10), v:count1)|silent ''[-'
+  if &modifiable
+    let cmd .= '|silent! call repeat#set("\<Plug>unimpairedBlankDown", v:count1)'
+  endif
+  return cmd
 endfunction
 
-nnoremap <silent> <Plug>unimpairedBlankUp   :<C-U>call <SID>BlankUp(v:count1)<CR>
-nnoremap <silent> <Plug>unimpairedBlankDown :<C-U>call <SID>BlankDown(v:count1)<CR>
+nnoremap <silent> <Plug>unimpairedBlankUp   :<C-U>exe <SID>BlankUp()<CR>
+nnoremap <silent> <Plug>unimpairedBlankDown :<C-U>exe <SID>BlankDown()<CR>
 
 call s:map('n', '[<Space>', '<Plug>unimpairedBlankUp')
 call s:map('n', ']<Space>', '<Plug>unimpairedBlankDown')
