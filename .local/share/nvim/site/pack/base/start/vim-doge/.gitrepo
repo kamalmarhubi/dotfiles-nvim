@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/kkoomen/vim-doge.git
 	branch = master
-	commit = 584c2e19ba8ea90087297caddd69c9cc192935b3
-	parent = 30519c61d70ae1bfbefea3b96ee64ae22fe56f8a
+	commit = 160fc0d7e283c31a60ec4a4eca13446a6f745ea7
+	parent = 4605e22c91193310399bb5d8c00f779cf3f7b9e9
 	method = rebase
 	cmdver = 0.4.3
