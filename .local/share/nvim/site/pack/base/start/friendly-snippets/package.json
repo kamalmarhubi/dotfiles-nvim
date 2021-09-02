@@ -6,7 +6,13 @@
   "contributes": {
     "snippets": [
       {
-        "language": ["plaintext", "markdown", "tex", "html"],
+        "language": [
+          "plaintext",
+          "markdown",
+          "tex",
+          "html",
+          "global"
+        ],
         "path": "./snippets/global.json"
       },
       {
@@ -18,6 +24,10 @@
         "path": "./snippets/cpp.json"
       },
       {
+        "language": "csharp",
+        "path": "./snippets/csharp.json"
+      },
+      {
         "language": "html",
         "path": "./snippets/ejs.json"
       },
@@ -26,12 +36,16 @@
         "path": "./snippets/erb.json"
       },
       {
-      "language": "elixir",
-      "path": "./snippets/elixir.json"
+        "language": "elixir",
+        "path": "./snippets/elixir.json"
       },
       {
         "language": "fortran",
         "path": "./snippets/fortran.json"
+      },
+      {
+        "language": "liquid",
+        "path": "./snippets/liquid.json"
       },
       {
         "language": "lua",
@@ -42,8 +56,8 @@
         "path": "./snippets/go.json"
       },
       {
-          "language": "fennel",
-          "path": "./snippets/fennel.json"
+        "language": "fennel",
+        "path": "./snippets/fennel.json"
       },
       {
         "language": "php",
@@ -74,15 +88,25 @@
         "path": "./snippets/sql.json"
       },
       {
-        "language": "shellscript",
+        "language": [
+          "shellscript",
+          "shell",
+          "sh"
+        ],
         "path": "./snippets/shell.json"
       },
       {
-        "language": "markdown",
+        "language": [
+          "markdown",
+          "rmd"
+        ],
         "path": "./snippets/markdown.json"
       },
       {
-        "language": ["plaintex", "tex"],
+        "language": [
+          "plaintex",
+          "tex"
+        ],
         "path": "./snippets/latex.json"
       },
       {
@@ -90,11 +114,21 @@
         "path": "./snippets/java.json"
       },
       {
-        "language": ["html", "jade", "pug"],
+        "language": [
+          "html",
+          "jade",
+          "pug"
+        ],
         "path": "./snippets/html.json"
       },
       {
-        "language": ["css", "scss", "sass", "less", "stylus"],
+        "language": [
+          "css",
+          "scss",
+          "sass",
+          "less",
+          "stylus"
+        ],
         "path": "./snippets/css.json"
       },
       {
@@ -107,11 +141,17 @@
         "path": "./snippets/javascript/javascript.json"
       },
       {
-        "language": ["javascriptreact", "typescriptreact"],
+        "language": [
+          "javascriptreact",
+          "typescriptreact"
+        ],
         "path": "./snippets/javascript/apollo.json"
       },
       {
-        "language": ["typescript", "typescriptreact"],
+        "language": [
+          "typescript",
+          "typescriptreact"
+        ],
         "path": "./snippets/javascript/typescript.json"
       },
       {
@@ -161,6 +201,70 @@
       {
         "language": "python",
         "path": "./snippets/python/tkinter.json"
+      },
+      {
+        "language": "dart",
+        "path": "./snippets/flutter.json"
+      },
+      {
+        "language": "markdown",
+        "path": "./snippets/jekyll/vscode-jekyll-snippets.json"
+      },
+      {
+        "language": "cobol",
+        "path": "./snippets/cobol/vscode_cobol.json"
+      },
+      {
+        "language": "cobol",
+        "path": "./snippets/cobol/vscode_cobol-compound.json"
+      },
+      {
+        "language": "cobol",
+        "path": "./snippets/cobol/vscode_cobol_dir.json"
+      },
+      {
+        "language": "cobol",
+        "path": "./snippets/cobol/vscode_cobol_jcl.json"
+      },
+      {
+        "language": "kotlin",
+        "path": "./snippets/kotlin.json"
+      },
+      {
+        "language": "fortran",
+        "path": "./snippets/fortran/vscode-fortran-support.json"
+      },
+      {
+        "language": [
+          "plaintex",
+          "tex"
+        ],
+        "path": "./snippets/latex/latex-snippets.json"
+      },
+      {
+        "language": [
+          "plaintex",
+          "tex"
+        ],
+        "path": "./snippets/latex/vscode-latex-snippets.json"
+      },
+      {
+        "language": [
+          "plaintex",
+          "tex"
+        ],
+        "path": "./snippets/latex/vscode-latex-support.json"
+      },
+      {
+        "language": "twig",
+        "path": "./snippets/twig.json"
+      },
+      {
+        "language": [
+          "r",
+          "rmd"
+        ],
+        "path": "./snippets/r.json"
       }
     ]
   }

@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/rafamadriz/friendly-snippets.git
 	branch = main
-	commit = 3dca3fc854b72a72233341f4ae51cebd7a864234
-	parent = cff9f33ea7c31ebcc3efb1a9e8e48fd5509db7a4
+	commit = 53c823f92f159107efa238ad1a5837f63ecb4c2b
+	parent = 95cc52136071087bf8e56c6a52b843ced047a1a6
 	method = rebase
 	cmdver = 0.4.3
