@@ -6,7 +6,7 @@
 [subrepo]
 	remote = https://github.com/tools-life/taskwiki.git
 	branch = master
-	commit = c5d6f58ab9e3343377c91493efc2f8b2539ac6b4
-	parent = b7185f04da14cd404a80eb484cad3cc5f54569d7
+	commit = 832293f9f797ce56a35be1a9c28ed8ddc3113364
+	parent = 0a7d49423cf6159422f913ace4c9b35f8f4f0f62
 	method = rebase
 	cmdver = 0.4.3
